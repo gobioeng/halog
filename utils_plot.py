@@ -136,6 +136,37 @@ class PlotUtils:
         layout.addLayout(controls_layout)
         return export_btn, view_combo
 
+    @staticmethod
+    def clear_plot_widget(widget):
+        """Clear all plots from a widget"""
+        layout = widget.layout()
+        if layout is None:
+            return
+            
+        # Clear existing widgets
+        for i in reversed(range(layout.count())):
+            child = layout.itemAt(i).widget()
+            if child:
+                child.setParent(None)
+        
+        # Add empty state message
+        from PyQt5.QtWidgets import QLabel
+        from PyQt5.QtCore import Qt
+        
+        empty_label = QLabel("Graph cleared\nSelect parameters and data to plot trends")
+        empty_label.setAlignment(Qt.AlignCenter)
+        empty_label.setStyleSheet("""
+            QLabel {
+                color: #6c757d;
+                font-size: 14px;
+                padding: 50px;
+                background-color: #f8f9fa;
+                border: 2px dashed #dee2e6;
+                border-radius: 8px;
+            }
+        """)
+        layout.addWidget(empty_label)
+
 
 def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):
     """Enhanced trend plotting with interactive capabilities and FIXED label overlapping"""
@@ -149,7 +180,30 @@ def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):
     else:
         # Clear existing widgets
         for i in reversed(range(layout.count())):
-            layout.itemAt(i).widget().setParent(None)
+            child = layout.itemAt(i).widget()
+            if child:
+                child.setParent(None)
+
+    # Check if data is available
+    if df.empty:
+        # Show empty state message
+        from PyQt5.QtWidgets import QLabel
+        from PyQt5.QtCore import Qt
+        
+        empty_label = QLabel("No data available for plotting\nPlease upload a log file first")
+        empty_label.setAlignment(Qt.AlignCenter)
+        empty_label.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                font-size: 14px;
+                padding: 50px;
+                background-color: #f8f9fa;
+                border: 2px dashed #dee2e6;
+                border-radius: 8px;
+            }
+        """)
+        layout.addWidget(empty_label)
+        return
 
     # Try to create interactive plot first
     plot_widget, is_interactive = PlotUtils.create_interactive_plot_widget(widget)
@@ -162,32 +216,85 @@ def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):
         colors = ["#1976D2", "#D32F2F", "#388E3C", "#F57C00", "#7B1FA2", "#0097A7"]
 
         if not df.empty:
-            # Get numeric columns (excluding timestamp)
-            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-
+            # Normalize column names - support both 'timestamp' and 'datetime'
+            time_col = None
             if "timestamp" in df.columns:
-                x_data = (
-                    pd.to_datetime(df["timestamp"]).astype(np.int64) // 10**9
-                )  # Convert to unix timestamp
+                time_col = "timestamp"
+            elif "datetime" in df.columns:
+                time_col = "datetime"
+            
+            if time_col:
+                # Convert time data to unix timestamp for pyqtgraph
+                x_data = pd.to_datetime(df[time_col]).astype(np.int64) // 10**9
 
-                for i, col in enumerate(
-                    numeric_cols[:6]
-                ):  # Limit to 6 parameters for readability
-                    y_data = df[col].values
+                # Handle min/max/avg data structure
+                if 'avg' in df.columns and 'param' in df.columns:
+                    # Group by parameter and plot each one
+                    for i, param in enumerate(df['param'].unique()):
+                        param_data = df[df['param'] == param].copy()
+                        
+                        if not param_data.empty:
+                            # Sort by time
+                            param_data = param_data.sort_values(time_col)
+                            param_x = pd.to_datetime(param_data[time_col]).astype(np.int64) // 10**9
+                            
+                            color = colors[i % len(colors)]
+                            
+                            # Plot average line (main line)
+                            if 'avg' in param_data.columns:
+                                mask = ~np.isnan(param_data['avg'])
+                                if np.any(mask):
+                                    pen = pg.mkPen(color=color, width=2)
+                                    plot_widget.plot(
+                                        param_x[mask],
+                                        param_data['avg'][mask],
+                                        pen=pen,
+                                        name=f"{param} (avg)",
+                                    )
+                            
+                            # Plot min line (dotted)
+                            if 'min' in param_data.columns:
+                                mask = ~np.isnan(param_data['min'])
+                                if np.any(mask):
+                                    pen = pg.mkPen(color=color, width=1, style=pg.QtCore.Qt.DotLine)
+                                    plot_widget.plot(
+                                        param_x[mask],
+                                        param_data['min'][mask],
+                                        pen=pen,
+                                        name=f"{param} (min)",
+                                    )
+                            
+                            # Plot max line (dotted)
+                            if 'max' in param_data.columns:
+                                mask = ~np.isnan(param_data['max'])
+                                if np.any(mask):
+                                    pen = pg.mkPen(color=color, width=1, style=pg.QtCore.Qt.DotLine)
+                                    plot_widget.plot(
+                                        param_x[mask],
+                                        param_data['max'][mask],
+                                        pen=pen,
+                                        name=f"{param} (max)",
+                                    )
+                else:
+                    # Fallback: plot numeric columns directly
+                    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                    
+                    for i, col in enumerate(numeric_cols[:6]):  # Limit to 6 parameters for readability
+                        y_data = df[col].values
 
-                    # Remove NaN values
-                    mask = ~np.isnan(y_data)
-                    if np.any(mask):
-                        pen = pg.mkPen(color=colors[i % len(colors)], width=2)
-                        curve = plot_widget.plot(
-                            x_data[mask],
-                            y_data[mask],
-                            pen=pen,
-                            name=col.replace("_", " ").title(),
-                        )
+                        # Remove NaN values
+                        mask = ~np.isnan(y_data)
+                        if np.any(mask):
+                            pen = pg.mkPen(color=colors[i % len(colors)], width=2)
+                            curve = plot_widget.plot(
+                                x_data[mask],
+                                y_data[mask],
+                                pen=pen,
+                                name=col.replace("_", " ").title(),
+                            )
 
-                        # Add hover tooltip capability
-                        curve.setToolTip(f"{col}: Interactive line plot")
+                            # Add hover tooltip capability
+                            curve.setToolTip(f"{col}: Interactive line plot")
 
         layout.addWidget(plot_widget)
 
@@ -208,24 +315,49 @@ def _plot_trend_matplotlib(widget, df: pd.DataFrame, title_suffix: str, layout, 
         if w:
             w.deleteLater()
 
-    if df.empty or "datetime" not in df.columns:
+    # Check for required columns - support both 'datetime' and 'timestamp' 
+    if df.empty:
         # Show empty state
         fig = Figure(figsize=(12, 6))
         ax = fig.add_subplot(111)
         ax.text(
             0.5,
             0.5,
-            "No data available for plotting",
+            "No data available for plotting\nPlease upload a log file first",
             horizontalalignment="center",
             verticalalignment="center",
-            transform=ax.transAxes,
-            fontsize=12,
-            color="gray",
+            fontsize=14,
+            color="#666666"
         )
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
-        ax.set_xticks([])
-        ax.set_yticks([])
+        ax.axis('off')
+        
+        canvas = FigureCanvas(fig)
+        layout.addWidget(canvas)
+        return
+    
+    # Normalize column names - convert 'timestamp' to 'datetime' if needed
+    if 'timestamp' in df.columns and 'datetime' not in df.columns:
+        df = df.copy()
+        df['datetime'] = pd.to_datetime(df['timestamp'])
+    elif 'datetime' not in df.columns and 'timestamp' not in df.columns:
+        # No time column found
+        fig = Figure(figsize=(12, 6))
+        ax = fig.add_subplot(111)
+        ax.text(
+            0.5,
+            0.5,
+            "No time column found in data\nExpected 'datetime' or 'timestamp' column",
+            horizontalalignment="center",
+            verticalalignment="center",
+            fontsize=14,
+            color="#666666"
+        )
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.axis('off')
+        
         canvas = FigureCanvas(fig)
         layout.addWidget(canvas)
         return
