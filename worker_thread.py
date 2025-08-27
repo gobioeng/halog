@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QThread, pyqtSignal
-from linac_parser import LinacParser
+from parser_linac import LinacParser
 from database import DatabaseManager
 import os
 import json

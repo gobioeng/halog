@@ -361,17 +361,6 @@ def _plot_trend_matplotlib(widget, df: pd.DataFrame, title_suffix: str, layout, 
         canvas = FigureCanvas(fig)
         layout.addWidget(canvas)
         return
-            transform=ax.transAxes,
-            fontsize=12,
-            color="gray",
-        )
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        canvas = FigureCanvas(fig)
-        layout.addWidget(canvas)
-        return
 
     # Prepare data
     df_clean = df.copy()

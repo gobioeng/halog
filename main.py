@@ -161,7 +161,7 @@ class HALogApp:
         painter.setRenderHint(QtGui.QPainter.TextAntialiasing, True)
         painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing, True)
 
-        # Material Design gradient background - Enhanced
+        # Professional gradient background
         gradient = QtGui.QLinearGradient(0, 0, 0, pixmap.height())
         gradient.setColorAt(0, QtGui.QColor("#0D47A1"))  # Material Blue 900 - Deeper
         gradient.setColorAt(0.3, QtGui.QColor("#1976D2"))  # Material Blue 700
@@ -172,7 +172,7 @@ class HALogApp:
 
         painter.fillRect(pixmap.rect(), QtGui.QBrush(gradient))
 
-        # Add modern Material Design 3.0 surface overlay
+        # Add modern surface overlay
         surface_overlay = QtGui.QRadialGradient(
             pixmap.width() * 0.7, pixmap.height() * 0.3, pixmap.width() * 0.8
         )
@@ -188,12 +188,12 @@ class HALogApp:
             # Load with optimized size for splash screen (100px)
             logo_pixmap = load_splash_icon(100)
 
-            # Create Material Design card-like container for icon - BETTER POSITIONING
+            # Create card-like container for icon
             card_x = 30
             card_y = 30
             card_size = 140  # Smaller card for better proportion
 
-            # Draw Material Design elevation shadow
+            # Draw elevation shadow
             for i in range(6):  # Reduced shadow layers
                 shadow_color = QtGui.QColor(0, 0, 0, 15 - i * 2)
                 painter.setBrush(QtGui.QBrush(shadow_color))
@@ -202,7 +202,7 @@ class HALogApp:
                     card_x + i, card_y + i, card_size, card_size, 12, 12
                 )
 
-            # Draw Material Design card background
+            # Draw card background
             painter.setBrush(QtGui.QBrush(QtGui.QColor(255, 255, 255, 250)))
             painter.setPen(QtCore.Qt.NoPen)
             painter.drawRoundedRect(card_x, card_y, card_size, card_size, 12, 12)
@@ -213,11 +213,11 @@ class HALogApp:
 
             painter.drawPixmap(icon_x, icon_y, logo_pixmap)
 
-            print(f"Material Design icon loaded successfully: {logo_pixmap.size()}")
+            print(f"Icon loaded successfully: {logo_pixmap.size()}")
 
         except Exception as e:
-            print(f"Error loading Material Design icon: {e}")
-            # Fallback to generated Material Design icon
+            print(f"Error loading icon: {e}")
+            # Fallback to generated icon
             from resource_helper import generate_icon
 
             fallback_icon = generate_icon(100, high_quality=True, color="#1976D2")
@@ -231,9 +231,9 @@ class HALogApp:
             icon_x = card_x + (card_size - fallback_icon.width()) // 2
             icon_y = card_y + (card_size - fallback_icon.height()) // 2
             painter.drawPixmap(icon_x, icon_y, fallback_icon)
-            print("Using generated Material Design fallback icon")
+            print("Using generated fallback icon")
 
-        # Material Design Typography - Primary Text - BETTER POSITIONING
+        # Professional Typography - Primary Text
         painter.setPen(QtGui.QColor("#FFFFFF"))  # White text on blue background
         font = QtGui.QFont("Segoe UI", 28, QtGui.QFont.Light)  # Slightly smaller
         painter.setFont(font)
@@ -242,7 +242,7 @@ class HALogApp:
             app_name_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, "HALog"
         )
 
-        # Material Design Typography - Secondary Text
+        # Professional Typography - Secondary Text
         painter.setPen(QtGui.QColor("#E3F2FD"))  # Light blue tint
         font = QtGui.QFont("Segoe UI", 13, QtGui.QFont.Normal)  # Smaller
         painter.setFont(font)
@@ -253,7 +253,7 @@ class HALogApp:
             f"Version {self.app_version} beta",
         )
 
-        # Material Design Typography - Body Text
+        # Professional Typography - Body Text
         painter.setPen(QtGui.QColor("#BBDEFB"))  # Even lighter blue
         font = QtGui.QFont("Segoe UI", 11, QtGui.QFont.Normal)  # Smaller
         painter.setFont(font)
@@ -264,7 +264,7 @@ class HALogApp:
             "Professional LINAC Water System Monitor",
         )
 
-        # Material Design Typography - Caption (Developer Credit)
+        # Professional Typography - Caption (Developer Credit)
         painter.setPen(QtGui.QColor("#E1F5FE"))
         font = QtGui.QFont("Segoe UI", 10, QtGui.QFont.Medium)  # Smaller
         painter.setFont(font)
@@ -273,7 +273,7 @@ class HALogApp:
             developer_rect, QtCore.Qt.AlignCenter, "Developed by gobioeng.com"
         )
 
-        # Material Design Typography - Caption (Company)
+        # Professional Typography - Caption (Company)
         painter.setPen(QtGui.QColor("#B3E5FC"))
         font = QtGui.QFont("Segoe UI", 9, QtGui.QFont.Normal)  # Smaller
         painter.setFont(font)
@@ -290,7 +290,7 @@ class HALogApp:
         # Set the modified pixmap back
         self.splash.setPixmap(pixmap)
 
-        # Material Design Progress Bar - BETTER POSITIONING
+        # Professional Progress Bar
         self.progress_bar = QtWidgets.QProgressBar(self.splash)
         self.progress_bar.setGeometry(50, 230, 400, 5)  # Thinner, better positioned
         self.progress_bar.setRange(0, 100)
@@ -311,7 +311,7 @@ class HALogApp:
         """
         )
 
-        # Material Design Status Label - BETTER POSITIONING
+        # Professional Status Label
         self.status_label = QtWidgets.QLabel(self.splash)
         self.status_label.setGeometry(50, 205, 400, 20)  # Better positioned
         self.status_label.setStyleSheet(
@@ -398,7 +398,7 @@ class HALogApp:
             app_icon = None
 
         # Import main components
-        from ui_mainwindow import Ui_MainWindow
+        from main_window import Ui_MainWindow
         from database import DatabaseManager
 
         # Pre-optimize pandas if used
@@ -441,11 +441,11 @@ class HALogApp:
                 if app_icon:
                     self.setWindowIcon(app_icon)
 
-                # THIRD: Apply Material Design styling
+                # THIRD: Apply professional styling
                 try:
-                    self.apply_material_design_styles()
+                    self.apply_professional_styles()
                 except Exception as e:
-                    print(f"Warning: Could not load Material Design styles: {e}")
+                    print(f"Warning: Could not load professional styles: {e}")
 
                 # FOURTH: Initialize actions AFTER UI is created
                 self._init_actions()
@@ -458,7 +458,7 @@ class HALogApp:
                     self.df = pd.DataFrame()
 
                     # Initialize fault code parser
-                    from fault_code_parser import FaultCodeParser
+                    from parser_fault_code import FaultCodeParser
                     self.fault_parser = FaultCodeParser()
                     self._initialize_fault_code_tab()
 
@@ -478,10 +478,10 @@ class HALogApp:
                 # Setup branding in status bar
                 self._setup_branding()
 
-            def apply_material_design_styles(self):
-                """Apply comprehensive Material Design styling with VISIBLE MENU BAR"""
+            def apply_professional_styles(self):
+                """Apply comprehensive professional styling with VISIBLE MENU BAR"""
                 material_stylesheet = """
-                /* Material Design 3.0 Global Styles */
+                /* Professional Global Styles */
                 QMainWindow {
                     background-color: #FAFAFA;
                     color: #1C1B1F;
@@ -491,7 +491,7 @@ class HALogApp:
                     line-height: 1.4;
                 }
                 
-                /* HIGHLY VISIBLE Material Design Menu Bar - FORCED VISIBILITY */
+                /* HIGHLY VISIBLE Professional Menu Bar - FORCED VISIBILITY */
                 QMenuBar {
                     background-color: #FFFFFF !important;
                     color: #1C1B1F !important;
@@ -525,7 +525,7 @@ class HALogApp:
                     color: #0D47A1 !important;
                 }
                 
-                /* HIGHLY VISIBLE Material Design Menu */
+                /* HIGHLY VISIBLE Professional Menu */
                 QMenu {
                     background-color: #FFFFFF !important;
                     border: 2px solid #1976D2 !important;
@@ -552,7 +552,7 @@ class HALogApp:
                     margin: 4px 8px !important;
                 }
                 
-                /* OPTIMIZED Material Design Tab Widget */
+                /* OPTIMIZED Professional Tab Widget */
                 QTabWidget {
                     border: none;
                     background-color: transparent;
@@ -588,7 +588,7 @@ class HALogApp:
                     color: #1C1B1F;
                 }
                 
-                /* OPTIMIZED Material Design Cards (Group Boxes) */
+                /* OPTIMIZED Professional Cards (Group Boxes) */
                 QGroupBox {
                     font-weight: 600;
                     color: #1C1B1F;
@@ -613,7 +613,7 @@ class HALogApp:
                     margin-top: -12px;
                 }
                 
-                /* OPTIMIZED Material Design 3.0 Buttons */
+                /* OPTIMIZED Professional Buttons */
                 QPushButton {
                     background-color: #1976D2;
                     color: #FFFFFF;
@@ -659,7 +659,7 @@ class HALogApp:
                     background-color: #1B5E20;
                 }
                 
-                /* OPTIMIZED Material Design Combo Boxes */
+                /* OPTIMIZED Professional Combo Boxes */
                 QComboBox {
                     border: 1px solid #E0E0E0;
                     border-radius: 8px;
@@ -684,7 +684,7 @@ class HALogApp:
                     height: 0px;
                 }
                 
-                /* OPTIMIZED Material Design Table Headers */
+                /* OPTIMIZED Professional Table Headers */
                 QHeaderView::section {
                     background-color: #1976D2;
                     color: #FFFFFF;
@@ -695,7 +695,7 @@ class HALogApp:
                     border-radius: 0px;
                 }
                 
-                /* OPTIMIZED Material Design Tables */
+                /* OPTIMIZED Professional Tables */
                 QTableWidget {
                     background-color: #FFFFFF;
                     alternate-background-color: #F8F9FA;
@@ -713,7 +713,7 @@ class HALogApp:
                     color: #1976D2;
                 }
                 
-                /* OPTIMIZED Material Design Labels */
+                /* OPTIMIZED Professional Labels */
                 QLabel {
                     color: #1C1B1F;
                     font-size: 13px;
@@ -737,7 +737,7 @@ class HALogApp:
                     font-weight: 400;
                 }
                 
-                /* OPTIMIZED Material Design Plot Frames */
+                /* OPTIMIZED Professional Plot Frames */
                 QFrame#plotFrame {
                     border: none;
                     border-radius: 12px;
@@ -746,7 +746,7 @@ class HALogApp:
                     padding: 12px;
                 }
                 
-                /* OPTIMIZED Material Design Progress Bars */
+                /* OPTIMIZED Professional Progress Bars */
                 QProgressBar {
                     border: none;
                     border-radius: 4px;
@@ -761,7 +761,7 @@ class HALogApp:
                     border-radius: 4px;
                 }
                 
-                /* OPTIMIZED Material Design Status Bar */
+                /* OPTIMIZED Professional Status Bar */
                 QStatusBar {
                     background-color: #FFFFFF;
                     border-top: 1px solid #E0E0E0;
@@ -1074,7 +1074,7 @@ class HALogApp:
                     print(f"Error setting up branding: {e}")
 
             def show_about_dialog(self):
-                """Show Material Design about dialog"""
+                """Show professional about dialog"""
                 try:
                     from about_dialog import AboutDialog
 
@@ -1089,7 +1089,7 @@ class HALogApp:
                     )
 
             def load_dashboard(self):
-                """Load dashboard with Material Design optimizations"""
+                """Load dashboard with professional optimizations"""
                 try:
                     if not hasattr(self, "db"):
                         print("Database not initialized")
@@ -1136,7 +1136,7 @@ class HALogApp:
                     traceback.print_exc()
 
             def update_trend_combos(self):
-                """Update trend combo boxes with Material Design styling"""
+                """Update trend combo boxes with professional styling"""
                 try:
                     if hasattr(self, "df") and not self.df.empty:
                         serials = sorted(set(map(str, self.df["serial"].unique())))
@@ -1162,7 +1162,7 @@ class HALogApp:
                     print(f"Error updating trend combos: {e}")
 
             def update_data_table(self, page_size=1000):
-                """Update data table with Material Design styling"""
+                """Update data table with professional styling"""
                 try:
                     if not hasattr(self, "df") or self.df.empty:
                         self.ui.tableData.setRowCount(0)
@@ -1225,7 +1225,7 @@ class HALogApp:
                     traceback.print_exc()
 
             def update_analysis_tab(self):
-                """Update analysis tab with Material Design progress"""
+                """Update analysis tab with professional progress"""
                 try:
                     if not hasattr(self, "df") or self.df.empty:
                         self.ui.tableTrends.setRowCount(0)
@@ -1234,7 +1234,7 @@ class HALogApp:
                     if len(self.df) > 10000:
                         try:
                             from worker_thread import AnalysisWorker
-                            from data_analyzer import DataAnalyzer
+                            from analyzer_data import DataAnalyzer
 
                             progress_dialog = QtWidgets.QProgressDialog(
                                 "Analyzing data...", "Cancel", 0, 100, self
@@ -1276,7 +1276,7 @@ class HALogApp:
             def _direct_analysis(self):
                 """Perform analysis directly without worker"""
                 try:
-                    from data_analyzer import DataAnalyzer
+                    from analyzer_data import DataAnalyzer
 
                     analyzer = DataAnalyzer()
 
@@ -1410,7 +1410,7 @@ class HALogApp:
                     print(f"Error populating trends table: {e}")
 
             def on_tab_changed(self, index):
-                """Handle tab changes with Material Design animations"""
+                """Handle tab changes with professional animations"""
                 try:
                     if index == 1:  # Trends tab
                         self.update_trend()
@@ -1422,7 +1422,7 @@ class HALogApp:
                     print(f"Error handling tab change: {e}")
 
             def update_trend(self):
-                """Update trend visualization with Material Design styling"""
+                """Update trend visualization with professional styling"""
                 try:
                     if not hasattr(self, "df") or self.df.empty:
                         return
@@ -1442,7 +1442,7 @@ class HALogApp:
                             mask &= self.df["param"] == param
                         df_trend = self.df[mask]
 
-                    from plot_utils import plot_trend
+                    from utils_plot import plot_trend
 
                     if len(df_trend) > 10000:
                         print(f"Downsampling large trend data: {len(df_trend)} points")
@@ -1485,7 +1485,7 @@ class HALogApp:
                     )
 
             def _import_small_file(self, file_path):
-                """Import small log file with Material Design progress"""
+                """Import small log file with professional progress"""
                 try:
                     progress_dialog = QtWidgets.QProgressDialog(
                         "Processing file...", "Cancel", 0, 100, self
@@ -1496,7 +1496,7 @@ class HALogApp:
                     progress_dialog.setValue(10)
                     QtWidgets.QApplication.processEvents()
 
-                    from linac_parser import LinacParser
+                    from parser_linac import LinacParser
 
                     parser = LinacParser()
 
@@ -1550,7 +1550,7 @@ class HALogApp:
                     traceback.print_exc()
 
             def _import_large_file(self, file_path, file_size):
-                """Import large log file with Material Design progress"""
+                """Import large log file with professional progress"""
                 try:
                     from progress_dialog import ProgressDialog
 
@@ -1583,7 +1583,7 @@ class HALogApp:
                     traceback.print_exc()
 
             def clear_database(self):
-                """Clear database with Material Design confirmation"""
+                """Clear database with professional confirmation"""
                 try:
                     reply = QtWidgets.QMessageBox.question(
                         self,
@@ -1707,7 +1707,7 @@ class HALogApp:
                     event.accept()
 
         self.window = HALogMaterialApp()
-        self.update_splash_progress(80, "Finalizing Material Design...")
+        self.update_splash_progress(80, "Finalizing interface...")
         self.load_times["window_creation"] = time.time() - start_window
         return self.window
 
@@ -1725,13 +1725,13 @@ def main():
         QtCore = lazy_import("PyQt5.QtCore")
         QtGui = lazy_import("PyQt5.QtGui")
 
-        # Create application with Material Design settings
+        # Create application with professional settings
         app = QtWidgets.QApplication(sys.argv)
         app.setApplicationName("Gobioeng HALog")
         app.setApplicationVersion(APP_VERSION)
         app.setOrganizationName("gobioeng.com")
 
-        # Set Material Design font
+        # Set professional font
         try:
             font = QtGui.QFont("Segoe UI", 9)  # Slightly smaller for better data focus
             app.setFont(font)
