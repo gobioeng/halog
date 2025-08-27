@@ -6,16 +6,18 @@ Company: gobioeng.com
 Date: 2025-08-22 16:50:01 UTC
 """
 
-from PyQt5.QtWidgets import QSplashScreen, QLabel, QVBoxLayout, QWidget
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QPixmap, QFont, QColor, QPainter
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QFont
 from resource_helper import resource_path
+
 
 class SplashScreen(QWidget):
     """
     Enhanced splash screen with professional styling
     Developed by Tanmay Pandey - gobioeng.com
     """
+
     def __init__(self):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
@@ -31,7 +33,9 @@ class SplashScreen(QWidget):
         self.logo_label = QLabel()
         logo_pix = QPixmap(resource_path("linac_logo.ico"))
         if not logo_pix.isNull():
-            self.logo_label.setPixmap(logo_pix.scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            self.logo_label.setPixmap(
+                logo_pix.scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            )
         else:
             self.logo_label.setText("🏥")
             self.logo_label.setStyleSheet("font-size: 64px; color: gold;")

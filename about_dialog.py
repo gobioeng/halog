@@ -1,91 +1,101 @@
-from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QPushButton, QTextBrowser, QTabWidget, QWidget)
+from PyQt5.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTextBrowser,
+    QTabWidget,
+    QWidget,
+)
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtGui import QFont
 import sys
 import platform
+
 
 class AboutDialog(QDialog):
     """
     Professional about dialog with comprehensive application information
     Developed by Tanmay Pandey - gobioeng.com
     """
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUI()
-        
+
     def setupUI(self):
         """Setup the about dialog UI"""
         self.setWindowTitle("About HALog")
         self.setModal(True)
         self.setFixedSize(500, 400)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        
+
         # Main layout
         layout = QVBoxLayout()
         self.setLayout(layout)
-        
+
         # Header section
         header_layout = QHBoxLayout()
-        
+
         # Logo placeholder
         logo_label = QLabel("🏥")
         logo_label.setStyleSheet("font-size: 48px; color: #2c3e50;")
         logo_label.setAlignment(Qt.AlignCenter)
         header_layout.addWidget(logo_label)
-        
+
         # Application info
         app_info_layout = QVBoxLayout()
-        
+
         app_name = QLabel("Gobioeng HALog")
         app_name.setFont(QFont("Arial", 16, QFont.Bold))
         app_name.setStyleSheet("color: #2c3e50; margin-bottom: 5px;")
         app_info_layout.addWidget(app_name)
-        
+
         version_label = QLabel("Version 0.0.1 beta")
         version_label.setFont(QFont("Arial", 10))
         version_label.setStyleSheet("color: #7f8c8d;")
         app_info_layout.addWidget(version_label)
-        
+
         developer_label = QLabel("Developed by Tanmay Pandey")
         developer_label.setFont(QFont("Arial", 10))
         developer_label.setStyleSheet("color: #2c3e50; font-weight: bold;")
         app_info_layout.addWidget(developer_label)
-        
+
         company_label = QLabel("gobioeng.com")
         company_label.setFont(QFont("Arial", 10))
         company_label.setStyleSheet("color: #7f8c8d;")
         app_info_layout.addWidget(company_label)
-        
+
         header_layout.addLayout(app_info_layout)
         header_layout.addStretch()
-        
+
         layout.addLayout(header_layout)
-        
+
         # Tab widget for different information sections
         tab_widget = QTabWidget()
-        
+
         # About tab
         about_tab = self.create_about_tab()
         tab_widget.addTab(about_tab, "About")
-        
+
         # Features tab
         features_tab = self.create_features_tab()
         tab_widget.addTab(features_tab, "Features")
-        
+
         # System info tab
         system_tab = self.create_system_info_tab()
         tab_widget.addTab(system_tab, "System")
-        
+
         layout.addWidget(tab_widget)
-        
+
         # Button layout
         button_layout = QHBoxLayout()
         button_layout.addStretch()
-        
+
         ok_button = QPushButton("OK")
-        ok_button.setStyleSheet("""
+        ok_button.setStyleSheet(
+            """
             QPushButton {
                 background-color: #3498db;
                 color: white;
@@ -97,14 +107,16 @@ class AboutDialog(QDialog):
             QPushButton:hover {
                 background-color: #2980b9;
             }
-        """)
+        """
+        )
         ok_button.clicked.connect(self.accept)
         button_layout.addWidget(ok_button)
-        
+
         layout.addLayout(button_layout)
-        
+
         # Apply professional styling
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QDialog {
                 background-color: #f8f9fa;
             }
@@ -121,15 +133,17 @@ class AboutDialog(QDialog):
                 background-color: white;
                 border-bottom: 2px solid #3498db;
             }
-        """)
-    
+        """
+        )
+
     def create_about_tab(self):
         """Create the about tab content with proper developer attribution"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        
+
         description = QTextBrowser()
-        description.setHtml("""
+        description.setHtml(
+            """
         <h3>LINAC Log Analysis System</h3>
         <p>HALog is a professional desktop application designed for monitoring and analyzing 
         machine log, water system parameters from Linear Accelerator (LINAC) medical devices.</p>
@@ -156,20 +170,22 @@ class AboutDialog(QDialog):
         
         <hr>
         <p><i>© 2025 Tanmay Pandey / gobioeng.com. All rights reserved.</i></p>
-        """)
+        """
+        )
         description.setOpenExternalLinks(True)
         description.setStyleSheet("border: none; background: transparent;")
-        
+
         layout.addWidget(description)
         return widget
-    
+
     def create_features_tab(self):
         """Create the features tab content"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        
+
         features = QTextBrowser()
-        features.setHtml("""
+        features.setHtml(
+            """
         <h3>Enhanced Features</h3>
         
         <h4>🔍 Unified Parameter Mapping</h4>
@@ -209,21 +225,23 @@ class AboutDialog(QDialog):
             <li><b>Performance Optimization:</b> Memory-efficient large file handling</li>
             <li><b>User Experience:</b> Intuitive and responsive interface design</li>
         </ul>
-        """)
+        """
+        )
         features.setStyleSheet("border: none; background: transparent;")
         layout.addWidget(features)
         return widget
-    
+
     def create_system_info_tab(self):
         """Create the system information tab"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        
+
         system_info = QTextBrowser()
         python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-        
+
         try:
             import PyQt5.QtCore
+
             qt_version = PyQt5.QtCore.QT_VERSION_STR
             pyqt_version = PyQt5.QtCore.PYQT_VERSION_STR
         except:
@@ -231,21 +249,25 @@ class AboutDialog(QDialog):
             pyqt_version = "Unknown"
         try:
             import pandas as pd
+
             pandas_version = pd.__version__
         except:
             pandas_version = "Not available"
         try:
             import numpy as np
+
             numpy_version = np.__version__
         except:
             numpy_version = "Not available"
         try:
             import matplotlib
+
             matplotlib_version = matplotlib.__version__
         except:
             matplotlib_version = "Not available"
-            
-        system_info.setHtml(f"""
+
+        system_info.setHtml(
+            f"""
         <h3>System Information</h3>
         <h4>Application Details</h4>
         <table>
@@ -281,13 +303,16 @@ class AboutDialog(QDialog):
             <tr><td><b>Data Processing:</b></td><td>Pandas, NumPy</td></tr>
             <tr><td><b>Visualization:</b></td><td>Matplotlib</td></tr>
         </table>
-        """)
-        system_info.setStyleSheet("""
+        """
+        )
+        system_info.setStyleSheet(
+            """
             border: none; 
             background: transparent;
             QTextBrowser table { border-collapse: collapse; width: 100%; }
             QTextBrowser td { padding: 4px 8px; border-bottom: 1px solid #eee; }
             QTextBrowser tr:nth-child(even) { background-color: #f9f9f9; }
-        """)
+        """
+        )
         layout.addWidget(system_info)
         return widget
