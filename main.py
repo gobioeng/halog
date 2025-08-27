@@ -161,25 +161,9 @@ class HALogApp:
         painter.setRenderHint(QtGui.QPainter.TextAntialiasing, True)
         painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing, True)
 
-        # Professional gradient background
-        gradient = QtGui.QLinearGradient(0, 0, 0, pixmap.height())
-        gradient.setColorAt(0, QtGui.QColor("#0D47A1"))  # Material Blue 900 - Deeper
-        gradient.setColorAt(0.3, QtGui.QColor("#1976D2"))  # Material Blue 700
-        gradient.setColorAt(0.7, QtGui.QColor("#2196F3"))  # Material Blue 500
-        gradient.setColorAt(
-            1, QtGui.QColor("#E3F2FD")
-        )  # Material Blue 50 - Light accent
-
-        painter.fillRect(pixmap.rect(), QtGui.QBrush(gradient))
-
-        # Add modern surface overlay
-        surface_overlay = QtGui.QRadialGradient(
-            pixmap.width() * 0.7, pixmap.height() * 0.3, pixmap.width() * 0.8
-        )
-        surface_overlay.setColorAt(0, QtGui.QColor(255, 255, 255, 25))
-        surface_overlay.setColorAt(0.6, QtGui.QColor(255, 255, 255, 10))
-        surface_overlay.setColorAt(1, QtGui.QColor(255, 255, 255, 0))
-        painter.fillRect(pixmap.rect(), QtGui.QBrush(surface_overlay))
+        # Solid gray background as requested
+        gray_color = QtGui.QColor("#808080")  # Medium gray
+        painter.fillRect(pixmap.rect(), QtGui.QBrush(gray_color))
 
         # Load OPTIMIZED ICON with proper spacing
         try:
@@ -233,18 +217,18 @@ class HALogApp:
             painter.drawPixmap(icon_x, icon_y, fallback_icon)
             print("Using generated fallback icon")
 
-        # Professional Typography - Primary Text
-        painter.setPen(QtGui.QColor("#FFFFFF"))  # White text on blue background
-        font = QtGui.QFont("Segoe UI", 28, QtGui.QFont.Light)  # Slightly smaller
+        # Professional Typography - Primary Text (adjusted font size)
+        painter.setPen(QtGui.QColor("#FFFFFF"))  # White text on gray background
+        font = QtGui.QFont("Segoe UI", 18, QtGui.QFont.Medium)  # Reduced from 28px
         painter.setFont(font)
         app_name_rect = QtCore.QRect(200, 50, 280, 40)  # Moved to avoid overlap
         painter.drawText(
             app_name_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, "HALog"
         )
 
-        # Professional Typography - Secondary Text
-        painter.setPen(QtGui.QColor("#E3F2FD"))  # Light blue tint
-        font = QtGui.QFont("Segoe UI", 13, QtGui.QFont.Normal)  # Smaller
+        # Professional Typography - Secondary Text (adjusted font size)
+        painter.setPen(QtGui.QColor("#F0F0F0"))  # Light gray for contrast
+        font = QtGui.QFont("Segoe UI", 12, QtGui.QFont.Normal)  # Slightly smaller
         painter.setFont(font)
         version_rect = QtCore.QRect(200, 90, 280, 25)
         painter.drawText(
@@ -253,9 +237,9 @@ class HALogApp:
             f"Version {self.app_version} beta",
         )
 
-        # Professional Typography - Body Text
-        painter.setPen(QtGui.QColor("#BBDEFB"))  # Even lighter blue
-        font = QtGui.QFont("Segoe UI", 11, QtGui.QFont.Normal)  # Smaller
+        # Professional Typography - Body Text (adjusted font size)
+        painter.setPen(QtGui.QColor("#E0E0E0"))  # Light gray for contrast
+        font = QtGui.QFont("Segoe UI", 10, QtGui.QFont.Normal)  # Standardized size
         painter.setFont(font)
         tagline_rect = QtCore.QRect(30, 180, 440, 20)  # Better positioning
         painter.drawText(
@@ -264,18 +248,18 @@ class HALogApp:
             "Professional LINAC Water System Monitor",
         )
 
-        # Professional Typography - Caption (Developer Credit)
-        painter.setPen(QtGui.QColor("#E1F5FE"))
-        font = QtGui.QFont("Segoe UI", 10, QtGui.QFont.Medium)  # Smaller
+        # Professional Typography - Caption (Developer Credit) (adjusted font size)
+        painter.setPen(QtGui.QColor("#D0D0D0"))
+        font = QtGui.QFont("Segoe UI", 9, QtGui.QFont.Normal)  # Standardized size
         painter.setFont(font)
         developer_rect = QtCore.QRect(30, 260, 440, 18)  # Adjusted for reduced height
         painter.drawText(
             developer_rect, QtCore.Qt.AlignCenter, "Developed by gobioeng.com"
         )
 
-        # Professional Typography - Caption (Company)
-        painter.setPen(QtGui.QColor("#B3E5FC"))
-        font = QtGui.QFont("Segoe UI", 9, QtGui.QFont.Normal)  # Smaller
+        # Professional Typography - Caption (Company) (adjusted font size)
+        painter.setPen(QtGui.QColor("#C0C0C0"))
+        font = QtGui.QFont("Segoe UI", 8, QtGui.QFont.Normal)  # Smaller for footer
         painter.setFont(font)
         company_rect = QtCore.QRect(30, 278, 440, 16)  # Adjusted for reduced height
         painter.drawText(
@@ -301,24 +285,24 @@ class HALogApp:
             QProgressBar {
                 border: none;
                 border-radius: 2px;
-                background-color: rgba(255, 255, 255, 25);
+                background-color: rgba(255, 255, 255, 50);
             }
             QProgressBar::chunk {
-                background-color: #FFD54F;
+                background-color: #4CAF50;
                 border-radius: 2px;
                 margin: 0px;
             }
         """
         )
 
-        # Professional Status Label
+        # Professional Status Label (updated for gray background)
         self.status_label = QtWidgets.QLabel(self.splash)
         self.status_label.setGeometry(50, 205, 400, 20)  # Better positioned
         self.status_label.setStyleSheet(
             """
-            color: #E8F5E8; 
+            color: #FFFFFF; 
             font-family: 'Segoe UI'; 
-            font-size: 12px; 
+            font-size: 11px; 
             font-weight: 500;
             background: transparent;
         """
@@ -328,7 +312,7 @@ class HALogApp:
 
         # Setup animation timer
         self.splash_animation_timer = QtCore.QTimer()
-        self.splash_animation_timer.timeout.connect(self._update_material_animation)
+        self.splash_animation_timer.timeout.connect(self._update_animation)
         self.splash_animation_timer.start(80)  # Smoother animation
 
         # Show splash
