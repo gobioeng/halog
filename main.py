@@ -1,11 +1,9 @@
 """
-HALog Material Design Implementation - Gobioeng
-Professional LINAC Water System Monitor with Material Design UI
-Developer: Tanmay Pandey
+Gobioeng HALog 0.0.1 beta
+Professional LINAC Water System Monitor
 Company: gobioeng.com
 Created: 2025-08-20 22:58:39 UTC
-Updated: 2025-08-22 17:40:15 UTC
-User: gobioeng
+Updated: 2025-08-27 15:08:00 UTC
 """
 
 import sys
@@ -82,7 +80,7 @@ def setup_environment():
 def test_icon_loading():
     """
     Test function to verify icon loading
-    Debugging utility by Tanmay Pandey
+    Debugging utility for Gobioeng HALog
     """
     from resource_helper import load_splash_icon, resource_path
     import os
@@ -117,10 +115,10 @@ def test_icon_loading():
     print("=== End Test ===")
 
 
-class MaterialDesignApp:
+class HALogApp:
     """
-    HALog Material Design Application with optimized startup
-    Enhanced Material Design implementation by Tanmay Pandey - gobioeng.com
+    Gobioeng HALog Application with optimized startup
+    Professional LINAC Water System Monitor - gobioeng.com
     """
 
     def __init__(self):
@@ -134,11 +132,11 @@ class MaterialDesignApp:
         self.status_label = None
         self.progress_bar = None
 
-    def create_material_splash(self):
+    def create_splash(self):
         """
-        Create Material Design splash screen with optimized layout
-        Material Design implementation by Tanmay Pandey
-        Developer: Tanmay Pandey - gobioeng.com
+        Create professional splash screen with optimized layout
+        Gobioeng HALog Implementation
+        Developer: gobioeng.com
         """
         # Import everything explicitly
         QtWidgets = lazy_import("PyQt5.QtWidgets")
@@ -272,7 +270,7 @@ class MaterialDesignApp:
         painter.setFont(font)
         developer_rect = QtCore.QRect(30, 260, 440, 18)  # Adjusted for reduced height
         painter.drawText(
-            developer_rect, QtCore.Qt.AlignCenter, "Developed by Tanmay Pandey"
+            developer_rect, QtCore.Qt.AlignCenter, "Developed by gobioeng.com"
         )
 
         # Material Design Typography - Caption (Company)
@@ -341,13 +339,13 @@ class MaterialDesignApp:
 
         return self.splash
 
-    def _update_material_animation(self):
-        """Update Material Design splash screen animation - FIXED"""
+    def _update_animation(self):
+        """Update splash screen animation - FIXED"""
         if not hasattr(self, "animation_step"):
             self.animation_step = 0
         self.animation_step = (self.animation_step + 1) % 6  # Smoother animation cycle
 
-        # Material Design loading dots animation
+        # Professional loading dots animation
         if self.status_label:
             message = self.status_label.text().split("•")[0].strip()
             dots = "•" * (self.animation_step % 4)
@@ -367,7 +365,7 @@ class MaterialDesignApp:
         QtWidgets.QApplication.instance().processEvents()
 
     def update_splash_progress(self, value, message=None):
-        """Update splash progress with Material Design styling"""
+        """Update splash progress with professional styling"""
         if not self.splash:
             return
 
@@ -382,13 +380,13 @@ class MaterialDesignApp:
         QtWidgets.QApplication.instance().processEvents()
 
     def create_main_window(self):
-        """Create Material Design main application window"""
+        """Create professional main application window"""
         start_window = time.time()
         QtWidgets = lazy_import("PyQt5.QtWidgets")
         QtCore = lazy_import("PyQt5.QtCore")
         QtGui = lazy_import("PyQt5.QtGui")
 
-        self.update_splash_progress(30, "Loading Material Design interface...")
+        self.update_splash_progress(30, "Loading interface...")
 
         # Import resources first to ensure icon is available
         try:
@@ -421,12 +419,12 @@ class MaterialDesignApp:
         except Exception as e:
             print(f"Warning: Could not configure numpy: {e}")
 
-        self.update_splash_progress(50, "Preparing Material Design components...")
+        self.update_splash_progress(50, "Preparing interface components...")
 
         class HALogMaterialApp(QtWidgets.QMainWindow):
             """
-            Main HALog Material Design Application Window
-            Material Design implementation by Tanmay Pandey - gobioeng.com
+            Main Gobioeng HALog Application Window
+            Professional LINAC Log Analysis System - gobioeng.com
             """
 
             def __init__(self, parent=None):
@@ -438,7 +436,7 @@ class MaterialDesignApp:
 
                 # SECOND: Set window properties
                 self.setWindowTitle(
-                    f"HALog {APP_VERSION} • Material Design • Tanmay Pandey"
+                    f"HALog {APP_VERSION} • Professional LINAC Monitor • gobioeng.com"
                 )
                 if app_icon:
                     self.setWindowIcon(app_icon)
@@ -1057,7 +1055,7 @@ class MaterialDesignApp:
                     """)
                     
                     # Add branding label on the left
-                    self.branding_label = QtWidgets.QLabel("Developed by gobioeng.com | Tanmay Pandey")
+                    self.branding_label = QtWidgets.QLabel("Developed by gobioeng.com")
                     self.branding_label.setStyleSheet("""
                         QLabel {
                             color: #6c757d;
@@ -1086,8 +1084,8 @@ class MaterialDesignApp:
                     print(f"Failed to load about dialog: {e}")
                     QtWidgets.QMessageBox.about(
                         self,
-                        "HALog Material Design",
-                        "HALog 0.0.1 beta\nMaterial Design LINAC Log Analysis System\nDeveloped by Tanmay Pandey\n© gobioeng.com",
+                        "Gobioeng HALog",
+                        "HALog 0.0.1 beta\nProfessional LINAC Log Analysis System\nDeveloped by gobioeng.com\n© 2025 gobioeng.com",
                     )
 
             def load_dashboard(self):
@@ -1729,7 +1727,7 @@ def main():
 
         # Create application with Material Design settings
         app = QtWidgets.QApplication(sys.argv)
-        app.setApplicationName("HALog Material Design")
+        app.setApplicationName("Gobioeng HALog")
         app.setApplicationVersion(APP_VERSION)
         app.setOrganizationName("gobioeng.com")
 
@@ -1742,17 +1740,17 @@ def main():
 
         qt_time = time.time() - startup_begin - env_time
 
-        # Create Material Design app
-        material_app = MaterialDesignApp()
-        splash = material_app.create_material_splash()
+        # Create HALog app
+        halog_app = HALogApp()
+        splash = halog_app.create_splash()
         splash_time = time.time() - startup_begin - env_time - qt_time
 
         # Create main window
-        material_app.update_splash_progress(20, "Creating Material Design interface...")
-        window = material_app.create_main_window()
+        halog_app.update_splash_progress(20, "Creating interface...")
+        window = halog_app.create_main_window()
 
         # Finalize startup
-        material_app.update_splash_progress(90, "Finalizing HALog Material Design...")
+        halog_app.update_splash_progress(90, "Finalizing HALog...")
 
         # Schedule window display with smooth transition
         def finish_startup():
@@ -1766,9 +1764,9 @@ def main():
 
         # Log startup timing
         total_time = time.time() - startup_begin
-        print(f"🚀 HALog Material Design startup: {total_time:.3f}s")
-        print(f"   Developed by Tanmay Pandey - gobioeng.com")
-        print(f"   Material Design Implementation Complete")
+        print(f"🚀 Gobioeng HALog startup: {total_time:.3f}s")
+        print(f"   Developed by gobioeng.com")
+        print(f"   Professional LINAC Water System Monitor Complete")
 
         # Run application
         return app.exec_()
@@ -1785,7 +1783,7 @@ def main():
             QMessageBox.critical(
                 None,
                 "Startup Error",
-                f"Error starting HALog Material Design: {str(e)}\n\nDeveloped by Tanmay Pandey\ngobioeng.com\n\n{traceback.format_exc()}",
+                f"Error starting Gobioeng HALog: {str(e)}\n\nDeveloped by gobioeng.com\n\n{traceback.format_exc()}",
             )
         except:
             pass
