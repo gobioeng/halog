@@ -16,6 +16,8 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QSizePolicy,
     QMenu,
+    QLineEdit,
+    QTextEdit,
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
