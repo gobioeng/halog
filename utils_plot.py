@@ -4,12 +4,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from PyQt5.QtWidgets import QVBoxLayout
-from typing import Optional
-from datetime import timedelta, datetime
-import matplotlib.transforms as mtransforms
-from matplotlib.patches import Rectangle
-import matplotlib.ticker as mticker
+from datetime import timedelta
 
 # Set matplotlib style for professional appearance
 plt.style.use('default')
@@ -61,7 +56,7 @@ class InteractivePlotManager:
         ylim = ax.get_ylim()
         
         # Calculate zoom factor
-        zoom_factor = 1.1 if event.button == 'down' else 1/1.1
+        zoom_factor = 1.1 if event.button == 'down' else 1 / 1.1
         
         # Get mouse position in data coordinates
         xdata = event.xdata
@@ -72,8 +67,8 @@ class InteractivePlotManager:
         y_range = (ylim[1] - ylim[0]) * zoom_factor
         
         # Center zoom on mouse position
-        new_xlim = [xdata - x_range/2, xdata + x_range/2]
-        new_ylim = [ydata - y_range/2, ydata + y_range/2]
+        new_xlim = [xdata - x_range / 2, xdata + x_range / 2]
+        new_ylim = [ydata - y_range / 2, ydata + y_range / 2]
         
         # Set new limits
         ax.set_xlim(new_xlim)
@@ -365,8 +360,8 @@ def find_time_clusters(df_times, gap_threshold=timedelta(days=1)):
     """
     # Convert to Python datetime objects for safety
     try:
-        times = df_times.dt.to_pydatetime()
-    except:
+        times = np.array(df_times.dt.to_pydatetime())
+    except Exception:
         times = [pd.to_datetime(t).to_pydatetime() for t in df_times]
     
     if len(times) <= 1:
