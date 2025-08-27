@@ -459,6 +459,11 @@ class MaterialDesignApp:
 
                     self.df = pd.DataFrame()
 
+                    # Initialize fault code parser
+                    from fault_code_parser import FaultCodeParser
+                    self.fault_parser = FaultCodeParser()
+                    self._initialize_fault_code_tab()
+
                     # Setup UI components
                     self.load_dashboard()
                     self.ui.tabWidget.currentChanged.connect(self.on_tab_changed)
@@ -471,6 +476,9 @@ class MaterialDesignApp:
                 self.memory_timer = QtCore.QTimer()
                 self.memory_timer.timeout.connect(self._update_memory_usage)
                 self.memory_timer.start(30000)
+
+                # Setup branding in status bar
+                self._setup_branding()
 
             def apply_material_design_styles(self):
                 """Apply comprehensive Material Design styling with VISIBLE MENU BAR"""
@@ -823,6 +831,24 @@ class MaterialDesignApp:
                     self.ui.comboTrendParam.currentIndexChanged.connect(
                         self.update_trend
                     )
+                    
+                    # FAULT CODE TAB ACTIONS
+                    if hasattr(self.ui, 'btnSearchCode'):
+                        self.ui.btnSearchCode.clicked.connect(self.search_fault_code)
+                        print("✓ Fault code search button connected")
+                    
+                    if hasattr(self.ui, 'btnSearchDescription'):
+                        self.ui.btnSearchDescription.clicked.connect(self.search_fault_description)
+                        print("✓ Fault description search button connected")
+                    
+                    if hasattr(self.ui, 'txtFaultCode'):
+                        self.ui.txtFaultCode.returnPressed.connect(self.search_fault_code)
+                        print("✓ Fault code input Enter key connected")
+                    
+                    if hasattr(self.ui, 'txtSearchDescription'):
+                        self.ui.txtSearchDescription.returnPressed.connect(self.search_fault_description)
+                        print("✓ Fault description input Enter key connected")
+                    
                     print("✓ Button actions connected")
 
                     print("✓ ALL ACTIONS CONNECTED SUCCESSFULLY")
@@ -846,6 +872,138 @@ class MaterialDesignApp:
                     "Settings",
                     "Settings dialog will be implemented in a future version.",
                 )
+
+            def _initialize_fault_code_tab(self):
+                """Initialize the fault code tab with statistics"""
+                try:
+                    if not hasattr(self, 'fault_parser'):
+                        return
+                    
+                    stats = self.fault_parser.get_stats()
+                    
+                    if hasattr(self.ui, 'lblTotalCodes'):
+                        self.ui.lblTotalCodes.setText(f"Total Codes: {stats['total_codes']}")
+                    
+                    if hasattr(self.ui, 'lblFaultTypes'):
+                        types_text = f"Types: {stats['types']} ({', '.join(stats['type_breakdown'].keys())})"
+                        self.ui.lblFaultTypes.setText(types_text)
+                    
+                    print(f"✓ Fault code tab initialized with {stats['total_codes']} codes")
+                    
+                except Exception as e:
+                    print(f"Error initializing fault code tab: {e}")
+
+            def search_fault_code(self):
+                """Search for a specific fault code"""
+                try:
+                    if not hasattr(self, 'fault_parser') or not hasattr(self.ui, 'txtFaultCode'):
+                        return
+                    
+                    code = self.ui.txtFaultCode.text().strip()
+                    if not code:
+                        self.ui.txtFaultResult.setHtml(
+                            "<p style='color: #f39c12;'><b>⚠️ Please enter a fault code</b></p>"
+                        )
+                        return
+                    
+                    result = self.fault_parser.search_fault_code(code)
+                    
+                    if result:
+                        html_result = f"""
+                        <div style='background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; padding: 12px; margin: 4px 0;'>
+                            <h3 style='color: #155724; margin: 0 0 8px 0;'>✅ Fault Code Found</h3>
+                            <p><b>Code:</b> {code}</p>
+                            <p><b>Type:</b> <span style='background: #e2e3e5; padding: 2px 6px; border-radius: 3px;'>{result['type']}</span></p>
+                            <p><b>Description:</b></p>
+                            <div style='background: #f8f9fa; border-left: 3px solid #6c757d; padding: 8px 12px; margin: 8px 0; font-family: monospace;'>
+                                {result['description']}
+                            </div>
+                        </div>
+                        """
+                        self.ui.txtFaultResult.setHtml(html_result)
+                    else:
+                        html_result = f"""
+                        <div style='background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 12px; margin: 4px 0;'>
+                            <h3 style='color: #721c24; margin: 0 0 8px 0;'>❌ Code Not Found</h3>
+                            <p>Fault code <b>{code}</b> was not found in the database.</p>
+                            <p><small>Please check the code and try again. You can also try searching by description keywords.</small></p>
+                        </div>
+                        """
+                        self.ui.txtFaultResult.setHtml(html_result)
+                    
+                except Exception as e:
+                    error_html = f"""
+                    <div style='background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 12px;'>
+                        <h3 style='color: #721c24; margin: 0 0 8px 0;'>🚫 Search Error</h3>
+                        <p>An error occurred while searching: {str(e)}</p>
+                    </div>
+                    """
+                    self.ui.txtFaultResult.setHtml(error_html)
+                    print(f"Error in fault code search: {e}")
+
+            def search_fault_description(self):
+                """Search fault codes by description keywords"""
+                try:
+                    if not hasattr(self, 'fault_parser') or not hasattr(self.ui, 'txtSearchDescription'):
+                        return
+                    
+                    search_term = self.ui.txtSearchDescription.text().strip()
+                    if not search_term:
+                        self.ui.txtFaultResult.setHtml(
+                            "<p style='color: #f39c12;'><b>⚠️ Please enter keywords to search</b></p>"
+                        )
+                        return
+                    
+                    results = self.fault_parser.search_description(search_term)
+                    
+                    if results:
+                        html_result = f"""
+                        <div style='background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; padding: 12px; margin: 4px 0;'>
+                            <h3 style='color: #155724; margin: 0 0 8px 0;'>🔍 Found {len(results)} Results</h3>
+                            <p><b>Search term:</b> "{search_term}"</p>
+                        </div>
+                        """
+                        
+                        for i, (fault_id, fault_data) in enumerate(results[:10]):  # Limit to first 10 results
+                            html_result += f"""
+                            <div style='background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; margin: 8px 0;'>
+                                <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;'>
+                                    <b style='color: #495057;'>Code: {fault_id}</b>
+                                    <span style='background: #e2e3e5; padding: 2px 6px; border-radius: 3px; font-size: 11px;'>{fault_data['type']}</span>
+                                </div>
+                                <div style='color: #6c757d; font-size: 13px; line-height: 1.4;'>
+                                    {fault_data['description']}
+                                </div>
+                            </div>
+                            """
+                        
+                        if len(results) > 10:
+                            html_result += f"""
+                            <div style='background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 8px; margin: 8px 0; text-align: center;'>
+                                <small>Showing first 10 of {len(results)} results. Refine your search for more specific results.</small>
+                            </div>
+                            """
+                        
+                        self.ui.txtFaultResult.setHtml(html_result)
+                    else:
+                        html_result = f"""
+                        <div style='background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 12px; margin: 4px 0;'>
+                            <h3 style='color: #721c24; margin: 0 0 8px 0;'>❌ No Results Found</h3>
+                            <p>No fault codes found containing <b>"{search_term}"</b>.</p>
+                            <p><small>Try different keywords or check spelling.</small></p>
+                        </div>
+                        """
+                        self.ui.txtFaultResult.setHtml(html_result)
+                    
+                except Exception as e:
+                    error_html = f"""
+                    <div style='background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 12px;'>
+                        <h3 style='color: #721c24; margin: 0 0 8px 0;'>🚫 Search Error</h3>
+                        <p>An error occurred while searching: {str(e)}</p>
+                    </div>
+                    """
+                    self.ui.txtFaultResult.setHtml(error_html)
+                    print(f"Error in description search: {e}")
 
             def _optimize_database(self):
                 """Apply database optimizations"""
@@ -880,6 +1038,42 @@ class MaterialDesignApp:
                         gc.collect()
                 except Exception:
                     pass
+
+            def _setup_branding(self):
+                """Setup branding elements in the status bar"""
+                try:
+                    # Create status bar with branding
+                    status_bar = self.statusBar()
+                    status_bar.setStyleSheet("""
+                        QStatusBar {
+                            background-color: #f8f9fa;
+                            color: #6c757d;
+                            border-top: 1px solid #dee2e6;
+                            font-size: 11px;
+                        }
+                        QStatusBar::item {
+                            border: none;
+                        }
+                    """)
+                    
+                    # Add branding label on the left
+                    self.branding_label = QtWidgets.QLabel("Developed by gobioeng.com | Tanmay Pandey")
+                    self.branding_label.setStyleSheet("""
+                        QLabel {
+                            color: #6c757d;
+                            font-size: 11px;
+                            padding: 2px 8px;
+                        }
+                    """)
+                    status_bar.addWidget(self.branding_label)
+                    
+                    # Add stretch to push memory info to the right
+                    status_bar.addWidget(QtWidgets.QLabel(), 1)  # Stretch
+                    
+                    print("✓ Branding setup complete")
+                    
+                except Exception as e:
+                    print(f"Error setting up branding: {e}")
 
             def show_about_dialog(self):
                 """Show Material Design about dialog"""

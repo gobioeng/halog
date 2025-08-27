@@ -153,6 +153,39 @@ tmp/
 
 # Data files (exclude large data files)
 *.dat
-*.log
 large_data/
 test_data/
+
+# HALog specific exclusions
+# Keep fault.txt and sample data, but exclude generated logs
+*.log
+!data/sample_halog_data.txt
+!data/Fault.txt
+
+# Node modules (if any web components added)
+node_modules/
+
+# Python virtual environments
+.python-version
+.venv/
+venv/
+env/
+
+# Modern Python tools
+.ruff_cache/
+.black
+.isort.cfg
+
+# Application runtime files
+halog_water.db
+*.pid
+*.lock
+
+# Temporary screenshot/export files
+screenshots/
+exports/
+output/
+
+# Development tools
+.flake8
+.pre-commit-config.yaml

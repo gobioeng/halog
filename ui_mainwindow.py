@@ -172,6 +172,7 @@ class Ui_MainWindow(object):
         self.setup_trends_tab()
         self.setup_data_table_tab()
         self.setup_analysis_tab()
+        self.setup_fault_code_tab()
         self.setup_about_tab()
 
     def setup_dashboard_tab(self):
@@ -339,6 +340,107 @@ class Ui_MainWindow(object):
         )
         trends_layout.addWidget(self.tableTrends)
         layout.addWidget(trends_group)
+
+    def setup_fault_code_tab(self):
+        """Setup the Fault Code Viewer tab"""
+        self.tabFaultCode = QWidget()
+        self.tabWidget.addTab(self.tabFaultCode, "🔍 Fault Code Viewer")
+        layout = QVBoxLayout(self.tabFaultCode)
+        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # Header
+        header_label = QLabel("<h2>LINAC Fault Code Viewer</h2>")
+        header_label.setAlignment(Qt.AlignCenter)
+        header_label.setWordWrap(True)
+        header_label.setStyleSheet("color: #2c3e50; margin: 10px; font-size:20px;")
+        layout.addWidget(header_label)
+
+        # Search controls group
+        search_group = QGroupBox("Search Fault Codes")
+        search_layout = QVBoxLayout(search_group)
+        search_layout.setSpacing(12)
+        search_layout.setContentsMargins(16, 16, 16, 16)
+
+        # Code input section
+        code_input_layout = QHBoxLayout()
+        code_label = QLabel("Enter Fault Code:")
+        code_label.setMinimumWidth(120)
+        code_input_layout.addWidget(code_label)
+
+        self.txtFaultCode = QLineEdit()
+        self.txtFaultCode.setPlaceholderText("e.g., 400027")
+        self.txtFaultCode.setMaximumWidth(200)
+        code_input_layout.addWidget(self.txtFaultCode)
+
+        self.btnSearchCode = QPushButton("Search Code")
+        self.btnSearchCode.setObjectName("primaryButton")
+        self.btnSearchCode.setMaximumWidth(120)
+        code_input_layout.addWidget(self.btnSearchCode)
+
+        code_input_layout.addStretch()
+        search_layout.addLayout(code_input_layout)
+
+        # Description search section
+        desc_input_layout = QHBoxLayout()
+        desc_label = QLabel("Search Description:")
+        desc_label.setMinimumWidth(120)
+        desc_input_layout.addWidget(desc_label)
+
+        self.txtSearchDescription = QLineEdit()
+        self.txtSearchDescription.setPlaceholderText("Enter keywords to search in descriptions...")
+        desc_input_layout.addWidget(self.txtSearchDescription)
+
+        self.btnSearchDescription = QPushButton("Search Description")
+        self.btnSearchDescription.setObjectName("secondaryButton")
+        self.btnSearchDescription.setMaximumWidth(150)
+        desc_input_layout.addWidget(self.btnSearchDescription)
+
+        search_layout.addLayout(desc_input_layout)
+        layout.addWidget(search_group)
+
+        # Results display
+        results_group = QGroupBox("Search Results")
+        results_layout = QVBoxLayout(results_group)
+        results_layout.setContentsMargins(16, 16, 16, 16)
+
+        # Result display area
+        self.txtFaultResult = QTextEdit()
+        self.txtFaultResult.setReadOnly(True)
+        self.txtFaultResult.setMinimumHeight(200)
+        self.txtFaultResult.setPlaceholderText("Search results will appear here...")
+        self.txtFaultResult.setStyleSheet("""
+            QTextEdit {
+                background-color: #f8f9fa;
+                border: 1px solid #e0e0e0;
+                border-radius: 6px;
+                padding: 12px;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                font-size: 13px;
+                line-height: 1.4;
+            }
+        """)
+        results_layout.addWidget(self.txtFaultResult)
+
+        layout.addWidget(results_group)
+
+        # Statistics section
+        stats_group = QGroupBox("Fault Code Statistics")
+        stats_layout = QHBoxLayout(stats_group)
+        stats_layout.setContentsMargins(16, 16, 16, 16)
+
+        self.lblTotalCodes = QLabel("Total Codes: Loading...")
+        self.lblTotalCodes.setWordWrap(True)
+        stats_layout.addWidget(self.lblTotalCodes)
+
+        self.lblFaultTypes = QLabel("Types: Loading...")
+        self.lblFaultTypes.setWordWrap(True)
+        stats_layout.addWidget(self.lblFaultTypes)
+
+        stats_layout.addStretch()
+        layout.addWidget(stats_group)
+
+        layout.addStretch()
 
     def setup_about_tab(self):
         self.tabAbout = QWidget()
