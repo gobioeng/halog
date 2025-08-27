@@ -140,9 +140,19 @@ setup/
 # PyQt UI files (if auto-generated)
 ui_*.py
 
+# Application specific databases and logs
+*.db
+*.sqlite
+*.sqlite3
+logs/
+temp/
+tmp/
+*.tmp
+*.bak
+*.backup
+
 # Data files (exclude large data files)
 *.dat
 *.log
 large_data/
 test_data/
-sample_data/

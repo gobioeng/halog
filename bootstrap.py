@@ -6,9 +6,9 @@ Company: gobioeng.com
 Date: 2025-08-22 16:50:01 UTC
 """
 
-from PyQt5.QtWidgets import QSplashScreen, QLabel, QVBoxLayout, QWidget
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QPixmap, QFont, QColor, QPainter
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QWidget
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QFont
 from resource_helper import resource_path
 
 
