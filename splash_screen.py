@@ -41,64 +41,76 @@ class SplashScreen(QSplashScreen):
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Draw gradient background
+        # Microsoft Word 2024 style gradient background - very subtle
         gradient = QLinearGradient(0, 0, 0, pixmap.height())
-        gradient.setColorAt(0, QColor("#f5f6fa"))
-        gradient.setColorAt(1, QColor("#e9ecef"))
+        gradient.setColorAt(0, QColor("#ffffff"))  # Pure white
+        gradient.setColorAt(0.5, QColor("#fafbfc"))  # Very light gray
+        gradient.setColorAt(1, QColor("#f8f9fa"))  # Slightly more gray
         painter.fillRect(pixmap.rect(), QBrush(gradient))
 
-        # Draw border
-        painter.setPen(QColor("#e0e1e4"))
+        # Subtle border like Word 2024
+        painter.setPen(QPen(QColor("#e3e4e6"), 1))
         painter.drawRect(0, 0, pixmap.width() - 1, pixmap.height() - 1)
 
-        # Try to load logo from assets
+        # Modern logo placement - centered and larger
+        logo_size = 80
+        logo_x = (pixmap.width() - logo_size) // 2
+        logo_y = 60
+
         logo_path = resource_path("linac_logo.ico")
         if os.path.exists(logo_path):
             logo_pixmap = QPixmap(logo_path)
             painter.drawPixmap(
-                25,
-                25,
-                logo_pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation),
+                logo_x,
+                logo_y,
+                logo_pixmap.scaled(logo_size, logo_size, Qt.KeepAspectRatio, Qt.SmoothTransformation),
             )
         else:
-            # Generate icon as fallback
-            fallback_icon = generate_icon(64)
-            painter.drawPixmap(25, 25, fallback_icon)
+            # Generate modern icon as fallback
+            fallback_icon = generate_icon(logo_size)
+            painter.drawPixmap(logo_x, logo_y, fallback_icon)
 
-        # Draw application name
-        painter.setPen(QColor("#2c3e50"))
-        font = QFont("Arial", 22, QFont.Bold)
+        # Main application title - Word 2024 style typography
+        painter.setPen(QColor("#323130"))  # Word 2024 text color
+        font = QFont("Segoe UI", 28, QFont.Light)  # Segoe UI like Word
         painter.setFont(font)
-        # Using explicitly created QRect instead of QRect literal
-        app_name_rect = QRect(100, 30, 300, 40)
-        painter.drawText(app_name_rect, Qt.AlignLeft | Qt.AlignVCenter, "HALog")
+        title_y = logo_y + logo_size + 30
+        title_rect = QRect(0, title_y, pixmap.width(), 40)
+        painter.drawText(title_rect, Qt.AlignCenter, "HALog")
 
-        # Draw version
-        painter.setPen(QColor("#7f8c8d"))
-        font = QFont("Arial", 12)
+        # Subtitle with clean typography
+        painter.setPen(QColor("#605e5c"))  # Subtle gray
+        font = QFont("Segoe UI", 14, QFont.Normal)
         painter.setFont(font)
-        version_rect = QRect(100, 70, 300, 30)
-        painter.drawText(
-            version_rect, Qt.AlignLeft | Qt.AlignVCenter, f"Version {self.app_version}"
-        )
+        subtitle_y = title_y + 45
+        subtitle_rect = QRect(0, subtitle_y, pixmap.width(), 25)
+        painter.drawText(subtitle_rect, Qt.AlignCenter, "LINAC Log Analyzer")
 
-        # Draw tagline
-        painter.setPen(QColor("#34495e"))
-        font = QFont("Arial", 10)
+        # Version info in a clean, minimal way
+        painter.setPen(QColor("#8a8886"))  # Light gray
+        font = QFont("Segoe UI", 11, QFont.Normal)
         painter.setFont(font)
-        tagline_rect = QRect(25, 120, 450, 20)
-        painter.drawText(
-            tagline_rect, Qt.AlignCenter, "Professional LINAC Water System Monitor"
-        )
+        version_y = subtitle_y + 35
+        version_rect = QRect(0, version_y, pixmap.width(), 20)
+        painter.drawText(version_rect, Qt.AlignCenter, f"Version {self.app_version}")
 
-        # Draw footer
-        painter.setPen(QColor("#7f8c8d"))
-        font = QFont("Arial", 9)
+        # Progress bar area (modern flat design)
+        progress_y = pixmap.height() - 80
+        progress_width = 200
+        progress_x = (pixmap.width() - progress_width) // 2
+        
+        # Progress bar background
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor("#f3f2f1"))  # Light background
+        painter.drawRoundedRect(progress_x, progress_y, progress_width, 6, 3, 3)
+
+        # Branding footer - very subtle like Word 2024
+        painter.setPen(QColor("#a19f9d"))  # Very light gray
+        font = QFont("Segoe UI", 9, QFont.Normal)
         painter.setFont(font)
-        footer_rect = QRect(25, 320, 450, 20)
-        painter.drawText(
-            footer_rect, Qt.AlignCenter, "© 2025 gobioeng.com - All Rights Reserved"
-        )
+        branding_y = pixmap.height() - 25
+        branding_rect = QRect(0, branding_y, pixmap.width(), 20)
+        painter.drawText(branding_rect, Qt.AlignCenter, "Powered by gobioeng.com")
 
         # Finish painting
         painter.end()
@@ -106,32 +118,37 @@ class SplashScreen(QSplashScreen):
         # Set the modified pixmap back
         self.setPixmap(pixmap)
 
-        # Setup progress bar
+        # Modern progress bar widget
         self.progress_bar = QProgressBar(self)
-        self.progress_bar.setGeometry(25, 280, 450, 20)
+        self.progress_bar.setGeometry(progress_x, progress_y, progress_width, 6)
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
-        self.progress_bar.setStyleSheet(
-            """
+        self.progress_bar.setStyleSheet("""
             QProgressBar {
-                border: 2px solid #ecf0f1;
-                border-radius: 5px;
-                background-color: #34495e;
+                border: none;
+                background-color: #f3f2f1;
+                border-radius: 3px;
                 text-align: center;
-                color: white;
             }
             QProgressBar::chunk {
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3498db, stop:1 #2980b9);
+                background-color: #0078d4;  /* Microsoft blue */
                 border-radius: 3px;
             }
-        """
-        )
+        """)
+        self.progress_bar.setTextVisible(False)
 
-        # Setup status label
+        # Modern status label
         self.status_label = QLabel(self)
-        self.status_label.setGeometry(25, 250, 450, 25)
-        self.status_label.setStyleSheet("color: #2c3e50; font-size: 11px;")
+        self.status_label.setGeometry(0, pixmap.height() - 55, pixmap.width(), 20)
         self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setStyleSheet("""
+            QLabel {
+                color: #605e5c;
+                font-family: 'Segoe UI';
+                font-size: 11px;
+                background: transparent;
+            }
+        """)
         self.status_label.setText("Initializing...")
 
     def update_animation(self):

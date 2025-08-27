@@ -22,7 +22,22 @@ class AboutDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        # Auto-detect version from main module
+        self.app_version = self._get_app_version()
         self.setupUI()
+    
+    def _get_app_version(self):
+        """Auto-detect application version"""
+        try:
+            # Try to import version from main module
+            import main
+            if hasattr(main, 'APP_VERSION'):
+                return main.APP_VERSION
+        except ImportError:
+            pass
+        
+        # Fallback to default version
+        return "0.0.1"
 
     def setupUI(self):
         """Setup the about dialog UI"""
@@ -47,22 +62,22 @@ class AboutDialog(QDialog):
         # Application info
         app_info_layout = QVBoxLayout()
 
-        app_name = QLabel("Gobioeng HALog")
+        app_name = QLabel("HALog – LINAC Log Analyzer")
         app_name.setFont(QFont("Arial", 16, QFont.Bold))
         app_name.setStyleSheet("color: #2c3e50; margin-bottom: 5px;")
         app_info_layout.addWidget(app_name)
 
-        version_label = QLabel("Version 0.0.1 beta")
+        version_label = QLabel(f"Version {self.app_version}")
         version_label.setFont(QFont("Arial", 10))
         version_label.setStyleSheet("color: #7f8c8d;")
         app_info_layout.addWidget(version_label)
 
-        developer_label = QLabel("Developed by Tanmay Pandey")
+        developer_label = QLabel("Developed by: Tanmay Pandey")
         developer_label.setFont(QFont("Arial", 10))
         developer_label.setStyleSheet("color: #2c3e50; font-weight: bold;")
         app_info_layout.addWidget(developer_label)
 
-        company_label = QLabel("gobioeng.com")
+        company_label = QLabel("Organization: gobioeng.com")
         company_label.setFont(QFont("Arial", 10))
         company_label.setStyleSheet("color: #7f8c8d;")
         app_info_layout.addWidget(company_label)
