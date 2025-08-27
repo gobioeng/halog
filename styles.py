@@ -6,6 +6,7 @@ Company: gobioeng.com
 Date: 2025-08-22 17:03:08 UTC
 """
 
+
 def get_material_design_stylesheet():
     """
     Complete Material Design 3.0 stylesheet
@@ -142,4 +143,90 @@ def get_material_design_stylesheet():
         font-size: 14px;
         min-width: 160px;
         min-height: 24px;
-        letter-spacing: 0.1
+        letter-spacing: 0.1px;
+    }
+    QPushButton:hover {
+        background-color: #1565C0;
+        box-shadow: 0px 4px 8px rgba(25, 118, 210, 0.3);
+    }
+    QPushButton:pressed {
+        background-color: #0D47A1;
+    }
+    QPushButton:disabled {
+        background-color: #E0E0E0;
+        color: #9E9E9E;
+    }
+    
+    /* Material Design Progress Bar */
+    QProgressBar {
+        border: none;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 500;
+        background-color: #E3F2FD;
+        color: #1976D2;
+        font-size: 12px;
+        min-height: 16px;
+    }
+    QProgressBar::chunk {
+        background-color: #1976D2;
+        border-radius: 8px;
+    }
+    
+    /* Material Design Labels */
+    QLabel {
+        color: #1C1B1F;
+        font-size: 14px;
+        font-weight: 400;
+        padding: 4px;
+    }
+    
+    /* Material Design Text Inputs */
+    QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox {
+        border: 2px solid #E7E0EC;
+        border-radius: 12px;
+        padding: 16px;
+        font-size: 14px;
+        background-color: #FFFFFF;
+        color: #1C1B1F;
+        selection-background-color: #E8F5E8;
+    }
+    QLineEdit:focus, QTextEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus {
+        border-color: #1976D2;
+    }
+    
+    /* Material Design Tables */
+    QTableWidget, QTreeWidget, QListWidget {
+        border: none;
+        border-radius: 16px;
+        background-color: #FFFFFF;
+        gridline-color: #E7E0EC;
+        selection-background-color: #E8F5E8;
+        selection-color: #006A6B;
+        font-size: 14px;
+    }
+    QHeaderView::section {
+        background-color: #F7F2FA;
+        color: #49454F;
+        padding: 16px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    
+    /* Material Design Scroll Bars */
+    QScrollBar:vertical {
+        background-color: #F5F5F5;
+        width: 12px;
+        border-radius: 6px;
+        margin: 0px;
+    }
+    QScrollBar::handle:vertical {
+        background-color: #BDBDBD;
+        border-radius: 6px;
+        min-height: 20px;
+    }
+    QScrollBar::handle:vertical:hover {
+        background-color: #9E9E9E;
+    }
+    """

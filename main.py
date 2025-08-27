@@ -149,21 +149,21 @@ class MaterialDesignApp:
         painter.setRenderHint(QtGui.QPainter.TextAntialiasing, True)
         painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing, True)
         
-        # Material Design gradient background
+        # Material Design gradient background - Enhanced
         gradient = QtGui.QLinearGradient(0, 0, 0, pixmap.height())
-        gradient.setColorAt(0, QtGui.QColor("#1976D2"))     # Material Blue 700
-        gradient.setColorAt(0.3, QtGui.QColor("#1E88E5"))   # Material Blue 600
-        gradient.setColorAt(0.7, QtGui.QColor("#2196F3"))   # Material Blue 500
-        gradient.setColorAt(1, QtGui.QColor("#42A5F5"))     # Material Blue 400
+        gradient.setColorAt(0, QtGui.QColor("#0D47A1"))     # Material Blue 900 - Deeper
+        gradient.setColorAt(0.3, QtGui.QColor("#1976D2"))   # Material Blue 700
+        gradient.setColorAt(0.7, QtGui.QColor("#2196F3"))   # Material Blue 500  
+        gradient.setColorAt(1, QtGui.QColor("#E3F2FD"))     # Material Blue 50 - Light accent
         
         painter.fillRect(pixmap.rect(), QtGui.QBrush(gradient))
         
-        # Add subtle pattern overlay for Material Design depth
-        pattern_overlay = QtGui.QLinearGradient(0, 0, pixmap.width(), pixmap.height())
-        pattern_overlay.setColorAt(0, QtGui.QColor(255, 255, 255, 8))
-        pattern_overlay.setColorAt(0.5, QtGui.QColor(255, 255, 255, 15))
-        pattern_overlay.setColorAt(1, QtGui.QColor(255, 255, 255, 5))
-        painter.fillRect(pixmap.rect(), QtGui.QBrush(pattern_overlay))
+        # Add modern Material Design 3.0 surface overlay
+        surface_overlay = QtGui.QRadialGradient(pixmap.width() * 0.7, pixmap.height() * 0.3, pixmap.width() * 0.8)
+        surface_overlay.setColorAt(0, QtGui.QColor(255, 255, 255, 25))
+        surface_overlay.setColorAt(0.6, QtGui.QColor(255, 255, 255, 10))
+        surface_overlay.setColorAt(1, QtGui.QColor(255, 255, 255, 0))
+        painter.fillRect(pixmap.rect(), QtGui.QBrush(surface_overlay))
 
         # Load OPTIMIZED ICON with proper spacing
         try:
