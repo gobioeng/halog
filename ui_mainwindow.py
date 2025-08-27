@@ -52,33 +52,47 @@ class Ui_MainWindow(object):
         # CRITICAL: Set the menu bar to MainWindow
         MainWindow.setMenuBar(self.menubar)
 
-        # Make menu bar visible with styling
+        # Make menu bar visible with Windows 11 styling
         self.menubar.setStyleSheet(
             """
             QMenuBar {
-                background-color: #FFFFFF;
-                color: #1976D2;
+                background-color: #f3f3f3;
+                color: #000000;
                 border: none;
-                border-bottom: 2px solid #1976D2;
-                padding: 8px 16px;
-                font-size: 14px;
-                font-weight: bold;
-                height: 40px;
+                border-bottom: 1px solid #e0e0e0;
+                padding: 4px 8px;
+                font-size: 12px;
+                font-weight: normal;
+                height: 30px;
             }
             QMenuBar::item {
                 background-color: transparent;
-                padding: 12px 20px;
-                margin: 0px 4px;
-                border-radius: 6px;
-                color: #1976D2;
-                font-weight: bold;
+                padding: 6px 12px;
+                margin: 0px 1px;
+                border-radius: 3px;
+                color: #000000;
             }
             QMenuBar::item:selected {
-                background-color: #E3F2FD;
-                color: #0D47A1;
+                background-color: #e6e6e6;
+                color: #000000;
             }
             QMenuBar::item:pressed {
-                background-color: #BBDEFB;
+                background-color: #d4d4d4;
+            }
+            QMenu {
+                background-color: #ffffff;
+                border: 1px solid #cccccc;
+                border-radius: 5px;
+                padding: 3px;
+                font-size: 12px;
+            }
+            QMenu::item {
+                background-color: transparent;
+                padding: 8px 20px;
+                border-radius: 3px;
+            }
+            QMenu::item:selected {
+                background-color: #e6f3ff;
             }
         """
         )
@@ -269,6 +283,28 @@ class Ui_MainWindow(object):
         self.comboTrendParam.setMinimumWidth(160)
         self.comboTrendParam.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         controls_layout.addWidget(self.comboTrendParam)
+        
+        # Add Reset button
+        self.btnResetGraph = QPushButton("Reset Graph")
+        self.btnResetGraph.setMinimumWidth(100)
+        self.btnResetGraph.setStyleSheet("""
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c82333;
+            }
+            QPushButton:pressed {
+                background-color: #bd2130;
+            }
+        """)
+        controls_layout.addWidget(self.btnResetGraph)
+        
         controls_layout.addStretch()
 
         layout.addWidget(controls_group)
@@ -457,7 +493,7 @@ class Ui_MainWindow(object):
         app_info = QLabel(
             "<h2>Gobioeng HALog 0.0.1 beta</h2>"
             "<p>A professional LINAC water system monitoring application</p>"
-            "<p>Developed by <b>Tanmay Pandey</b></p>"
+            "<p>Developed by <b>gobioeng.com</b></p>"
             "<p><a href='https://gobioeng.com'>gobioeng.com</a></p>"
             "<p>© 2025 Gobioeng. All rights reserved.</p>"
         )
