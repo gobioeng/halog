@@ -476,66 +476,7 @@ class HALogApp:
                 }
                 
                 /* HIGHLY VISIBLE Professional Menu Bar - FORCED VISIBILITY */
-                QMenuBar {
-                    background-color: #FFFFFF !important;
-                    color: #1C1B1F !important;
-                    border: 1px solid #E7E0EC !important;
-                    border-bottom: 2px solid #1976D2 !important;
-                    padding: 8px 16px !important;
-                    font-size: 14px !important;
-                    font-weight: 600 !important;
-                    spacing: 16px !important;
-                    height: 40px !important;
-                    min-height: 40px !important;
-                    max-height: 40px !important;
-                    show-decoration-selected: 1;
-                }
-                QMenuBar::item {
-                    background-color: transparent !important;
-                    padding: 12px 20px !important;
-                    margin: 2px 6px !important;
-                    border-radius: 8px !important;
-                    color: #1976D2 !important;
-                    font-weight: 600 !important;
-                    border: 1px solid transparent !important;
-                }
-                QMenuBar::item:selected {
-                    background-color: #E3F2FD !important;
-                    color: #0D47A1 !important;
-                    border: 1px solid #1976D2 !important;
-                }
-                QMenuBar::item:pressed {
-                    background-color: #BBDEFB !important;
-                    color: #0D47A1 !important;
-                }
-                
-                /* HIGHLY VISIBLE Professional Menu */
-                QMenu {
-                    background-color: #FFFFFF !important;
-                    border: 2px solid #1976D2 !important;
-                    border-radius: 12px !important;
-                    padding: 12px !important;
-                    font-size: 14px !important;
-                    font-weight: 500 !important;
-                }
-                QMenu::item {
-                    padding: 14px 24px !important;
-                    border-radius: 8px !important;
-                    margin: 3px !important;
-                    color: #1C1B1F !important;
-                    border: 1px solid transparent !important;
-                }
-                QMenu::item:selected {
-                    background-color: #E3F2FD !important;
-                    color: #1976D2 !important;
-                    border: 1px solid #1976D2 !important;
-                }
-                QMenu::separator {
-                    height: 2px !important;
-                    background-color: #E0E0E0 !important;
-                    margin: 4px 8px !important;
-                }
-                
+                                
                 /* OPTIMIZED Professional Tab Widget */
                 QTabWidget {
                     border: none;
