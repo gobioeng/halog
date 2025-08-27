@@ -1,18 +1,221 @@
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT
 from matplotlib.figure import Figure
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from PyQt5.QtWidgets import QVBoxLayout
-from typing import Optional
-from datetime import timedelta, datetime
-import matplotlib.transforms as mtransforms
-from matplotlib.patches import Rectangle
-import matplotlib.ticker as mticker
+from datetime import timedelta
 
 # Set matplotlib style for professional appearance
 plt.style.use('default')
+
+class InteractivePlotManager:
+    """Manages interactive functionality for matplotlib plots"""
+    
+    def __init__(self, fig, ax, canvas):
+        self.fig = fig
+        self.ax = ax if isinstance(ax, list) else [ax]  # Support multiple axes
+        self.canvas = canvas
+        self.press = None
+        self.initial_xlim = None
+        self.initial_ylim = None
+        self.tooltip_annotation = None
+        
+        # Store initial view for reset functionality
+        self._store_initial_view()
+        
+        # Connect event handlers
+        self._connect_events()
+    
+    def _store_initial_view(self):
+        """Store initial view limits for reset functionality"""
+        self.initial_views = []
+        for ax in self.ax:
+            self.initial_views.append({
+                'xlim': ax.get_xlim(),
+                'ylim': ax.get_ylim()
+            })
+    
+    def _connect_events(self):
+        """Connect interactive event handlers"""
+        self.canvas.mpl_connect('scroll_event', self._handle_zoom)
+        self.canvas.mpl_connect('button_press_event', self._handle_button_press)
+        self.canvas.mpl_connect('button_release_event', self._handle_button_release)
+        self.canvas.mpl_connect('motion_notify_event', self._handle_motion)
+    
+    def _handle_zoom(self, event):
+        """Handle mouse wheel zoom"""
+        if event.inaxes is None:
+            return
+        
+        # Get the current axis
+        ax = event.inaxes
+        
+        # Get current limits
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        
+        # Calculate zoom factor
+        zoom_factor = 1.1 if event.button == 'down' else 1 / 1.1
+        
+        # Get mouse position in data coordinates
+        xdata = event.xdata
+        ydata = event.ydata
+        
+        # Calculate new limits
+        x_range = (xlim[1] - xlim[0]) * zoom_factor
+        y_range = (ylim[1] - ylim[0]) * zoom_factor
+        
+        # Center zoom on mouse position
+        new_xlim = [xdata - x_range / 2, xdata + x_range / 2]
+        new_ylim = [ydata - y_range / 2, ydata + y_range / 2]
+        
+        # Set new limits
+        ax.set_xlim(new_xlim)
+        ax.set_ylim(new_ylim)
+        
+        # Redraw
+        self.canvas.draw()
+    
+    def _handle_button_press(self, event):
+        """Handle button press events"""
+        if event.inaxes is None:
+            return
+        
+        # Double-click to reset view
+        if event.dblclick:
+            self.reset_view()
+            return
+        
+        # Start pan operation on left mouse button
+        if event.button == 1:  # Left mouse button
+            self.press = (event.xdata, event.ydata)
+            self.current_ax = event.inaxes
+    
+    def _handle_button_release(self, event):
+        """Handle button release events"""
+        self.press = None
+        self.current_ax = None
+        self.canvas.draw()
+    
+    def _handle_motion(self, event):
+        """Handle mouse motion for panning and tooltips"""
+        if event.inaxes is None:
+            return
+        
+        # Handle panning
+        if self.press is not None and event.button == 1:
+            ax = self.current_ax
+            if ax is None:
+                return
+            
+            # Calculate movement
+            dx = event.xdata - self.press[0]
+            dy = event.ydata - self.press[1]
+            
+            # Get current limits
+            xlim = ax.get_xlim()
+            ylim = ax.get_ylim()
+            
+            # Apply pan
+            ax.set_xlim([xlim[0] - dx, xlim[1] - dx])
+            ax.set_ylim([ylim[0] - dy, ylim[1] - dy])
+            
+            self.canvas.draw_idle()
+        
+        # Handle tooltips
+        else:
+            self._update_tooltip(event)
+    
+    def _update_tooltip(self, event):
+        """Update tooltip with data values"""
+        if event.inaxes is None:
+            if self.tooltip_annotation:
+                self.tooltip_annotation.set_visible(False)
+                self.canvas.draw_idle()
+            return
+        
+        ax = event.inaxes
+        
+        # Find closest data point
+        closest_point = self._find_closest_point(event.xdata, event.ydata, ax)
+        
+        if closest_point:
+            x_val, y_val, param_name = closest_point
+            
+            # Remove old tooltip
+            if self.tooltip_annotation:
+                self.tooltip_annotation.remove()
+            
+            # Create new tooltip
+            tooltip_text = f"{param_name}\nX: {x_val}\nY: {y_val:.3f}"
+            self.tooltip_annotation = ax.annotate(
+                tooltip_text,
+                xy=(event.xdata, event.ydata),
+                xytext=(20, 20),
+                textcoords="offset points",
+                bbox=dict(boxstyle="round,pad=0.3", fc="yellow", alpha=0.8),
+                arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0"),
+                fontsize=8
+            )
+            
+            self.canvas.draw_idle()
+    
+    def _find_closest_point(self, x, y, ax):
+        """Find the closest data point to the mouse cursor"""
+        min_distance = float('inf')
+        closest_point = None
+        
+        for line in ax.get_lines():
+            if line.get_label().startswith('_'):  # Skip internal matplotlib lines
+                continue
+                
+            xdata = line.get_xdata()
+            ydata = line.get_ydata()
+            
+            if len(xdata) == 0:
+                continue
+            
+            # Convert to display coordinates for distance calculation
+            try:
+                # Handle datetime x-axis
+                if hasattr(xdata[0], 'timestamp'):
+                    x_numeric = [mdates.date2num(xi) for xi in xdata]
+                else:
+                    x_numeric = xdata
+                
+                # Find closest point
+                distances = [(abs(xi - x) + abs(yi - y)) for xi, yi in zip(x_numeric, ydata)]
+                min_idx = np.argmin(distances)
+                
+                if distances[min_idx] < min_distance:
+                    min_distance = distances[min_idx]
+                    x_val = xdata[min_idx]
+                    y_val = ydata[min_idx]
+                    param_name = line.get_label() or "Data"
+                    
+                    # Format x value based on type
+                    if hasattr(x_val, 'strftime'):
+                        x_formatted = x_val.strftime('%Y-%m-%d %H:%M:%S')
+                    else:
+                        x_formatted = f"{x_val:.3f}"
+                    
+                    closest_point = (x_formatted, y_val, param_name)
+            except Exception as e:
+                continue
+        
+        return closest_point
+    
+    def reset_view(self):
+        """Reset view to initial limits"""
+        for i, ax in enumerate(self.ax):
+            if i < len(self.initial_views):
+                view = self.initial_views[i]
+                ax.set_xlim(view['xlim'])
+                ax.set_ylim(view['ylim'])
+        
+        self.canvas.draw()
+
 
 class PlotUtils:
     """Enhanced plotting utilities for LINAC water system data"""
@@ -40,7 +243,7 @@ class PlotUtils:
 
 
 def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):
-    """Enhanced trend plotting with professional styling and multiple parameters"""
+    """Enhanced trend plotting with professional styling, multiple parameters and interactive features"""
     # Clear existing plot
     layout = widget.layout()
     if layout is None:
@@ -84,12 +287,22 @@ def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):
     fig = Figure(figsize=(12, 8))
     fig.suptitle(f"LINAC Water System Trends{title_suffix}", fontsize=14, fontweight='bold')
     
+    # Create canvas first
+    canvas = FigureCanvas(fig)
+    
+    # Add navigation toolbar
+    toolbar = NavigationToolbar2QT(canvas, widget)
+    layout.addWidget(toolbar)
+    
     # Check if we have multiple parameters
     unique_params = df_clean["param"].unique()
+    
+    axes = []  # Store axes for interactive manager
     
     if len(unique_params) == 1:
         # Single parameter plot
         ax = fig.add_subplot(111)
+        axes.append(ax)
         _plot_single_parameter(ax, df_clean, unique_params[0])
     else:
         # Multiple parameters - create subplots
@@ -99,13 +312,35 @@ def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):
         
         for i, param in enumerate(unique_params):
             ax = fig.add_subplot(n_rows, n_cols, i + 1)
+            axes.append(ax)
             param_data = df_clean[df_clean["param"] == param]
             _plot_single_parameter(ax, param_data, param, subplot=True)
     
     # Adjust layout and add to widget
     fig.tight_layout()
-    canvas = FigureCanvas(fig)
     layout.addWidget(canvas)
+    
+    # Add interactive functionality
+    interactive_manager = InteractivePlotManager(fig, axes, canvas)
+    
+    # Store the interactive manager in the canvas for potential reset button access
+    canvas.interactive_manager = interactive_manager
+
+
+def reset_plot_view(widget):
+    """Reset the plot view to initial state - to be connected to reset button"""
+    layout = widget.layout()
+    if layout is None:
+        return
+    
+    # Find the canvas widget
+    for i in range(layout.count()):
+        item = layout.itemAt(i)
+        if item and item.widget():
+            canvas = item.widget()
+            if hasattr(canvas, 'interactive_manager'):
+                canvas.interactive_manager.reset_view()
+                break
 
 def find_time_clusters(df_times, gap_threshold=timedelta(days=1)):
     """
@@ -125,8 +360,8 @@ def find_time_clusters(df_times, gap_threshold=timedelta(days=1)):
     """
     # Convert to Python datetime objects for safety
     try:
-        times = df_times.dt.to_pydatetime()
-    except:
+        times = np.array(df_times.dt.to_pydatetime())
+    except Exception:
         times = [pd.to_datetime(t).to_pydatetime() for t in df_times]
     
     if len(times) <= 1:
@@ -259,7 +494,7 @@ def _plot_single_parameter(ax, df: pd.DataFrame, param_name: str, subplot: bool 
                         if not min_cluster_data.empty:
                             norm_min_times = [transform_time(t) for t in min_cluster_data["datetime"]]
                             ax.plot(norm_min_times, min_cluster_data["avg"].tolist(), 
-                                  color=color, linestyle='dotted', linewidth=1, alpha=0.4)
+                                  color=color, linestyle='--', linewidth=1.5, alpha=0.7, label='Min Range')
                     
                     if not max_df.empty:
                         max_cluster_data = max_df[
@@ -269,9 +504,9 @@ def _plot_single_parameter(ax, df: pd.DataFrame, param_name: str, subplot: bool 
                         if not max_cluster_data.empty:
                             norm_max_times = [transform_time(t) for t in max_cluster_data["datetime"]]
                             ax.plot(norm_max_times, max_cluster_data["avg"].tolist(), 
-                                  color=color, linestyle='dotted', linewidth=1, alpha=0.4)
+                                  color=color, linestyle='--', linewidth=1.5, alpha=0.7, label='Max Range')
                     
-                    # Fill between min and max if both exist
+                    # Enhanced fill between min and max with better visibility
                     if not min_df.empty and not max_df.empty:
                         merged = pd.merge(
                             min_df[(min_df["datetime"] >= min_time) & (min_df["datetime"] <= max_time)][["datetime", "avg"]],
@@ -281,13 +516,20 @@ def _plot_single_parameter(ax, df: pd.DataFrame, param_name: str, subplot: bool 
                         )
                         if not merged.empty:
                             norm_merged_times = [transform_time(t) for t in merged["datetime"]]
+                            # Primary shaded area
                             ax.fill_between(
                                 norm_merged_times, 
                                 merged["avg_min"].tolist(), 
                                 merged["avg_max"].tolist(),
                                 color=color, 
-                                alpha=0.15
+                                alpha=0.25,
+                                label='Min-Max Range'
                             )
+                            # Add subtle edge lines for better definition
+                            ax.plot(norm_merged_times, merged["avg_min"].tolist(), 
+                                  color=color, linestyle=':', linewidth=1, alpha=0.6)
+                            ax.plot(norm_merged_times, merged["avg_max"].tolist(), 
+                                  color=color, linestyle=':', linewidth=1, alpha=0.6)
                 
                 # Add break marks between clusters
                 for i in range(len(norm_domains) - 1):
@@ -346,16 +588,16 @@ def _plot_single_parameter(ax, df: pd.DataFrame, param_name: str, subplot: bool 
                 ax.plot(avg_df["datetime"], avg_df["avg"], color=color, linewidth=2, alpha=0.8, label=param_name)
                 ax.scatter(avg_df["datetime"], avg_df["avg"], color=color, s=30, alpha=0.6, zorder=5)
                 
-                # Plot min/max
+                # Enhanced min/max visualization
                 if not min_df.empty:
                     ax.plot(min_df["datetime"], min_df["avg"], 
-                          color=color, linestyle='dotted', linewidth=1, alpha=0.4, label='Min')
+                          color=color, linestyle='--', linewidth=1.5, alpha=0.7, label='Min Range')
                 
                 if not max_df.empty:
                     ax.plot(max_df["datetime"], max_df["avg"], 
-                          color=color, linestyle='dotted', linewidth=1, alpha=0.4, label='Max')
+                          color=color, linestyle='--', linewidth=1.5, alpha=0.7, label='Max Range')
                 
-                # Fill between
+                # Enhanced fill between with better visibility
                 if not min_df.empty and not max_df.empty:
                     merged = pd.merge(
                         min_df[["datetime", "avg"]],
@@ -364,13 +606,20 @@ def _plot_single_parameter(ax, df: pd.DataFrame, param_name: str, subplot: bool 
                         suffixes=("_min", "_max")
                     )
                     if not merged.empty:
+                        # Primary shaded area with better opacity
                         ax.fill_between(
                             merged["datetime"], 
                             merged["avg_min"], 
                             merged["avg_max"], 
                             color=color, 
-                            alpha=0.15
+                            alpha=0.25,
+                            label='Min-Max Range'
                         )
+                        # Add subtle edge lines for definition
+                        ax.plot(merged["datetime"], merged["avg_min"], 
+                              color=color, linestyle=':', linewidth=1, alpha=0.6)
+                        ax.plot(merged["datetime"], merged["avg_max"], 
+                              color=color, linestyle=':', linewidth=1, alpha=0.6)
                 
                 # Add trend line
                 if len(avg_df) > 3:
