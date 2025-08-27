@@ -22,110 +22,46 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setWindowTitle("Gobioeng HALog 0.0.1 beta")
         MainWindow.resize(1200, 800)
         MainWindow.setMinimumSize(800, 600)
 
-        # CRITICAL: Setup menu bar FIRST before anything else
+        # Setup menu bar FIRST before anything else
         self.setup_menu_bar(MainWindow)
 
         self.centralwidget = QWidget(MainWindow)
         MainWindow.setCentralWidget(self.centralwidget)
 
-        # Main layout
         self.main_layout = QVBoxLayout(self.centralwidget)
         self.main_layout.setSpacing(16)
         self.main_layout.setContentsMargins(16, 16, 16, 16)
 
-        # Setup main content
         self.setup_main_content()
 
     def setup_menu_bar(self, MainWindow):
-        """Setup the complete menu bar with all menus and actions - PRIORITY FIX"""
-        print("Setting up menu bar...")
-
-        # Create menu bar and set it to MainWindow immediately
+        """Setup the menu bar with all menus and actions"""
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName("menubar")
-
-        # CRITICAL: Set the menu bar to MainWindow
         MainWindow.setMenuBar(self.menubar)
-
-        # Make menu bar visible with Windows 11 styling
-        self.menubar.setStyleSheet(
-            """
-            QMenuBar {
-                background-color: #f3f3f3;
-                color: #000000;
-                border: none;
-                border-bottom: 1px solid #e0e0e0;
-                padding: 4px 8px;
-                font-size: 12px;
-                font-weight: normal;
-                height: 30px;
-            }
-            QMenuBar::item {
-                background-color: transparent;
-                padding: 6px 12px;
-                margin: 0px 1px;
-                border-radius: 3px;
-                color: #000000;
-            }
-            QMenuBar::item:selected {
-                background-color: #e6e6e6;
-                color: #000000;
-            }
-            QMenuBar::item:pressed {
-                background-color: #d4d4d4;
-            }
-            QMenu {
-                background-color: #ffffff;
-                border: 1px solid #cccccc;
-                border-radius: 5px;
-                padding: 3px;
-                font-size: 12px;
-            }
-            QMenu::item {
-                background-color: transparent;
-                padding: 8px 20px;
-                border-radius: 3px;
-            }
-            QMenu::item:selected {
-                background-color: #e6f3ff;
-            }
-        """
-        )
 
         # File Menu
         self.menuFile = self.menubar.addMenu("&File")
-        self.menuFile.setObjectName("menuFile")
-
-        # File Menu Actions
         self.actionOpen_Log_File = QAction(MainWindow)
         self.actionOpen_Log_File.setObjectName("actionOpen_Log_File")
         self.actionOpen_Log_File.setText("&Open Log File...")
         self.actionOpen_Log_File.setShortcut(QKeySequence("Ctrl+O"))
         self.actionOpen_Log_File.setStatusTip("Open a LINAC log file for analysis")
         self.menuFile.addAction(self.actionOpen_Log_File)
-
-        # Add separator
         self.menuFile.addSeparator()
-
-        # Export Action
         self.actionExport_Data = QAction(MainWindow)
         self.actionExport_Data.setObjectName("actionExport_Data")
         self.actionExport_Data.setText("&Export Data...")
         self.actionExport_Data.setShortcut(QKeySequence("Ctrl+E"))
         self.actionExport_Data.setStatusTip("Export analysis results")
         self.menuFile.addAction(self.actionExport_Data)
-
-        # Add separator
         self.menuFile.addSeparator()
-
-        # Exit Action
         self.actionExit = QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
         self.actionExit.setText("E&xit")
@@ -135,9 +71,6 @@ class Ui_MainWindow(object):
 
         # View Menu
         self.menuView = self.menubar.addMenu("&View")
-        self.menuView.setObjectName("menuView")
-
-        # View Menu Actions
         self.actionRefresh = QAction(MainWindow)
         self.actionRefresh.setObjectName("actionRefresh")
         self.actionRefresh.setText("&Refresh")
@@ -147,42 +80,21 @@ class Ui_MainWindow(object):
 
         # Help Menu
         self.menuHelp = self.menubar.addMenu("&Help")
-        self.menuHelp.setObjectName("menuHelp")
-
-        # Help Menu Actions
         self.actionAbout = QAction(MainWindow)
         self.actionAbout.setObjectName("actionAbout")
         self.actionAbout.setText("&About HALog...")
         self.actionAbout.setStatusTip("About this application")
         self.menuHelp.addAction(self.actionAbout)
-
-        # About Qt
         self.actionAbout_Qt = QAction(MainWindow)
         self.actionAbout_Qt.setObjectName("actionAbout_Qt")
         self.actionAbout_Qt.setText("About &Qt...")
         self.actionAbout_Qt.setStatusTip("About Qt framework")
         self.menuHelp.addAction(self.actionAbout_Qt)
 
-        print(f"✓ Menu bar created with {self.menubar.actions()} actions")
-
     def setup_main_content(self):
         self.tabWidget = QTabWidget()
         self.tabWidget.setTabPosition(QTabWidget.North)
         self.tabWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.tabWidget.setStyleSheet(
-            """
-            QTabBar::tab {
-                min-width: 120px;
-                padding: 12px 20px;
-                font-size: 13px;
-                word-wrap: break-word;
-                text-align: center;
-            }
-            QTabBar::tab:selected {
-                font-weight: bold;
-            }
-        """
-        )
         self.main_layout.addWidget(self.tabWidget)
         self.setup_dashboard_tab()
         self.setup_trends_tab()
@@ -201,7 +113,6 @@ class Ui_MainWindow(object):
         header_label = QLabel("<h2>LINAC Water System Monitor</h2>")
         header_label.setAlignment(Qt.AlignCenter)
         header_label.setWordWrap(True)
-        header_label.setStyleSheet("color: #2c3e50; margin: 10px; font-size:20px;")
         layout.addWidget(header_label)
 
         cards_layout = QHBoxLayout()
@@ -286,27 +197,9 @@ class Ui_MainWindow(object):
         self.comboTrendParam.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         controls_layout.addWidget(self.comboTrendParam)
         
-        # Add Reset button
         self.btnResetGraph = QPushButton("Reset Graph")
         self.btnResetGraph.setMinimumWidth(100)
-        self.btnResetGraph.setStyleSheet("""
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-            QPushButton:pressed {
-                background-color: #bd2130;
-            }
-        """)
         controls_layout.addWidget(self.btnResetGraph)
-        
         controls_layout.addStretch()
 
         layout.addWidget(controls_group)
@@ -356,7 +249,6 @@ class Ui_MainWindow(object):
         layout = QVBoxLayout(self.tabAnalysis)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        # Only Parameter Trend Analysis Group
         trends_group = QGroupBox("Parameter Trend Analysis")
         trends_layout = QVBoxLayout(trends_group)
 
@@ -380,27 +272,22 @@ class Ui_MainWindow(object):
         layout.addWidget(trends_group)
 
     def setup_fault_code_tab(self):
-        """Setup the Fault Code Viewer tab"""
         self.tabFaultCode = QWidget()
         self.tabWidget.addTab(self.tabFaultCode, "🔍 Fault Code Viewer")
         layout = QVBoxLayout(self.tabFaultCode)
         layout.setSpacing(16)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        # Header
         header_label = QLabel("<h2>LINAC Fault Code Viewer</h2>")
         header_label.setAlignment(Qt.AlignCenter)
         header_label.setWordWrap(True)
-        header_label.setStyleSheet("color: #2c3e50; margin: 10px; font-size:20px;")
         layout.addWidget(header_label)
 
-        # Search controls group
         search_group = QGroupBox("Search Fault Codes")
         search_layout = QVBoxLayout(search_group)
         search_layout.setSpacing(12)
         search_layout.setContentsMargins(16, 16, 16, 16)
 
-        # Code input section
         code_input_layout = QHBoxLayout()
         code_label = QLabel("Enter Fault Code:")
         code_label.setMinimumWidth(120)
@@ -419,7 +306,6 @@ class Ui_MainWindow(object):
         code_input_layout.addStretch()
         search_layout.addLayout(code_input_layout)
 
-        # Description search section
         desc_input_layout = QHBoxLayout()
         desc_label = QLabel("Search Description:")
         desc_label.setMinimumWidth(120)
@@ -437,32 +323,18 @@ class Ui_MainWindow(object):
         search_layout.addLayout(desc_input_layout)
         layout.addWidget(search_group)
 
-        # Results display
         results_group = QGroupBox("Search Results")
         results_layout = QVBoxLayout(results_group)
         results_layout.setContentsMargins(16, 16, 16, 16)
 
-        # Result display area
         self.txtFaultResult = QTextEdit()
         self.txtFaultResult.setReadOnly(True)
         self.txtFaultResult.setMinimumHeight(200)
         self.txtFaultResult.setPlaceholderText("Search results will appear here...")
-        self.txtFaultResult.setStyleSheet("""
-            QTextEdit {
-                background-color: #f8f9fa;
-                border: 1px solid #e0e0e0;
-                border-radius: 6px;
-                padding: 12px;
-                font-family: 'Segoe UI', Arial, sans-serif;
-                font-size: 13px;
-                line-height: 1.4;
-            }
-        """)
         results_layout.addWidget(self.txtFaultResult)
 
         layout.addWidget(results_group)
 
-        # Statistics section
         stats_group = QGroupBox("Fault Code Statistics")
         stats_layout = QHBoxLayout(stats_group)
         stats_layout.setContentsMargins(16, 16, 16, 16)
