@@ -1,6 +1,0 @@
-[Version]
-FileVersion=0.0.1.0
-ProductVersion=0.0.1
-CompanyName=gobioeng.com
-FileDescription=LINAC Water System Monitor
-LegalCopyright=(c) 2025 gobioeng.com
