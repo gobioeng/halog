@@ -593,11 +593,8 @@ def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):
             else:
                 plot_color = group_color
             
-            # Sort by datetime for proper line plotting
-            param_data_sorted = param_data.sort_values("datetime")
-            
-            ax.plot(param_data_sorted["datetime"], param_data_sorted["avg"], 
-                   color=plot_color, linewidth=2, alpha=0.8, label=param, marker='o', markersize=3)
+            # Use enhanced multi-date plotting with gap handling
+            plot_multi_date_timeline(ax, param_data, param)
         
         # Customize subplot
         ax.set_title(f"{group_name} Parameters", fontsize=12, fontweight='bold')
@@ -673,7 +670,7 @@ def reset_plot_view(widget):
 
 def find_time_clusters(df_times, gap_threshold=timedelta(days=1)):
     """
-    Group data points into clusters based on time proximity
+    Group data points into clusters based on time proximity - Enhanced for multi-date handling
     
     Parameters:
     -----------
@@ -698,6 +695,102 @@ def find_time_clusters(df_times, gap_threshold=timedelta(days=1)):
     
     # Sort times and get indices
     indices = sorted(range(len(times)), key=lambda i: times[i])
+    
+    clusters = []
+    current_cluster = [indices[0]]
+    
+    for i in range(1, len(indices)):
+        curr_idx = indices[i]
+        prev_idx = indices[i-1]
+        
+        # Calculate time gap
+        time_gap = times[curr_idx] - times[prev_idx]
+        
+        if time_gap <= gap_threshold:
+            current_cluster.append(curr_idx)
+        else:
+            # Start new cluster
+            clusters.append(current_cluster)
+            current_cluster = [curr_idx]
+    
+    clusters.append(current_cluster)
+    return clusters
+
+
+def plot_multi_date_timeline(ax, df, param_name, gap_threshold=timedelta(days=1)):
+    """
+    Plot data with visual gaps for missing data between dates
+    
+    Parameters:
+    -----------
+    ax : matplotlib axis
+        The axis to plot on
+    df : pandas DataFrame
+        Data with datetime and value columns
+    param_name : str
+        Parameter name for labeling
+    gap_threshold : timedelta
+        Threshold for considering a gap significant
+    """
+    if df.empty or 'datetime' not in df.columns:
+        return
+    
+    # Ensure datetime column is properly formatted
+    df_clean = df.copy()
+    df_clean['datetime'] = pd.to_datetime(df_clean['datetime'], errors='coerce')
+    df_clean = df_clean.dropna(subset=['datetime'])
+    
+    if df_clean.empty:
+        return
+    
+    # Sort by datetime
+    df_clean = df_clean.sort_values('datetime')
+    
+    # Find time clusters (continuous data periods)
+    clusters = find_time_clusters(df_clean['datetime'], gap_threshold)
+    
+    # Plot each cluster separately with gaps
+    colors = plt.cm.Set1(np.linspace(0, 1, len(clusters)))
+    
+    for i, cluster in enumerate(clusters):
+        cluster_data = df_clean.iloc[cluster]
+        
+        # Plot the cluster
+        ax.plot(cluster_data['datetime'], cluster_data['avg'], 
+               color=colors[i], linewidth=2, alpha=0.8, 
+               marker='o', markersize=4, label=f'Period {i+1}' if len(clusters) > 1 else param_name)
+        
+        # Add a visual gap indicator if there are multiple clusters
+        if i < len(clusters) - 1:
+            # Add a gap marker between clusters
+            next_cluster = clusters[i + 1]
+            gap_start = cluster_data['datetime'].iloc[-1]
+            gap_end = df_clean.iloc[next_cluster[0]]['datetime']
+            
+            # Add vertical dashed line to indicate gap
+            gap_mid = gap_start + (gap_end - gap_start) / 2
+            ax.axvline(x=gap_mid, color='red', linestyle='--', alpha=0.5, linewidth=1)
+            
+            # Add text annotation for gap
+            gap_duration = gap_end - gap_start
+            if gap_duration.days > 0:
+                gap_text = f'{gap_duration.days}d gap'
+            else:
+                gap_text = f'{gap_duration.seconds//3600}h gap'
+            
+            ax.annotate(gap_text, xy=(gap_mid, ax.get_ylim()[1] * 0.9), 
+                       ha='center', va='bottom', fontsize=8, color='red', alpha=0.7)
+    
+    # Enhance axis formatting
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
+    ax.xaxis.set_major_locator(mdates.HourLocator(interval=max(1, len(df_clean) // 10)))
+    
+    # Add legend if multiple periods
+    if len(clusters) > 1:
+        ax.legend(loc='best', fontsize=8)
+    
+    # Rotate x-axis labels for better readability
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
     sorted_times = [times[i] for i in indices]
     
     # Initialize clusters
