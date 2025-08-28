@@ -805,7 +805,7 @@ class HALogApp:
                     stats = self.fault_parser.get_stats()
                     
                     if hasattr(self.ui, 'lblTotalCodes'):
-                        self.ui.lblTotalCodes.setText(f"Total Codes: {stats['total_codes']}")
+                        self.ui.lblTotalCodes.setText(f"Total Codes: {stats['total_codes']} (HAL: {stats['hal_codes']}, TB: {stats['tb_codes']})")
                     
                     if hasattr(self.ui, 'lblFaultTypes'):
                         types_text = f"Types: {stats['types']} ({', '.join(stats['type_breakdown'].keys())})"
@@ -832,15 +832,21 @@ class HALogApp:
                     result = self.fault_parser.search_fault_code(code)
                     
                     if result:
+                        # Get database source information
+                        db_desc = result.get('database_description', 'Unknown')
+                        db_source = result.get('database', 'Unknown')
+                        
                         html_result = f"""
                         <div style='background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; padding: 12px; margin: 4px 0;'>
                             <h3 style='color: #155724; margin: 0 0 8px 0;'>✅ Fault Code Found</h3>
                             <p><b>Code:</b> {code}</p>
+                            <p><b>Database Source:</b> <span style='background: #007bff; color: white; padding: 2px 8px; border-radius: 3px; font-weight: bold;'>{db_desc}</span></p>
                             <p><b>Type:</b> <span style='background: #e2e3e5; padding: 2px 6px; border-radius: 3px;'>{result['type']}</span></p>
                             <p><b>Description:</b></p>
                             <div style='background: #f8f9fa; border-left: 3px solid #6c757d; padding: 8px 12px; margin: 8px 0; font-family: monospace;'>
                                 {result['description']}
                             </div>
+                            <small style='color: #6c757d;'>Source: {db_source} database</small>
                         </div>
                         """
                         self.ui.txtFaultResult.setHtml(html_result)
@@ -848,7 +854,8 @@ class HALogApp:
                         html_result = f"""
                         <div style='background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 12px; margin: 4px 0;'>
                             <h3 style='color: #721c24; margin: 0 0 8px 0;'>❌ Code Not Found</h3>
-                            <p>Fault code <b>{code}</b> was not found in the database.</p>
+                            <p>Fault code <b>{code}</b> was not found in either database.</p>
+                            <p><b>Database Source:</b> <span style='background: #6c757d; color: white; padding: 2px 8px; border-radius: 3px; font-weight: bold;'>NA</span></p>
                             <p><small>Please check the code and try again. You can also try searching by description keywords.</small></p>
                         </div>
                         """
@@ -888,11 +895,22 @@ class HALogApp:
                         """
                         
                         for i, (fault_id, fault_data) in enumerate(results[:10]):  # Limit to first 10 results
+                            db_desc = fault_data.get('database_description', fault_data.get('database', 'Unknown'))
+                            if fault_data.get('database') == 'HAL':
+                                db_desc = 'HAL Description'
+                            elif fault_data.get('database') == 'TB':
+                                db_desc = 'TB Description'
+                            else:
+                                db_desc = 'NA'
+                                
                             html_result += f"""
                             <div style='background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; margin: 8px 0;'>
                                 <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;'>
                                     <b style='color: #495057;'>Code: {fault_id}</b>
-                                    <span style='background: #e2e3e5; padding: 2px 6px; border-radius: 3px; font-size: 11px;'>{fault_data['type']}</span>
+                                    <div>
+                                        <span style='background: #007bff; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-right: 4px;'>{db_desc}</span>
+                                        <span style='background: #e2e3e5; padding: 2px 6px; border-radius: 3px; font-size: 11px;'>{fault_data['type']}</span>
+                                    </div>
                                 </div>
                                 <div style='color: #6c757d; font-size: 13px; line-height: 1.4;'>
                                     {fault_data['description']}
@@ -1475,13 +1493,15 @@ class HALogApp:
                     traceback.print_exc()
 
             def _import_large_file(self, file_path, file_size):
-                """Import large log file with professional progress"""
+                """Import large log file with enhanced progress phases"""
                 try:
                     from progress_dialog import ProgressDialog
 
                     self.progress_dialog = ProgressDialog(self)
                     self.progress_dialog.setWindowTitle("Processing LINAC Log File")
-                    self.progress_dialog.setLabelText("Initializing file processing...")
+                    
+                    # Start with uploading phase
+                    self.progress_dialog.set_phase("uploading", 0)
                     self.progress_dialog.show()
 
                     from worker_thread import FileProcessingWorker
@@ -1489,10 +1509,23 @@ class HALogApp:
                     self.worker = FileProcessingWorker(file_path, file_size, self.db)
                     self.worker.chunk_size = 5000
 
-                    self.worker.progress_update.connect(
-                        self.progress_dialog.update_progress
+                    # Enhanced progress handling with phases
+                    def handle_progress_update(percentage, status_message="", lines_processed=0, total_lines=0, bytes_processed=0, total_bytes=0):
+                        # Determine phase based on status message or progress
+                        if "uploading" in status_message.lower() or "reading" in status_message.lower():
+                            self.progress_dialog.set_phase("uploading", percentage)
+                        elif "processing" in status_message.lower() or "parsing" in status_message.lower():
+                            self.progress_dialog.set_phase("processing", percentage)
+                        elif "finalizing" in status_message.lower() or "saving" in status_message.lower():
+                            self.progress_dialog.set_phase("finalizing", percentage)
+                        else:
+                            # Default to processing phase
+                            self.progress_dialog.set_phase("processing", percentage)
+                    
+                    self.worker.progress_update.connect(handle_progress_update)
+                    self.worker.status_update.connect(
+                        lambda msg: self.progress_dialog.setLabelText(msg)
                     )
-                    self.worker.status_update.connect(self.progress_dialog.setLabelText)
                     self.worker.finished.connect(self.on_file_processing_finished)
                     self.worker.error.connect(self.on_file_processing_error)
 

@@ -240,10 +240,60 @@ class PlotUtils:
             'legend.fontsize': 9,
             'figure.titlesize': 14
         })
+    
+    @staticmethod
+    def group_parameters(parameters):
+        """Group parameters by type for better visualization"""
+        parameter_groups = {
+            'Temperature': [],
+            'Pressure': [],
+            'Flow': [],
+            'Voltage': [],
+            'Current': [],
+            'Humidity': [],
+            'Position': [],
+            'Other': []
+        }
+        
+        for param in parameters:
+            param_lower = param.lower()
+            if any(temp_keyword in param_lower for temp_keyword in ['temp', 'temperature', '°c', 'celsius']):
+                parameter_groups['Temperature'].append(param)
+            elif any(press_keyword in param_lower for press_keyword in ['press', 'pressure', 'psi', 'bar', 'pa']):
+                parameter_groups['Pressure'].append(param)
+            elif any(flow_keyword in param_lower for flow_keyword in ['flow', 'rate', 'gpm', 'lpm', 'l/min']):
+                parameter_groups['Flow'].append(param)
+            elif any(volt_keyword in param_lower for volt_keyword in ['volt', 'voltage', 'v', 'kv']):
+                parameter_groups['Voltage'].append(param)
+            elif any(curr_keyword in param_lower for curr_keyword in ['current', 'amp', 'ampere', 'ma']):
+                parameter_groups['Current'].append(param)
+            elif any(humid_keyword in param_lower for humid_keyword in ['humid', 'humidity', '%rh', 'moisture']):
+                parameter_groups['Humidity'].append(param)
+            elif any(pos_keyword in param_lower for pos_keyword in ['pos', 'position', 'x', 'y', 'z', 'angle']):
+                parameter_groups['Position'].append(param)
+            else:
+                parameter_groups['Other'].append(param)
+        
+        # Remove empty groups
+        return {k: v for k, v in parameter_groups.items() if v}
+    
+    @staticmethod
+    def get_group_colors():
+        """Get consistent colors for parameter groups"""
+        return {
+            'Temperature': '#ff6b6b',  # Red
+            'Pressure': '#4ecdc4',     # Teal
+            'Flow': '#45b7d1',         # Blue
+            'Voltage': '#96ceb4',      # Green
+            'Current': '#ffeaa7',      # Yellow
+            'Humidity': '#dda0dd',     # Plum
+            'Position': '#98d8c8',     # Mint
+            'Other': '#95a5a6'         # Gray
+        }
 
 
 def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):
-    """Enhanced trend plotting with professional styling, multiple parameters and interactive features"""
+    """Enhanced trend plotting with parameter grouping and professional styling"""
     # Clear existing plot
     layout = widget.layout()
     if layout is None:
@@ -283,9 +333,27 @@ def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):
     # Setup professional style
     PlotUtils.setup_professional_style()
     
+    # Group parameters by type
+    unique_params = df_clean["param"].unique()
+    parameter_groups = PlotUtils.group_parameters(unique_params)
+    group_colors = PlotUtils.get_group_colors()
+    
+    # Determine subplot layout based on number of groups
+    num_groups = len(parameter_groups)
+    if num_groups <= 2:
+        rows, cols = 1, num_groups
+        fig_height = 6
+    elif num_groups <= 4:
+        rows, cols = 2, 2
+        fig_height = 10
+    else:
+        rows = (num_groups + 2) // 3
+        cols = 3
+        fig_height = max(8, rows * 4)
+    
     # Create figure with enhanced layout
-    fig = Figure(figsize=(12, 8))
-    fig.suptitle(f"LINAC Water System Trends{title_suffix}", fontsize=14, fontweight='bold')
+    fig = Figure(figsize=(14, fig_height))
+    fig.suptitle(f"LINAC System Parameters by Type{title_suffix}", fontsize=14, fontweight='bold')
     
     # Create canvas first
     canvas = FigureCanvas(fig)
@@ -294,10 +362,68 @@ def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):
     toolbar = NavigationToolbar2QT(canvas, widget)
     layout.addWidget(toolbar)
     
-    # Check if we have multiple parameters
-    unique_params = df_clean["param"].unique()
-    
     axes = []  # Store axes for interactive manager
+    
+    # Plot each parameter group in separate subplots
+    for idx, (group_name, params) in enumerate(parameter_groups.items()):
+        if not params:
+            continue
+            
+        ax = fig.add_subplot(rows, cols, idx + 1)
+        axes.append(ax)
+        
+        group_color = group_colors.get(group_name, '#95a5a6')
+        
+        # Plot each parameter in the group with slight color variations
+        for i, param in enumerate(params):
+            param_data = df_clean[df_clean["param"] == param]
+            if param_data.empty:
+                continue
+            
+            # Create slight color variation for multiple parameters in same group
+            if len(params) > 1:
+                color_variation = min(i * 0.2, 0.8)
+                import matplotlib.colors as mcolors
+                base_color = mcolors.to_rgb(group_color)
+                varied_color = tuple(max(0, min(1, c - color_variation)) for c in base_color)
+                plot_color = mcolors.to_hex(varied_color)
+            else:
+                plot_color = group_color
+            
+            # Sort by datetime for proper line plotting
+            param_data_sorted = param_data.sort_values("datetime")
+            
+            ax.plot(param_data_sorted["datetime"], param_data_sorted["avg"], 
+                   color=plot_color, linewidth=2, alpha=0.8, label=param, marker='o', markersize=3)
+        
+        # Customize subplot
+        ax.set_title(f"{group_name} Parameters", fontsize=12, fontweight='bold')
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Value")
+        ax.grid(True, alpha=0.3)
+        
+        # Format x-axis to show dates nicely
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        ax.xaxis.set_major_locator(mdates.HourLocator(interval=max(1, len(param_data) // 10)))
+        
+        # Add legend if multiple parameters in group
+        if len(params) > 1:
+            ax.legend(loc='best', fontsize=8)
+        
+        # Rotate x-axis labels for better readability
+        plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
+    
+    # Adjust layout to prevent overlap
+    fig.tight_layout()
+    
+    # Create interactive manager
+    interactive_manager = InteractivePlotManager(fig, axes, canvas)
+    
+    # Add canvas to layout
+    layout.addWidget(canvas)
+    
+    # Store reference to prevent garbage collection
+    widget._interactive_manager = interactive_manager
     
     if len(unique_params) == 1:
         # Single parameter plot
