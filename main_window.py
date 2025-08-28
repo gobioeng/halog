@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QTabWidget,
     QTableWidget,
+    QTableWidgetItem,  # Added missing import
     QComboBox,
     QAction,
     QMenuBar,
@@ -567,9 +568,6 @@ class Ui_MainWindow(object):
         self.tableMPC.setMinimumHeight(400)
         results_layout.addWidget(self.tableMPC)
 
-        # Load sample MPC data
-        self._populate_sample_mpc_data()
-        
         layout.addWidget(results_group)
 
         # Statistics
@@ -583,6 +581,9 @@ class Ui_MainWindow(object):
 
         stats_layout.addStretch()
         layout.addWidget(stats_group)
+
+        # Load sample MPC data AFTER creating all UI elements
+        self._populate_sample_mpc_data()
 
     def _populate_sample_mpc_data(self):
         """Populate sample MPC data for demonstration"""
