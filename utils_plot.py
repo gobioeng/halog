@@ -686,7 +686,7 @@ def find_time_clusters(df_times, gap_threshold=timedelta(days=1)):
     """
     # Convert to Python datetime objects for safety
     try:
-        times = np.array(df_times.dt.to_pydatetime())
+        times = np.array([t.to_pydatetime() for t in df_times])
     except Exception:
         times = [pd.to_datetime(t).to_pydatetime() for t in df_times]
     
@@ -791,30 +791,6 @@ def plot_multi_date_timeline(ax, df, param_name, gap_threshold=timedelta(days=1)
     
     # Rotate x-axis labels for better readability
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
-    sorted_times = [times[i] for i in indices]
-    
-    # Initialize clusters
-    clusters = []
-    current_cluster = [indices[0]]
-    
-    # Group times into clusters based on gaps
-    for i in range(1, len(sorted_times)):
-        # Calculate time difference
-        time_diff = sorted_times[i] - sorted_times[i-1]
-        
-        if time_diff > gap_threshold:
-            # Gap detected, start new cluster
-            clusters.append(current_cluster)
-            current_cluster = [indices[i]]
-        else:
-            # Add to current cluster
-            current_cluster.append(indices[i])
-    
-    # Add the last cluster
-    if current_cluster:
-        clusters.append(current_cluster)
-    
-    return clusters
 
 def _plot_single_parameter(ax, df: pd.DataFrame, param_name: str, subplot: bool = False):
     """Plot data for a single parameter with compressed time gaps"""

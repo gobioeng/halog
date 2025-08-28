@@ -127,6 +127,10 @@ class ShortDataParser:
                 
                 if stat_match:
                     param_name = stat_match.group(1).strip()
+                    
+                    # Clean up parameter name - fix common naming issues
+                    param_name = self._normalize_parameter_name(param_name)
+                    
                     count = int(stat_match.group(2))
                     max_val = float(stat_match.group(3))
                     min_val = float(stat_match.group(4))
@@ -156,6 +160,17 @@ class ShortDataParser:
         
         return None
     
+    def _normalize_parameter_name(self, param_name: str) -> str:
+        """Normalize parameter names to fix common naming issues"""
+        # Fix double "Fan" prefix in fan speed parameters
+        if param_name.startswith('FanfanSpeed'):
+            param_name = param_name.replace('FanfanSpeed', 'FanSpeed')
+        
+        # Add other normalizations as needed
+        # For example, fix case consistency or remove redundant prefixes
+        
+        return param_name
+    
     def _group_parameters(self, parameters: List[Dict]):
         """Group parameters by type for organized visualization - Enhanced for requirement specifications"""
         for param in parameters:
@@ -163,7 +178,7 @@ class ShortDataParser:
             original_name = param['parameter_name']
             
             # Fan speed parameters (check first to catch fan-related temps)
-            if any(term in param_name for term in ['fanfanspeed', 'fanspeed', 'fan speed']):
+            if any(term in param_name for term in ['fanspeed', 'fan speed']):
                 self.parameter_groups['fan_speed'].append(param)
             
             # Voltage parameters (enhanced patterns)
