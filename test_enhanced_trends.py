@@ -94,6 +94,46 @@ class TestUIStructure(unittest.TestCase):
             self.assertTrue(True, "Successfully imported main_window module")
         except ImportError as e:
             self.fail(f"Failed to import main_window: {e}")
+    
+    def test_dropdown_structure(self):
+        """Test that the UI has the expected dropdown structure"""
+        from main_window import Ui_MainWindow
+        from PyQt5.QtWidgets import QMainWindow, QApplication
+        import sys
+        
+        # Create a minimal QApplication if one doesn't exist
+        app = QApplication.instance()
+        if app is None:
+            app = QApplication(sys.argv)
+        
+        try:
+            # Create window and UI
+            window = QMainWindow()
+            ui = Ui_MainWindow()
+            ui.setupUi(window)
+            
+            # Test that the new dropdown controls exist
+            expected_dropdowns = [
+                'comboWaterTopGraph', 'comboWaterBottomGraph',
+                'comboVoltageTopGraph', 'comboVoltageBottomGraph', 
+                'comboTempTopGraph', 'comboTempBottomGraph',
+                'comboHumidityTopGraph', 'comboHumidityBottomGraph',
+                'comboFanTopGraph', 'comboFanBottomGraph'
+            ]
+            
+            for dropdown_name in expected_dropdowns:
+                self.assertTrue(hasattr(ui, dropdown_name), 
+                              f"Missing dropdown: {dropdown_name}")
+                dropdown = getattr(ui, dropdown_name)
+                self.assertTrue(dropdown.count() > 1, 
+                              f"Dropdown {dropdown_name} should have items")
+                
+        except Exception as e:
+            # If GUI can't be created (headless environment), just pass
+            if "cannot connect to display" in str(e).lower() or "xcb" in str(e).lower():
+                self.skipTest("Skipping GUI test in headless environment")
+            else:
+                raise e
 
 if __name__ == "__main__":
     unittest.main()
