@@ -446,6 +446,12 @@ class HALogApp:
                     self.fault_parser = FaultCodeParser()
                     self._initialize_fault_code_tab()
 
+                    # Initialize short data parser for enhanced parameters
+                    from parser_shortdata import ShortDataParser
+                    self.shortdata_parser = ShortDataParser()
+                    self.shortdata_parameters = self.shortdata_parser.parse_log_file()
+                    self._initialize_trend_controls()
+
                     # Setup UI components
                     self.load_dashboard()
                     self.ui.tabWidget.currentChanged.connect(self.on_tab_changed)
@@ -748,12 +754,22 @@ class HALogApp:
                     # BUTTON ACTIONS
                     self.ui.btnClearDB.clicked.connect(self.clear_database)
                     self.ui.btnRefreshData.clicked.connect(self.load_dashboard)
-                    self.ui.comboTrendSerial.currentIndexChanged.connect(
-                        self.update_trend
-                    )
-                    self.ui.comboTrendParam.currentIndexChanged.connect(
-                        self.update_trend
-                    )
+                    
+                    # Legacy trend controls (keep for backward compatibility)
+                    if hasattr(self.ui, 'comboTrendSerial'):
+                        self.ui.comboTrendSerial.currentIndexChanged.connect(self.update_trend)
+                    if hasattr(self.ui, 'comboTrendParam'):
+                        self.ui.comboTrendParam.currentIndexChanged.connect(self.update_trend)
+                    
+                    # NEW TREND SUB-TAB ACTIONS
+                    if hasattr(self.ui, 'btnRefreshWater'):
+                        self.ui.btnRefreshWater.clicked.connect(lambda: self.refresh_trend_tab('flow'))
+                    if hasattr(self.ui, 'btnRefreshVoltage'):
+                        self.ui.btnRefreshVoltage.clicked.connect(lambda: self.refresh_trend_tab('voltage'))
+                    if hasattr(self.ui, 'btnRefreshTemp'):
+                        self.ui.btnRefreshTemp.clicked.connect(lambda: self.refresh_trend_tab('temperature'))
+                    if hasattr(self.ui, 'btnRefreshHumidity'):
+                        self.ui.btnRefreshHumidity.clicked.connect(lambda: self.refresh_trend_tab('humidity'))
                     
                     # FAULT CODE TAB ACTIONS
                     if hasattr(self.ui, 'btnSearchCode'):
@@ -815,6 +831,163 @@ class HALogApp:
                     
                 except Exception as e:
                     print(f"Error initializing fault code tab: {e}")
+
+            def _initialize_trend_controls(self):
+                """Initialize the trend controls with shortdata parameters"""
+                try:
+                    if not hasattr(self, 'shortdata_parameters') or not self.shortdata_parameters:
+                        print("⚠️ No shortdata parameters available")
+                        return
+                    
+                    groups = self.shortdata_parameters.get('groups', {})
+                    
+                    # Get unique serial numbers
+                    parameters = self.shortdata_parameters.get('parameters', [])
+                    serial_numbers = list(set(p['serial_number'] for p in parameters))
+                    
+                    # Initialize Water System controls
+                    if hasattr(self.ui, 'comboWaterSerial'):
+                        self.ui.comboWaterSerial.clear()
+                        self.ui.comboWaterSerial.addItems(serial_numbers)
+                        
+                        # Add flow parameters to water system
+                        flow_params = [p['parameter_name'] for p in groups.get('flow', [])]
+                        unique_flow_params = list(set(flow_params))
+                        if hasattr(self.ui, 'comboWaterParam'):
+                            self.ui.comboWaterParam.clear()
+                            self.ui.comboWaterParam.addItems(unique_flow_params)
+                    
+                    # Initialize Voltage controls
+                    if hasattr(self.ui, 'comboVoltageSerial'):
+                        self.ui.comboVoltageSerial.clear()
+                        self.ui.comboVoltageSerial.addItems(serial_numbers)
+                        
+                        voltage_params = [p['parameter_name'] for p in groups.get('voltage', [])]
+                        unique_voltage_params = list(set(voltage_params))[:10]  # Limit to first 10
+                        if hasattr(self.ui, 'comboVoltageParam'):
+                            self.ui.comboVoltageParam.clear()
+                            self.ui.comboVoltageParam.addItems(unique_voltage_params)
+                    
+                    # Initialize Temperature controls
+                    if hasattr(self.ui, 'comboTempSerial'):
+                        self.ui.comboTempSerial.clear()
+                        self.ui.comboTempSerial.addItems(serial_numbers)
+                        
+                        temp_params = [p['parameter_name'] for p in groups.get('temperature', [])]
+                        unique_temp_params = list(set(temp_params))
+                        if hasattr(self.ui, 'comboTempParam'):
+                            self.ui.comboTempParam.clear()
+                            self.ui.comboTempParam.addItems(unique_temp_params)
+                    
+                    # Initialize Humidity controls
+                    if hasattr(self.ui, 'comboHumiditySerial'):
+                        self.ui.comboHumiditySerial.clear()
+                        self.ui.comboHumiditySerial.addItems(serial_numbers)
+                        
+                        humidity_params = [p['parameter_name'] for p in groups.get('humidity', [])]
+                        unique_humidity_params = list(set(humidity_params))
+                        if hasattr(self.ui, 'comboHumidityParam'):
+                            self.ui.comboHumidityParam.clear()
+                            self.ui.comboHumidityParam.addItems(unique_humidity_params)
+                    
+                    print(f"✓ Trend controls initialized with {len(parameters)} parameters")
+                    print(f"  - Flow: {len(unique_flow_params)} parameters")
+                    print(f"  - Voltage: {len(unique_voltage_params)} parameters") 
+                    print(f"  - Temperature: {len(unique_temp_params)} parameters")
+                    print(f"  - Humidity: {len(unique_humidity_params)} parameters")
+                    
+                except Exception as e:
+                    print(f"Error initializing trend controls: {e}")
+                    import traceback
+                    traceback.print_exc()
+
+            def refresh_trend_tab(self, group_name):
+                """Refresh trend data for specific parameter group"""
+                try:
+                    if not hasattr(self, 'shortdata_parser'):
+                        print(f"⚠️ Shortdata parser not available for {group_name}")
+                        return
+                    
+                    # Get the appropriate combo boxes and graph widgets based on group
+                    serial_combo = None
+                    param_combo = None
+                    graph_top = None
+                    graph_bottom = None
+                    
+                    if group_name == 'flow':  # Water System
+                        serial_combo = getattr(self.ui, 'comboWaterSerial', None)
+                        param_combo = getattr(self.ui, 'comboWaterParam', None)
+                        graph_top = getattr(self.ui, 'waterGraphTop', None)
+                        graph_bottom = getattr(self.ui, 'waterGraphBottom', None)
+                    elif group_name == 'voltage':
+                        serial_combo = getattr(self.ui, 'comboVoltageSerial', None)
+                        param_combo = getattr(self.ui, 'comboVoltageParam', None)
+                        graph_top = getattr(self.ui, 'voltageGraphTop', None)
+                        graph_bottom = getattr(self.ui, 'voltageGraphBottom', None)
+                    elif group_name == 'temperature':
+                        serial_combo = getattr(self.ui, 'comboTempSerial', None)
+                        param_combo = getattr(self.ui, 'comboTempParam', None)
+                        graph_top = getattr(self.ui, 'tempGraphTop', None)
+                        graph_bottom = getattr(self.ui, 'tempGraphBottom', None)
+                    elif group_name == 'humidity':
+                        serial_combo = getattr(self.ui, 'comboHumiditySerial', None)
+                        param_combo = getattr(self.ui, 'comboHumidityParam', None)
+                        graph_top = getattr(self.ui, 'humidityGraphTop', None)
+                        graph_bottom = getattr(self.ui, 'humidityGraphBottom', None)
+                    
+                    if not all([graph_top, graph_bottom]):
+                        print(f"⚠️ Graph widgets not found for {group_name}")
+                        return
+                    
+                    # Get selected parameters
+                    selected_serial = serial_combo.currentText() if serial_combo else None
+                    selected_param = param_combo.currentText() if param_combo else None
+                    
+                    print(f"🔄 Refreshing {group_name} trends for serial {selected_serial}, param {selected_param}")
+                    
+                    # Import plotting utilities
+                    from utils_plot import PlotUtils
+                    import pandas as pd
+                    
+                    # Plot top graph (selected parameter or first available)
+                    if selected_param:
+                        data_top = self.shortdata_parser.get_data_for_visualization(group_name, selected_param)
+                        title_top = f"{selected_param}"
+                    else:
+                        data_top = self.shortdata_parser.get_data_for_visualization(group_name)
+                        title_top = f"{group_name.title()} Parameters"
+                    
+                    # Filter by serial number
+                    if selected_serial and selected_serial != "All" and not data_top.empty:
+                        if 'serial_number' in data_top.columns:
+                            data_top = data_top[data_top['serial_number'] == selected_serial]
+                    
+                    # Plot using the enhanced plotting utilities
+                    PlotUtils._plot_parameter_data_single(graph_top, data_top, title_top)
+                    
+                    # Plot bottom graph (second parameter in group)
+                    all_params = self.shortdata_parser.get_unique_parameter_names(group_name)
+                    if len(all_params) > 1:
+                        second_param = all_params[1] if selected_param == all_params[0] else all_params[0]
+                        data_bottom = self.shortdata_parser.get_data_for_visualization(group_name, second_param)
+                        title_bottom = f"{second_param}"
+                        
+                        # Filter by serial number
+                        if selected_serial and selected_serial != "All" and not data_bottom.empty:
+                            if 'serial_number' in data_bottom.columns:
+                                data_bottom = data_bottom[data_bottom['serial_number'] == selected_serial]
+                        
+                        PlotUtils._plot_parameter_data_single(graph_bottom, data_bottom, title_bottom)
+                    else:
+                        # Show "no additional data" message
+                        PlotUtils._plot_parameter_data_single(graph_bottom, pd.DataFrame(), "No additional data available")
+                    
+                    print(f"✓ Successfully refreshed {group_name} trends")
+                    
+                except Exception as e:
+                    print(f"❌ Error refreshing {group_name} trends: {e}")
+                    import traceback
+                    traceback.print_exc()
 
             def search_fault_code(self):
                 """Search for a specific fault code"""
