@@ -827,9 +827,25 @@ class HALogApp:
                         self.ui.txtFaultResult.setHtml(
                             "<p style='color: #f39c12;'><b>⚠️ Please enter a fault code</b></p>"
                         )
+                        # Clear the HAL and TB description boxes
+                        if hasattr(self.ui, 'txtHALDescription'):
+                            self.ui.txtHALDescription.setPlainText("")
+                        if hasattr(self.ui, 'txtTBDescription'):
+                            self.ui.txtTBDescription.setPlainText("")
                         return
                     
                     result = self.fault_parser.search_fault_code(code)
+                    
+                    # Get descriptions from both databases
+                    descriptions = self.fault_parser.get_fault_descriptions_by_database(code)
+                    hal_description = descriptions['hal_description']
+                    tb_description = descriptions['tb_description']
+                    
+                    # Update the HAL and TB description text boxes
+                    if hasattr(self.ui, 'txtHALDescription'):
+                        self.ui.txtHALDescription.setPlainText(hal_description)
+                    if hasattr(self.ui, 'txtTBDescription'):
+                        self.ui.txtTBDescription.setPlainText(tb_description)
                     
                     if result:
                         # Get database source information
