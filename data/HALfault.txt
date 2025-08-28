@@ -9,7 +9,7 @@ ID	Description	Type
 2018	Device is not ready; gating device ID: 0 is required.	Interlock
 2019	Device is not ready; motion management device ID: 1 is required.	Interlock
 2020	Device is not ready; gating device ID: 2 is required.	Interlock
-2021	Device is not ready; gating device ID: 3  is required.	Interlock
+2021	Device is not ready; gating device ID: 3 Â is required.	Interlock
 2022	Device is not ready; gating device ID: 4 is required.	Interlock
 2023	Device is not ready; gating device ID: 5 is required.	Interlock
 2024	Device is not ready; gating device ID: 6 is required.	Interlock
@@ -441,7 +441,7 @@ Cause Code = {0}	Fault
 200028	CPU temperature sensor {0} reading {1} C is out of range.	Fault
 200029	CPU temperature sensor {0} failed.	Fault
 201000	Stand sync pulse did not arrive at the BGM in time. 	Fault
-201003	Supervisor sync pulse count doesn’t match count at BGM.	Fault
+201003	Supervisor sync pulse count doesnÂ’t match count at BGM.	Fault
 201004	BGM: Configuration CRC in BGM doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
 201005	BGM: Software is unable to get correct result from hardware application interface.	Fault
 201006	BGM node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
@@ -753,7 +753,7 @@ BGM Software	Fault
 212214	Dosimetry: Primary dose per pulse {0} exceeded range; expected value {1}.	Fault
 212215	Dosimetry: Secondary dose per pulse {0} exceeded range; expected value {1}.	Fault
 212229	Beam Data: Ion Charge exceed expected value, plate indices (bit-wise OR, A=0, B=1, .) = {0}, maximum detected out of range value = {1}. See BeamRecord in event log for more details.	Fault
-213000	In the process of Ion Chamber Signal verification (CalCheck – Capacity Test), BGM Software fails to receive an interrupt signal from BGM FPGA. The failure occurs during Capacity Test step.
+213000	In the process of Ion Chamber Signal verification (CalCheck Â– Capacity Test), BGM Software fails to receive an interrupt signal from BGM FPGA. The failure occurs during Capacity Test step.
 
 Fault Originator:
 BGM software	Fault
@@ -1160,11 +1160,11 @@ Expected Interlock: Beam off on Dose Difference greater than limit Interlock
 
 Fault Originator:
 BGM Software	Fault
-213175	In the process of Ion Chamber Signal verification (CalCheck – Capacity Test), BGM Software detected that the BGM FPGA fail to assert interlock when the Ion Chamber power supply is reduced. (Monitor at the supply)
+213175	In the process of Ion Chamber Signal verification (CalCheck Â– Capacity Test), BGM Software detected that the BGM FPGA fail to assert interlock when the Ion Chamber power supply is reduced. (Monitor at the supply)
 
 Fault Originator:
 BGM software	Fault
-213176	In the process of Ion Chamber Signal verification (CalCheck – Capacity Test), BGM Software detected that the BGM FPGA fail to assert interlock when the Ion Chamber power supply is reduced. (Monitor at the return)
+213176	In the process of Ion Chamber Signal verification (CalCheck Â– Capacity Test), BGM Software detected that the BGM FPGA fail to assert interlock when the Ion Chamber power supply is reduced. (Monitor at the return)
 
 Fault Originator:
 BGM software	Fault
@@ -2048,7 +2048,7 @@ The range is between 10.0 and 40.0 degree Celsius.	Fault
 300028	CPU temperature sensor {0} reading {1} C is out of range.	Fault
 300029	CPU temperature sensor {0} failed.	Fault
 301000	Stand sync pulse did not arrive at the receving component in time. 	Fault
-301003	Supervisor sync pulse count doesn’t match count at STN.	Fault
+301003	Supervisor sync pulse count doesnÂ’t match count at STN.	Fault
 301004	STN: Configuration CRC in STN doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
 301005	STN: Software is unable to get correct result from hardware application interface.	Fault
 301006	STN node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
@@ -2482,8 +2482,8 @@ and STN Controller Application FPGA is unstable	Fault
 347240	STN FPGA Beam Timer parameter corruption has been detected.	Fault
 347241	STN software failed to access FPGA beam timer parameter registers.	Fault
 347242	Beam-on time is greater than expected, possibly due to:
-• BGM did not generate enough beam pulse during Beam On (indicates issue with BGM configuration).
-• STN was set to receive less beam pulse than required  (in service mode the Beam Time was set too small).
+Â• BGM did not generate enough beam pulse during Beam On (indicates issue with BGM configuration).
+Â• STN was set to receive less beam pulse than required  (in service mode the Beam Time was set too small).
 	Fault
 347243	
 
@@ -2746,7 +2746,7 @@ and Stand Power Distribution FPGA is unstable	Fault
 400028	CPU temperature sensor {0} reading {1} C is out of range.	Fault
 400029	CPU temperature sensor {0} failed.	Fault
 401000	Stand sync pulse did not arrive at the COL in time. 	Fault
-401003	Supervisor sync pulse count doesn’t match count at COL.	Fault
+401003	Supervisor sync pulse count doesnÂ’t match count at COL.	Fault
 401004	COL: Configuration CRC in COL doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
 401005	COL: Software is unable to get correct result from hardware application interface.	Fault
 401006	COL node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
@@ -3083,7 +3083,7 @@ local interlocks being asserted.	Fault
 500028	CPU temperature sensor {0} reading {1} C is out of range.	Fault
 500029	CPU temperature sensor {0} failed.	Fault
 501000	Stand sync pulse did not arrive at the XI in time. 	Fault
-501003	Supervisor sync pulse count doesn’t match count at XI.	Fault
+501003	Supervisor sync pulse count doesnÂ’t match count at XI.	Fault
 501004	XI: Configuration CRC in XI doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
 501005	XI: Software is unable to get correct result from hardware application interface.	Fault
 501006	XI node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
@@ -3437,7 +3437,7 @@ Check the XI log for a more detailed reason why the connection was refused.	Faul
 700028	CCHU: CPU temperature sensor {0} reading {1} C is out of range.	Fault
 700029	CCHU: CPU temperature sensor {0} failed.	Fault
 701000	CCHU: Stand sync pulse did not arrive at the CCHU in time. 	Fault
-701003	CCHU: Supervisor sync pulse count doesn’t match count at CCHU.	Fault
+701003	CCHU: Supervisor sync pulse count doesnÂ’t match count at CCHU.	Fault
 701004	CCHU: Configuration CRC in CCHU doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
 701005	CCHU: Software is unable to get correct result from hardware application interface.	Fault
 701006	CCHU node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
