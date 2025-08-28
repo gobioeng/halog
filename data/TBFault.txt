@@ -665,7 +665,7 @@ BGM Software FPGA	Fault
 512704	XI has no kV tube calibration for the active focal spot stored.	Fault
 1001005	KVS: Software is unable to get correct result from hardware application interface.	Fault
 1001004	KVS: Configuration CRC in KVS doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
-1001003	Supervisor sync pulse count doesn’t match count at KVS.	Fault
+1001003	Supervisor sync pulse count doesnÂ’t match count at KVS.	Fault
 1011484	kV collimator system calibration is invalid	Fault
 1001000	Stand sync pulse did not arrive at the KVS in time. 	Fault
 117004	SPV: CouchPit axis motor is slipping.	Fault
@@ -795,7 +795,7 @@ BGM Software	Fault
 201006	BGM node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
 201005	BGM: Software is unable to get correct result from hardware application interface.	Fault
 201004	BGM: Configuration CRC in BGM doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
-201003	Supervisor sync pulse count doesn’t match count at BGM.	Fault
+201003	Supervisor sync pulse count doesnÂ’t match count at BGM.	Fault
 309203	STN: PWR: CAN receive buffer is full	Fault
 201000	Stand sync pulse did not arrive at the BGM in time. 	Fault
 301036	Unable to communicate with the Mezzanine board.	Fault
@@ -1508,7 +1508,7 @@ BGM software	Fault
 301006	STN node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
 301005	STN: Software is unable to get correct result from hardware application interface.	Fault
 301004	STN: Configuration CRC in STN doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
-301003	Supervisor sync pulse count doesn’t match count at STN.	Fault
+301003	Supervisor sync pulse count doesnÂ’t match count at STN.	Fault
 301000	Stand sync pulse did not arrive at the receving component in time. 	Fault
 300029	CPU temperature sensor {0} failed.	Fault
 300027	STN: Software was not able to create network socket: errno={0}, socket={1}. 	Fault
@@ -2052,7 +2052,7 @@ While starting firmware, the CRC of firmware is calculated, and compared against
 510704	The optical tracking camera is not responding	Fault
 510702	XI could not start an optical tracking	Fault
 510701	XI could not set up the optical tracking camera for acquisition	Fault
-513103	The patient’s anatomy has left the user defined range.	Fault
+513103	The patientÂ’s anatomy has left the user defined range.	Fault
 513102	The used tracking source report invalid tracking data.	Fault
 136008	Total beam time {0} seconds was exceeded for field {1}.	Fault
 720925	CouchRol: Commanded acceleration at position {0} is above allowed value of maximum {1} + overshoot	Fault
@@ -2115,8 +2115,8 @@ Do not use the system for treatments until it is thoroughly checked out by quali
 
 	Fault
 340016	Beam-on time is greater than expected, possibly due to:
-• BGM did not generate enough beam pulse during Beam On (indicates issue with BGM configuration).
-• STN was set to receive less beam pulse than required  (in service mode the Beam Time was set too small).
+Â• BGM did not generate enough beam pulse during Beam On (indicates issue with BGM configuration).
+Â• STN was set to receive less beam pulse than required  (in service mode the Beam Time was set too small).
 	Fault
 340015	FPGA: Secondary encoder rollover error occurred.	Fault
 340014	FPGA: Primary encoder rollover error occurred.	Fault
@@ -2222,7 +2222,7 @@ BGM software	Fault
 401006	COL node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
 401005	COL: Software is unable to get correct result from hardware application interface.	Fault
 401004	COL: Configuration CRC in COL doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
-401003	Supervisor sync pulse count doesn’t match count at COL.	Fault
+401003	Supervisor sync pulse count doesnÂ’t match count at COL.	Fault
 511306	XI could not communicate with the DU	Fault
 401000	Stand sync pulse did not arrive at the COL in time. 	Fault
 511303	XI could not communicate with the DU	Fault
@@ -3229,7 +3229,7 @@ BGM software	Fault
 501006	XI node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
 501005	XI: Software is unable to get correct result from hardware application interface.	Fault
 501004	XI: Configuration CRC in XI doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
-501003	Supervisor sync pulse count doesn’t match count at XI.	Fault
+501003	Supervisor sync pulse count doesnÂ’t match count at XI.	Fault
 717161	Left Pendant: Thumbwheel has not been calibrated.	Fault
 717160	Left Pendant: Firmware detected that one of the thumbwheel is not at center position during power up, uncentered thumbwheel bit mask {0} 	Fault
 717159	Left Pendant: Firmware detected that one of the pendant keys is being pressed during power up, Initial keys pressed: pressed key bit mask {1} 	Fault
@@ -3464,8 +3464,8 @@ If this fault occurs the system will be pushed to STANDBY	Fault
 223009	PWM:DSP Common internal Error - Bad Fault Id 	Fault
 223008	PWM: Firmware internal issue	Fault
 223007	PWM: Board Temperature is not within limit
-minor fault if T < 10º C or T > 45º C; 
-warning if T is not in minor fault range and (T < 13º C or T > 41º C). 	Fault
+minor fault if T < 10Âº C or T > 45Âº C; 
+warning if T is not in minor fault range and (T < 13Âº C or T > 41Âº C). 	Fault
 223006	PWM: Firmware tries to open Beam loop but the Beam loop remain closed	Fault
 223005	PWM:Boot Kernel parameter saved in EEPROM fail the CRC check	Fault
 223004	PWM Firmware Internal Issue	Fault
@@ -4337,7 +4337,7 @@ BGM software	Fault
 601006	MVD node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
 601005	MVD: Software is unable to get correct result from hardware application interface.	Fault
 1013535	kV blade X2: The reference position has changed while in standstill mode.	Fault
-601003	Supervisor sync pulse count doesn’t match count at MVD.	Fault
+601003	Supervisor sync pulse count doesnÂ’t match count at MVD.	Fault
 340013	During standstill, gantry moved.	Fault
 601000	Stand sync pulse did not arrive at the MVD in time. 	Fault
 340010	STN controller detected gantry primary encoder CRC, timeout, or error bit error.	Fault
@@ -4719,7 +4719,7 @@ BGM software	Fault
 912021	Voltage of the motor driver board is too low.	Fault
 912020	Motor Driver Board voltage M48VDC exceeds upper limit.	Fault
 912019	Voltage for motor driver board is too low.	Fault
-912018	• If the problem persists, contact Service. 	Fault
+912018	Â• If the problem persists, contact Service. 	Fault
 912017	Voltage for motor driver board is too low.	Fault
 912016	Controller voltage AN2.7VDC exceeds upper limit.	Fault
 912015	Controller voltage AN2.7VDC is less than lower limit.	Fault
@@ -4778,11 +4778,11 @@ BGM software	Fault
 331045	System failed to turn on the Rangefinder lamp.	Fault
 331044	System failed to turn off the Rangefinder.	Fault
 213177	CalCheck failed to execute because FPGA interlock was overridden.	Fault
-213176	In the process of Ion Chamber Signal verification (CalCheck – Capacity Test), BGM Software detected that the BGM FPGA fail to assert interlock when the Ion Chamber power supply is reduced. (Monitor at the return)
+213176	In the process of Ion Chamber Signal verification (CalCheck Â– Capacity Test), BGM Software detected that the BGM FPGA fail to assert interlock when the Ion Chamber power supply is reduced. (Monitor at the return)
 
 Fault Originator:
 BGM software	Fault
-213175	In the process of Ion Chamber Signal verification (CalCheck – Capacity Test), BGM Software detected that the BGM FPGA fail to assert interlock when the Ion Chamber power supply is reduced. (Monitor at the supply)
+213175	In the process of Ion Chamber Signal verification (CalCheck Â– Capacity Test), BGM Software detected that the BGM FPGA fail to assert interlock when the Ion Chamber power supply is reduced. (Monitor at the supply)
 
 Fault Originator:
 BGM software	Fault
@@ -5470,7 +5470,7 @@ Do not perform further treatments until the accelerator has been checked by qual
 701006	CCHU node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
 701005	CCHU: Software is unable to get correct result from hardware application interface.	Fault
 701004	CCHU: Configuration CRC in CCHU doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
-701003	CCHU: Supervisor sync pulse count doesn’t match count at CCHU.	Fault
+701003	CCHU: Supervisor sync pulse count doesnÂ’t match count at CCHU.	Fault
 221119	The 500V power supply to the Ion Chamber is below operational range.	Fault
 221118	Beam Generation subsystem has detected that the negative 5V analog power supply of the BGM Controller PCB is above the operational range.
 
@@ -6421,7 +6421,7 @@ BGM software	Fault
 801006	CCHL node detected its Beam Enable Loop (BEL) switch cannot be opened during Ready state check.	Fault
 801005	CCHL: Software is unable to get correct result from hardware application interface.	Fault
 801004	CCHL: Configuration CRC in CCHL doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
-801003	Supervisor sync pulse count doesn’t match count at CCHL.	Fault
+801003	Supervisor sync pulse count doesnÂ’t match count at CCHL.	Fault
 1011477	kV blade X1: During Initializing hardstop A reached, but no limit switch A closed signal	Fault
 801000	Stand sync pulse did not arrive at the CCHL in time. 	Fault
 1011471	kV blade X1: During initialization, the axis took too much time to move to the retract position.	Fault
@@ -6773,7 +6773,7 @@ The failure occurs during Normal Beam Test step.
 
 Fault Originator:
 BGM Software	Fault
-213000	In the process of Ion Chamber Signal verification (CalCheck – Capacity Test), BGM Software fails to receive an interrupt signal from BGM FPGA. The failure occurs during Capacity Test step.
+213000	In the process of Ion Chamber Signal verification (CalCheck Â– Capacity Test), BGM Software fails to receive an interrupt signal from BGM FPGA. The failure occurs during Capacity Test step.
 
 Fault Originator:
 BGM software	Fault
@@ -7079,8 +7079,8 @@ Fault Originator:
 BGM software	Fault
 110001	Gantry Rtn axis position {0} deviates from requested position {1}.	Fault
 110000	Gantry Rtn axis position {0} deviates from standstill position {1}.	Fault
-211027	• BGM subsystem cannot program Klystron current (KSol) during mode-up.
-• Klystron current drifted after mode-up to {0}V; expected {1}V.	Fault
+211027	Â• BGM subsystem cannot program Klystron current (KSol) during mode-up.
+Â• Klystron current drifted after mode-up to {0}V; expected {1}V.	Fault
 413082	X1: Cannot reach limit B or limit B switch failed	Fault
 413081	X1: Cannot reach limit A or limit A switch failed	Fault
 413080	X1: Limit A and limit B switches are swapped	Fault
@@ -7434,7 +7434,7 @@ BGM Software	Fault
 101201	Could not close power loop on node {0}.	Fault
 901005	KVD: Software is unable to get correct result from hardware application interface.	Fault
 901004	KVD: Configuration CRC in KVD doesn't match that on workstation. Configuration protected element CRC: calculated = {0}, from the workstation = {1}.	Fault
-901003	Supervisor sync pulse count doesn’t match count at KVD.	Fault
+901003	Supervisor sync pulse count doesnÂ’t match count at KVD.	Fault
 901000	Stand sync pulse did not arrive at the KVD in time. 	Fault
 911379	KVD Hand: After starting up, the node software was not able to detect the current axis position.	Fault
 420101	Calibration not completed for Bank {0}, Leaf {1}.	Fault
@@ -7831,7 +7831,7 @@ BGM Software	Fault
 3008	Treatment room door is open.	Interlock
 2023	Device is not ready; gating device ID: 5 is required.	Interlock
 2022	Device is not ready; gating device ID: 4 is required.	Interlock
-2021	Device is not ready; gating device ID: 3  is required.	Interlock
+2021	Device is not ready; gating device ID: 3 Â is required.	Interlock
 3004	New file is downloading or has been downloaded to Stand subsystem. Wait for downloading to finish	Interlock
 2084	BGM POS: Bad 28V detected	Interlock
 2083	Carousel radial axis (Y axis) secondary check disabled	Interlock
