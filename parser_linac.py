@@ -75,7 +75,7 @@ class LinacParser:
                     "CoolingmagnetronFlowLowStatistics",
                 ],
                 "unit": "L/min",
-                "description": "Magnetron Cooling Flow",
+                "description": "Mag Flow",
                 "expected_range": (3, 10),
                 "critical_range": (2, 12),
             },
@@ -88,7 +88,7 @@ class LinacParser:
                     "coolingtargetflowlowstatistics",
                 ],
                 "unit": "L/min",
-                "description": "Target and Circulator Cooling Flow",
+                "description": "Flow Target",
                 "expected_range": (2, 5),
                 "critical_range": (1, 6),
             },
@@ -108,7 +108,7 @@ class LinacParser:
                 "critical_range": (6, 20),
             },
             # Enhanced parameter mappings as per requirements
-            "MLC_ADC_CHAN_TEMP_BANKB_STAT": {
+            "MLC_ADC_CHAN_TEMP_BANKB_STAT_24V": {
                 "patterns": [
                     "MLC_ADC_CHAN_TEMP_BANKB_STAT",
                     "mlc_adc_chan_temp_bankb_stat",
@@ -119,7 +119,7 @@ class LinacParser:
                 "expected_range": (22, 26),
                 "critical_range": (20, 28),
             },
-            "MLC_ADC_CHAN_TEMP_BANKA_STAT": {
+            "MLC_ADC_CHAN_TEMP_BANKA_STAT_24V": {
                 "patterns": [
                     "MLC_ADC_CHAN_TEMP_BANKA_STAT",
                     "mlc_adc_chan_temp_banka_stat", 
@@ -271,9 +271,9 @@ class LinacParser:
             },
             "MLC_ADC_CHAN_TEMP_BANKA_STAT_TEMP": {
                 "patterns": [
-                    "MLC_ADC_CHAN_TEMP_BANKA_STAT",
-                    "mlc_adc_chan_temp_banka_stat",
-                    "MLC ADC CHAN TEMP BANKA STAT",
+                    "MLC_ADC_CHAN_TEMP_BANKA_STAT_TEMP",
+                    "mlc_adc_chan_temp_banka_stat_temp",
+                    "MLC ADC CHAN TEMP BANKA STAT TEMP",
                 ],
                 "unit": "°C",
                 "description": "Temp MLC Bank A",
@@ -282,9 +282,9 @@ class LinacParser:
             },
             "MLC_ADC_CHAN_TEMP_BANKB_STAT_TEMP": {
                 "patterns": [
-                    "MLC_ADC_CHAN_TEMP_BANKB_STAT",
-                    "mlc_adc_chan_temp_bankb_stat",
-                    "MLC ADC CHAN TEMP BANKB STAT",
+                    "MLC_ADC_CHAN_TEMP_BANKB_STAT_TEMP",
+                    "mlc_adc_chan_temp_bankb_stat_temp",
+                    "MLC ADC CHAN TEMP BANKB STAT TEMP",
                 ],
                 "unit": "°C", 
                 "description": "Temp MLC Bank B",

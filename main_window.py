@@ -203,21 +203,37 @@ class Ui_MainWindow(object):
         layout.setContentsMargins(16, 16, 16, 16)
         
         # Controls
-        controls_group = QGroupBox("Water System Controls")
+        controls_group = QGroupBox("Water System Graph Selection")
         controls_layout = QHBoxLayout(controls_group)
         controls_layout.setSpacing(12)
         
-        self.comboWaterSerial = QComboBox()
-        self.comboWaterSerial.setMinimumWidth(120)
-        controls_layout.addWidget(QLabel("Serial:"))
-        controls_layout.addWidget(self.comboWaterSerial)
+        # Top graph selector
+        controls_layout.addWidget(QLabel("Top Graph:"))
+        self.comboWaterTopGraph = QComboBox()
+        self.comboWaterTopGraph.setMinimumWidth(160)
+        self.comboWaterTopGraph.addItems([
+            "Select parameter...",
+            "Mag Flow",
+            "Flow Target", 
+            "Flow Chiller Water",
+            "Cooling Pump Pressure"
+        ])
+        controls_layout.addWidget(self.comboWaterTopGraph)
         
-        self.comboWaterParam = QComboBox()
-        self.comboWaterParam.setMinimumWidth(160)
-        controls_layout.addWidget(QLabel("Parameter:"))
-        controls_layout.addWidget(self.comboWaterParam)
+        # Bottom graph selector
+        controls_layout.addWidget(QLabel("Bottom Graph:"))
+        self.comboWaterBottomGraph = QComboBox()
+        self.comboWaterBottomGraph.setMinimumWidth(160)
+        self.comboWaterBottomGraph.addItems([
+            "Select parameter...",
+            "Mag Flow",
+            "Flow Target",
+            "Flow Chiller Water", 
+            "Cooling Pump Pressure"
+        ])
+        controls_layout.addWidget(self.comboWaterBottomGraph)
         
-        self.btnRefreshWater = QPushButton("Refresh")
+        self.btnRefreshWater = QPushButton("Update Graphs")
         self.btnRefreshWater.setObjectName("primaryButton")
         controls_layout.addWidget(self.btnRefreshWater)
         controls_layout.addStretch()
@@ -252,21 +268,51 @@ class Ui_MainWindow(object):
         layout.setContentsMargins(16, 16, 16, 16)
         
         # Controls
-        controls_group = QGroupBox("Voltage Controls")
+        controls_group = QGroupBox("Voltage Graph Selection")
         controls_layout = QHBoxLayout(controls_group)
         controls_layout.setSpacing(12)
         
-        self.comboVoltageSerial = QComboBox()
-        self.comboVoltageSerial.setMinimumWidth(120)
-        controls_layout.addWidget(QLabel("Serial:"))
-        controls_layout.addWidget(self.comboVoltageSerial)
+        # Top graph selector
+        controls_layout.addWidget(QLabel("Top Graph:"))
+        self.comboVoltageTopGraph = QComboBox()
+        self.comboVoltageTopGraph.setMinimumWidth(160)
+        self.comboVoltageTopGraph.addItems([
+            "Select parameter...",
+            "MLC Bank A 24V",
+            "MLC Bank B 24V",
+            "COL 48V",
+            "MLC Bank A 48V",
+            "MLC Bank B 48V",
+            "MLC Bank A 5V",
+            "MLC Bank B 5V",
+            "MLC DISTAL 10V",
+            "MLC PROXIMAL 10V",
+            "Motor PWR 48V",
+            "Motor PWR -48V"
+        ])
+        controls_layout.addWidget(self.comboVoltageTopGraph)
         
-        self.comboVoltageParam = QComboBox()
-        self.comboVoltageParam.setMinimumWidth(160)
-        controls_layout.addWidget(QLabel("Parameter:"))
-        controls_layout.addWidget(self.comboVoltageParam)
+        # Bottom graph selector
+        controls_layout.addWidget(QLabel("Bottom Graph:"))
+        self.comboVoltageBottomGraph = QComboBox()
+        self.comboVoltageBottomGraph.setMinimumWidth(160)
+        self.comboVoltageBottomGraph.addItems([
+            "Select parameter...",
+            "MLC Bank A 24V",
+            "MLC Bank B 24V",
+            "COL 48V",
+            "MLC Bank A 48V", 
+            "MLC Bank B 48V",
+            "MLC Bank A 5V",
+            "MLC Bank B 5V",
+            "MLC DISTAL 10V",
+            "MLC PROXIMAL 10V",
+            "Motor PWR 48V",
+            "Motor PWR -48V"
+        ])
+        controls_layout.addWidget(self.comboVoltageBottomGraph)
         
-        self.btnRefreshVoltage = QPushButton("Refresh")
+        self.btnRefreshVoltage = QPushButton("Update Graphs")
         self.btnRefreshVoltage.setObjectName("primaryButton")
         controls_layout.addWidget(self.btnRefreshVoltage)
         controls_layout.addStretch()
@@ -301,21 +347,43 @@ class Ui_MainWindow(object):
         layout.setContentsMargins(16, 16, 16, 16)
         
         # Controls
-        controls_group = QGroupBox("Temperature Controls")
+        controls_group = QGroupBox("Temperature Graph Selection")
         controls_layout = QHBoxLayout(controls_group)
         controls_layout.setSpacing(12)
         
-        self.comboTempSerial = QComboBox()
-        self.comboTempSerial.setMinimumWidth(120)
-        controls_layout.addWidget(QLabel("Serial:"))
-        controls_layout.addWidget(self.comboTempSerial)
+        # Top graph selector
+        controls_layout.addWidget(QLabel("Top Graph:"))
+        self.comboTempTopGraph = QComboBox()
+        self.comboTempTopGraph.setMinimumWidth(160)
+        self.comboTempTopGraph.addItems([
+            "Select parameter...",
+            "Temp Room",
+            "Temp PDU",
+            "Temp COL Board",
+            "Temp Magnetron",
+            "Temp Water Tank",
+            "Temp MLC Bank A",
+            "Temp MLC Bank B"
+        ])
+        controls_layout.addWidget(self.comboTempTopGraph)
         
-        self.comboTempParam = QComboBox()
-        self.comboTempParam.setMinimumWidth(160)
-        controls_layout.addWidget(QLabel("Parameter:"))
-        controls_layout.addWidget(self.comboTempParam)
+        # Bottom graph selector
+        controls_layout.addWidget(QLabel("Bottom Graph:"))
+        self.comboTempBottomGraph = QComboBox()
+        self.comboTempBottomGraph.setMinimumWidth(160)
+        self.comboTempBottomGraph.addItems([
+            "Select parameter...",
+            "Temp Room",
+            "Temp PDU",
+            "Temp COL Board",
+            "Temp Magnetron",
+            "Temp Water Tank",
+            "Temp MLC Bank A",
+            "Temp MLC Bank B"
+        ])
+        controls_layout.addWidget(self.comboTempBottomGraph)
         
-        self.btnRefreshTemp = QPushButton("Refresh")
+        self.btnRefreshTemp = QPushButton("Update Graphs")
         self.btnRefreshTemp.setObjectName("primaryButton")
         controls_layout.addWidget(self.btnRefreshTemp)
         controls_layout.addStretch()
@@ -350,21 +418,33 @@ class Ui_MainWindow(object):
         layout.setContentsMargins(16, 16, 16, 16)
         
         # Controls
-        controls_group = QGroupBox("Humidity Controls")
+        controls_group = QGroupBox("Humidity Graph Selection")
         controls_layout = QHBoxLayout(controls_group)
         controls_layout.setSpacing(12)
         
-        self.comboHumiditySerial = QComboBox()
-        self.comboHumiditySerial.setMinimumWidth(120)
-        controls_layout.addWidget(QLabel("Serial:"))
-        controls_layout.addWidget(self.comboHumiditySerial)
+        # Top graph selector
+        controls_layout.addWidget(QLabel("Top Graph:"))
+        self.comboHumidityTopGraph = QComboBox()
+        self.comboHumidityTopGraph.setMinimumWidth(160)
+        self.comboHumidityTopGraph.addItems([
+            "Select parameter...",
+            "Room Humidity",
+            "Temp Room"  # Per requirements: include room temp in humidity tab
+        ])
+        controls_layout.addWidget(self.comboHumidityTopGraph)
         
-        self.comboHumidityParam = QComboBox()
-        self.comboHumidityParam.setMinimumWidth(160)
-        controls_layout.addWidget(QLabel("Parameter:"))
-        controls_layout.addWidget(self.comboHumidityParam)
+        # Bottom graph selector
+        controls_layout.addWidget(QLabel("Bottom Graph:"))
+        self.comboHumidityBottomGraph = QComboBox()
+        self.comboHumidityBottomGraph.setMinimumWidth(160)
+        self.comboHumidityBottomGraph.addItems([
+            "Select parameter...",
+            "Room Humidity",
+            "Temp Room"  # Per requirements: include room temp in humidity tab
+        ])
+        controls_layout.addWidget(self.comboHumidityBottomGraph)
         
-        self.btnRefreshHumidity = QPushButton("Refresh")
+        self.btnRefreshHumidity = QPushButton("Update Graphs")
         self.btnRefreshHumidity.setObjectName("primaryButton")
         controls_layout.addWidget(self.btnRefreshHumidity)
         controls_layout.addStretch()
@@ -399,21 +479,37 @@ class Ui_MainWindow(object):
         layout.setContentsMargins(16, 16, 16, 16)
         
         # Controls
-        controls_group = QGroupBox("Fan Speed Controls")
+        controls_group = QGroupBox("Fan Speed Graph Selection")
         controls_layout = QHBoxLayout(controls_group)
         controls_layout.setSpacing(12)
         
-        self.comboFanSerial = QComboBox()
-        self.comboFanSerial.setMinimumWidth(120)
-        controls_layout.addWidget(QLabel("Serial:"))
-        controls_layout.addWidget(self.comboFanSerial)
+        # Top graph selector
+        controls_layout.addWidget(QLabel("Top Graph:"))
+        self.comboFanTopGraph = QComboBox()
+        self.comboFanTopGraph.setMinimumWidth(160)
+        self.comboFanTopGraph.addItems([
+            "Select parameter...",
+            "Speed FAN 1",
+            "Speed FAN 2",
+            "Speed FAN 3",
+            "Speed FAN 4"
+        ])
+        controls_layout.addWidget(self.comboFanTopGraph)
         
-        self.comboFanParam = QComboBox()
-        self.comboFanParam.setMinimumWidth(160)
-        controls_layout.addWidget(QLabel("Parameter:"))
-        controls_layout.addWidget(self.comboFanParam)
+        # Bottom graph selector
+        controls_layout.addWidget(QLabel("Bottom Graph:"))
+        self.comboFanBottomGraph = QComboBox()
+        self.comboFanBottomGraph.setMinimumWidth(160)
+        self.comboFanBottomGraph.addItems([
+            "Select parameter...",
+            "Speed FAN 1",
+            "Speed FAN 2", 
+            "Speed FAN 3",
+            "Speed FAN 4"
+        ])
+        controls_layout.addWidget(self.comboFanBottomGraph)
         
-        self.btnRefreshFan = QPushButton("Refresh")
+        self.btnRefreshFan = QPushButton("Update Graphs")
         self.btnRefreshFan.setObjectName("primaryButton")
         controls_layout.addWidget(self.btnRefreshFan)
         controls_layout.addStretch()
