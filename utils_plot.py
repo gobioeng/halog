@@ -290,6 +290,209 @@ class PlotUtils:
             'Position': '#98d8c8',     # Mint
             'Other': '#95a5a6'         # Gray
         }
+    
+    @staticmethod 
+    def create_dual_graph_plot(widget, data_top=None, data_bottom=None, title_top="Top Graph", title_bottom="Bottom Graph"):
+        """Create dual graph layout (top and bottom) for enhanced parameter visualization"""
+        from PyQt5.QtWidgets import QVBoxLayout
+        
+        # Clear existing plot
+        layout = widget.layout()
+        if layout is None:
+            layout = QVBoxLayout(widget)
+            widget.setLayout(layout)
+        else:
+            while layout.count():
+                item = layout.takeAt(0)
+                w = item.widget()
+                if w:
+                    w.deleteLater()
+        
+        # Setup professional style
+        PlotUtils.setup_professional_style()
+        
+        # Create figure with two subplots
+        fig = Figure(figsize=(12, 8))
+        
+        # Top subplot
+        ax1 = fig.add_subplot(2, 1, 1)
+        PlotUtils._plot_parameter_data(ax1, data_top, title_top)
+        
+        # Bottom subplot  
+        ax2 = fig.add_subplot(2, 1, 2)
+        PlotUtils._plot_parameter_data(ax2, data_bottom, title_bottom)
+        
+        # Adjust layout
+        fig.tight_layout(pad=3.0)
+        
+        # Add to widget
+        canvas = FigureCanvas(fig)
+        layout.addWidget(canvas)
+        
+        # Add interactive manager
+        interactive_manager = InteractivePlotManager(fig, [ax1, ax2], canvas)
+        
+        return canvas, interactive_manager
+    
+    @staticmethod
+    def _plot_parameter_data(ax, data, title):
+        """Plot parameter data on a specific axis"""
+        if data is None or data.empty:
+            ax.text(0.5, 0.5, 'No data available', 
+                   horizontalalignment='center', verticalalignment='center',
+                   transform=ax.transAxes, fontsize=12, color='gray')
+            ax.set_title(title, fontsize=12, fontweight='bold')
+            return
+        
+        # Ensure datetime column exists and is valid
+        if 'datetime' in data.columns:
+            data['datetime'] = pd.to_datetime(data['datetime'], errors='coerce')
+            data = data[data['datetime'].notna()]
+        
+        if data.empty:
+            ax.text(0.5, 0.5, 'No valid data', 
+                   horizontalalignment='center', verticalalignment='center',
+                   transform=ax.transAxes, fontsize=12, color='gray')
+            ax.set_title(title, fontsize=12, fontweight='bold')
+            return
+        
+        # Plot data with auto-scaling
+        colors = PlotUtils.get_group_colors()
+        color_cycle = list(colors.values())
+        
+        if 'parameter' in data.columns:
+            # Multiple parameters
+            unique_params = data['parameter'].unique()
+            for i, param in enumerate(unique_params):
+                param_data = data[data['parameter'] == param]
+                color = color_cycle[i % len(color_cycle)]
+                
+                if 'datetime' in param_data.columns and 'avg_value' in param_data.columns:
+                    ax.plot(param_data['datetime'], param_data['avg_value'], 
+                           label=param, color=color, linewidth=2, marker='o', markersize=4)
+                    
+                    # Add error bands if min/max available
+                    if 'min_value' in param_data.columns and 'max_value' in param_data.columns:
+                        ax.fill_between(param_data['datetime'], 
+                                      param_data['min_value'], param_data['max_value'],
+                                      alpha=0.2, color=color)
+        else:
+            # Single parameter
+            if 'datetime' in data.columns and 'avg_value' in data.columns:
+                ax.plot(data['datetime'], data['avg_value'], 
+                       color=color_cycle[0], linewidth=2, marker='o', markersize=4)
+                
+                if 'min_value' in data.columns and 'max_value' in data.columns:
+                    ax.fill_between(data['datetime'], 
+                                  data['min_value'], data['max_value'],
+                                  alpha=0.2, color=color_cycle[0])
+        
+        # Format axes
+        ax.set_title(title, fontsize=12, fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        
+        if 'datetime' in data.columns:
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+            ax.xaxis.set_major_locator(mdates.HourLocator(interval=1))
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
+        
+        # Auto-scale with some padding
+        ax.margins(x=0.02, y=0.05)
+        
+        # Add legend if multiple parameters
+        if 'parameter' in data.columns and len(data['parameter'].unique()) > 1:
+            ax.legend(loc='best', framealpha=0.9)
+    
+    @staticmethod
+    def _plot_parameter_data_single(widget, data, title):
+        """Plot parameter data on a single widget"""
+        from PyQt5.QtWidgets import QVBoxLayout
+        
+        # Clear existing plot
+        layout = widget.layout()
+        if layout is None:
+            layout = QVBoxLayout(widget)
+            widget.setLayout(layout)
+        else:
+            while layout.count():
+                item = layout.takeAt(0)
+                w = item.widget()
+                if w:
+                    w.deleteLater()
+        
+        # Setup professional style
+        PlotUtils.setup_professional_style()
+        
+        # Create figure with single subplot
+        fig = Figure(figsize=(8, 4))
+        ax = fig.add_subplot(111)
+        
+        # Plot the data
+        PlotUtils._plot_parameter_data(ax, data, title)
+        
+        # Adjust layout
+        fig.tight_layout(pad=2.0)
+        
+        # Add to widget
+        canvas = FigureCanvas(fig)
+        layout.addWidget(canvas)
+        
+        # Add interactive manager
+        interactive_manager = InteractivePlotManager(fig, ax, canvas)
+        
+        return canvas, interactive_manager
+    
+    @staticmethod
+    def plot_shortdata_parameters(widget, shortdata_parser, group_name, serial_number=None, parameter_name=None):
+        """Plot shortdata parameters using dual graph layout"""
+        try:
+            # Get parameters for the group
+            if parameter_name:
+                # Plot specific parameter in top graph
+                data_top = shortdata_parser.get_data_for_visualization(group_name, parameter_name)
+                title_top = f"{parameter_name} - {group_name.title()}"
+                
+                # Get another parameter for bottom graph
+                all_params = shortdata_parser.get_unique_parameter_names(group_name)
+                other_params = [p for p in all_params if p != parameter_name]
+                if other_params:
+                    data_bottom = shortdata_parser.get_data_for_visualization(group_name, other_params[0])
+                    title_bottom = f"{other_params[0]} - {group_name.title()}"
+                else:
+                    data_bottom = pd.DataFrame()
+                    title_bottom = f"No additional {group_name.title()} data"
+            else:
+                # Plot top 2 parameters in the group
+                all_params = shortdata_parser.get_unique_parameter_names(group_name)
+                if len(all_params) >= 1:
+                    data_top = shortdata_parser.get_data_for_visualization(group_name, all_params[0])
+                    title_top = f"{all_params[0]} - {group_name.title()}"
+                else:
+                    data_top = pd.DataFrame()
+                    title_top = f"No {group_name.title()} data"
+                
+                if len(all_params) >= 2:
+                    data_bottom = shortdata_parser.get_data_for_visualization(group_name, all_params[1])
+                    title_bottom = f"{all_params[1]} - {group_name.title()}"
+                else:
+                    data_bottom = pd.DataFrame()
+                    title_bottom = f"No additional {group_name.title()} data"
+            
+            # Filter by serial number if specified
+            if serial_number and serial_number != "All":
+                if not data_top.empty and 'serial_number' in data_top.columns:
+                    data_top = data_top[data_top['serial_number'] == serial_number]
+                if not data_bottom.empty and 'serial_number' in data_bottom.columns:
+                    data_bottom = data_bottom[data_bottom['serial_number'] == serial_number]
+            
+            # Create dual graph plot
+            return PlotUtils.create_dual_graph_plot(widget, data_top, data_bottom, title_top, title_bottom)
+            
+        except Exception as e:
+            print(f"Error plotting shortdata parameters: {e}")
+            import traceback
+            traceback.print_exc()
+            return None, None
 
 
 def plot_trend(widget, df: pd.DataFrame, title_suffix: str = ""):

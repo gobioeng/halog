@@ -110,6 +110,24 @@ class FaultCodeParser:
             return result
         return None
     
+    def get_fault_descriptions_by_database(self, code: str) -> Dict[str, str]:
+        """Get fault descriptions from both databases for a given code"""
+        code = code.strip()
+        descriptions = {
+            'hal_description': 'NA',
+            'tb_description': 'NA'
+        }
+        
+        if code in self.fault_codes:
+            fault_data = self.fault_codes[code]
+            db = fault_data.get('database', 'Unknown')
+            if db == 'HAL':
+                descriptions['hal_description'] = fault_data.get('description', 'NA')
+            elif db == 'TB':
+                descriptions['tb_description'] = fault_data.get('description', 'NA')
+        
+        return descriptions
+    
     def get_stats(self) -> Dict[str, int]:
         """Get statistics about loaded fault codes from both databases"""
         stats = {

@@ -174,42 +174,218 @@ class Ui_MainWindow(object):
         layout = QVBoxLayout(self.tabTrends)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        controls_group = QGroupBox("Trend Analysis Controls")
+        # Create sub-tabs for different parameter groups
+        self.trendSubTabs = QTabWidget()
+        self.trendSubTabs.setTabPosition(QTabWidget.North)
+        layout.addWidget(self.trendSubTabs)
+
+        # Water System tab
+        self.setup_water_system_tab()
+        
+        # Voltages tab
+        self.setup_voltages_tab()
+        
+        # Temperatures tab  
+        self.setup_temperatures_tab()
+        
+        # Humidity tab
+        self.setup_humidity_tab()
+
+    def setup_water_system_tab(self):
+        self.tabWaterSystem = QWidget()
+        self.trendSubTabs.addTab(self.tabWaterSystem, "🌊 Water System")
+        layout = QVBoxLayout(self.tabWaterSystem)
+        layout.setContentsMargins(16, 16, 16, 16)
+        
+        # Controls
+        controls_group = QGroupBox("Water System Controls")
         controls_layout = QHBoxLayout(controls_group)
         controls_layout.setSpacing(12)
-        controls_layout.setContentsMargins(12, 12, 12, 12)
-
-        serial_label = QLabel("Serial Number:")
-        serial_label.setWordWrap(True)
-        controls_layout.addWidget(serial_label)
-
-        self.comboTrendSerial = QComboBox()
-        self.comboTrendSerial.setMinimumWidth(120)
-        self.comboTrendSerial.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
-        controls_layout.addWidget(self.comboTrendSerial)
-
-        param_label = QLabel("Parameter:")
-        param_label.setWordWrap(True)
-        controls_layout.addWidget(param_label)
-
-        self.comboTrendParam = QComboBox()
-        self.comboTrendParam.setMinimumWidth(160)
-        self.comboTrendParam.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
-        controls_layout.addWidget(self.comboTrendParam)
         
-        self.btnResetGraph = QPushButton("Reset Graph")
-        self.btnResetGraph.setMinimumWidth(100)
-        controls_layout.addWidget(self.btnResetGraph)
+        self.comboWaterSerial = QComboBox()
+        self.comboWaterSerial.setMinimumWidth(120)
+        controls_layout.addWidget(QLabel("Serial:"))
+        controls_layout.addWidget(self.comboWaterSerial)
+        
+        self.comboWaterParam = QComboBox()
+        self.comboWaterParam.setMinimumWidth(160)
+        controls_layout.addWidget(QLabel("Parameter:"))
+        controls_layout.addWidget(self.comboWaterParam)
+        
+        self.btnRefreshWater = QPushButton("Refresh")
+        self.btnRefreshWater.setObjectName("primaryButton")
+        controls_layout.addWidget(self.btnRefreshWater)
         controls_layout.addStretch()
-
+        
         layout.addWidget(controls_group)
+        
+        # Two graphs layout (top and bottom)
+        graphs_widget = QWidget()
+        graphs_layout = QVBoxLayout(graphs_widget)
+        graphs_layout.setSpacing(12)
+        
+        self.waterGraphTop = QFrame()
+        self.waterGraphTop.setFrameStyle(QFrame.Box)
+        self.waterGraphTop.setObjectName("plotFrame")
+        self.waterGraphTop.setMinimumHeight(200)
+        self.waterGraphTop.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        graphs_layout.addWidget(self.waterGraphTop)
+        
+        self.waterGraphBottom = QFrame()
+        self.waterGraphBottom.setFrameStyle(QFrame.Box)
+        self.waterGraphBottom.setObjectName("plotFrame")
+        self.waterGraphBottom.setMinimumHeight(200)
+        self.waterGraphBottom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        graphs_layout.addWidget(self.waterGraphBottom)
+        
+        layout.addWidget(graphs_widget)
 
-        self.plotWidget = QFrame()
-        self.plotWidget.setFrameStyle(QFrame.Box)
-        self.plotWidget.setObjectName("plotFrame")
-        self.plotWidget.setMinimumHeight(400)
-        self.plotWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        layout.addWidget(self.plotWidget)
+    def setup_voltages_tab(self):
+        self.tabVoltages = QWidget()
+        self.trendSubTabs.addTab(self.tabVoltages, "⚡ Voltages")
+        layout = QVBoxLayout(self.tabVoltages)
+        layout.setContentsMargins(16, 16, 16, 16)
+        
+        # Controls
+        controls_group = QGroupBox("Voltage Controls")
+        controls_layout = QHBoxLayout(controls_group)
+        controls_layout.setSpacing(12)
+        
+        self.comboVoltageSerial = QComboBox()
+        self.comboVoltageSerial.setMinimumWidth(120)
+        controls_layout.addWidget(QLabel("Serial:"))
+        controls_layout.addWidget(self.comboVoltageSerial)
+        
+        self.comboVoltageParam = QComboBox()
+        self.comboVoltageParam.setMinimumWidth(160)
+        controls_layout.addWidget(QLabel("Parameter:"))
+        controls_layout.addWidget(self.comboVoltageParam)
+        
+        self.btnRefreshVoltage = QPushButton("Refresh")
+        self.btnRefreshVoltage.setObjectName("primaryButton")
+        controls_layout.addWidget(self.btnRefreshVoltage)
+        controls_layout.addStretch()
+        
+        layout.addWidget(controls_group)
+        
+        # Two graphs layout (top and bottom)
+        graphs_widget = QWidget()
+        graphs_layout = QVBoxLayout(graphs_widget)
+        graphs_layout.setSpacing(12)
+        
+        self.voltageGraphTop = QFrame()
+        self.voltageGraphTop.setFrameStyle(QFrame.Box)
+        self.voltageGraphTop.setObjectName("plotFrame")
+        self.voltageGraphTop.setMinimumHeight(200)
+        self.voltageGraphTop.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        graphs_layout.addWidget(self.voltageGraphTop)
+        
+        self.voltageGraphBottom = QFrame()
+        self.voltageGraphBottom.setFrameStyle(QFrame.Box)
+        self.voltageGraphBottom.setObjectName("plotFrame")
+        self.voltageGraphBottom.setMinimumHeight(200)
+        self.voltageGraphBottom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        graphs_layout.addWidget(self.voltageGraphBottom)
+        
+        layout.addWidget(graphs_widget)
+
+    def setup_temperatures_tab(self):
+        self.tabTemperatures = QWidget()
+        self.trendSubTabs.addTab(self.tabTemperatures, "🌡️ Temperatures")
+        layout = QVBoxLayout(self.tabTemperatures)
+        layout.setContentsMargins(16, 16, 16, 16)
+        
+        # Controls
+        controls_group = QGroupBox("Temperature Controls")
+        controls_layout = QHBoxLayout(controls_group)
+        controls_layout.setSpacing(12)
+        
+        self.comboTempSerial = QComboBox()
+        self.comboTempSerial.setMinimumWidth(120)
+        controls_layout.addWidget(QLabel("Serial:"))
+        controls_layout.addWidget(self.comboTempSerial)
+        
+        self.comboTempParam = QComboBox()
+        self.comboTempParam.setMinimumWidth(160)
+        controls_layout.addWidget(QLabel("Parameter:"))
+        controls_layout.addWidget(self.comboTempParam)
+        
+        self.btnRefreshTemp = QPushButton("Refresh")
+        self.btnRefreshTemp.setObjectName("primaryButton")
+        controls_layout.addWidget(self.btnRefreshTemp)
+        controls_layout.addStretch()
+        
+        layout.addWidget(controls_group)
+        
+        # Two graphs layout (top and bottom)
+        graphs_widget = QWidget()
+        graphs_layout = QVBoxLayout(graphs_widget)
+        graphs_layout.setSpacing(12)
+        
+        self.tempGraphTop = QFrame()
+        self.tempGraphTop.setFrameStyle(QFrame.Box)
+        self.tempGraphTop.setObjectName("plotFrame")
+        self.tempGraphTop.setMinimumHeight(200)
+        self.tempGraphTop.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        graphs_layout.addWidget(self.tempGraphTop)
+        
+        self.tempGraphBottom = QFrame()
+        self.tempGraphBottom.setFrameStyle(QFrame.Box)
+        self.tempGraphBottom.setObjectName("plotFrame")
+        self.tempGraphBottom.setMinimumHeight(200)
+        self.tempGraphBottom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        graphs_layout.addWidget(self.tempGraphBottom)
+        
+        layout.addWidget(graphs_widget)
+
+    def setup_humidity_tab(self):
+        self.tabHumidity = QWidget()
+        self.trendSubTabs.addTab(self.tabHumidity, "💧 Humidity")
+        layout = QVBoxLayout(self.tabHumidity)
+        layout.setContentsMargins(16, 16, 16, 16)
+        
+        # Controls
+        controls_group = QGroupBox("Humidity Controls")
+        controls_layout = QHBoxLayout(controls_group)
+        controls_layout.setSpacing(12)
+        
+        self.comboHumiditySerial = QComboBox()
+        self.comboHumiditySerial.setMinimumWidth(120)
+        controls_layout.addWidget(QLabel("Serial:"))
+        controls_layout.addWidget(self.comboHumiditySerial)
+        
+        self.comboHumidityParam = QComboBox()
+        self.comboHumidityParam.setMinimumWidth(160)
+        controls_layout.addWidget(QLabel("Parameter:"))
+        controls_layout.addWidget(self.comboHumidityParam)
+        
+        self.btnRefreshHumidity = QPushButton("Refresh")
+        self.btnRefreshHumidity.setObjectName("primaryButton")
+        controls_layout.addWidget(self.btnRefreshHumidity)
+        controls_layout.addStretch()
+        
+        layout.addWidget(controls_group)
+        
+        # Two graphs layout (top and bottom)
+        graphs_widget = QWidget()
+        graphs_layout = QVBoxLayout(graphs_widget)
+        graphs_layout.setSpacing(12)
+        
+        self.humidityGraphTop = QFrame()
+        self.humidityGraphTop.setFrameStyle(QFrame.Box)
+        self.humidityGraphTop.setObjectName("plotFrame")
+        self.humidityGraphTop.setMinimumHeight(200)
+        self.humidityGraphTop.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        graphs_layout.addWidget(self.humidityGraphTop)
+        
+        self.humidityGraphBottom = QFrame()
+        self.humidityGraphBottom.setFrameStyle(QFrame.Box)
+        self.humidityGraphBottom.setObjectName("plotFrame")
+        self.humidityGraphBottom.setMinimumHeight(200)
+        self.humidityGraphBottom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        graphs_layout.addWidget(self.humidityGraphBottom)
+        
+        layout.addWidget(graphs_widget)
 
     def setup_data_table_tab(self):
         self.tabDataTable = QWidget()
@@ -329,10 +505,40 @@ class Ui_MainWindow(object):
 
         self.txtFaultResult = QTextEdit()
         self.txtFaultResult.setReadOnly(True)
-        self.txtFaultResult.setMinimumHeight(200)
+        self.txtFaultResult.setMinimumHeight(150)
         self.txtFaultResult.setPlaceholderText("Search results will appear here...")
         results_layout.addWidget(self.txtFaultResult)
 
+        # Add HAL and TB Description text boxes
+        descriptions_layout = QHBoxLayout()
+        descriptions_layout.setSpacing(12)
+        
+        # HAL Description box
+        hal_group = QGroupBox("HAL Description")
+        hal_layout = QVBoxLayout(hal_group)
+        hal_layout.setContentsMargins(8, 8, 8, 8)
+        
+        self.txtHALDescription = QTextEdit()
+        self.txtHALDescription.setReadOnly(True)
+        self.txtHALDescription.setMaximumHeight(120)
+        self.txtHALDescription.setPlaceholderText("HAL fault description will appear here...")
+        hal_layout.addWidget(self.txtHALDescription)
+        
+        # TB Description box
+        tb_group = QGroupBox("TB Description")
+        tb_layout = QVBoxLayout(tb_group)
+        tb_layout.setContentsMargins(8, 8, 8, 8)
+        
+        self.txtTBDescription = QTextEdit()
+        self.txtTBDescription.setReadOnly(True)
+        self.txtTBDescription.setMaximumHeight(120)
+        self.txtTBDescription.setPlaceholderText("TB fault description will appear here...")
+        tb_layout.addWidget(self.txtTBDescription)
+        
+        descriptions_layout.addWidget(hal_group)
+        descriptions_layout.addWidget(tb_group)
+        
+        results_layout.addLayout(descriptions_layout)
         layout.addWidget(results_group)
 
         stats_group = QGroupBox("Fault Code Statistics")
