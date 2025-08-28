@@ -100,6 +100,7 @@ class Ui_MainWindow(object):
         self.setup_trends_tab()
         self.setup_data_table_tab()
         self.setup_analysis_tab()
+        self.setup_mpc_tab()  # NEW MPC TAB
         self.setup_fault_code_tab()
         self.setup_about_tab()
 
@@ -190,6 +191,9 @@ class Ui_MainWindow(object):
         
         # Humidity tab
         self.setup_humidity_tab()
+        
+        # Fan Speeds tab (NEW)
+        self.setup_fan_speeds_tab()
 
     def setup_water_system_tab(self):
         self.tabWaterSystem = QWidget()
@@ -387,6 +391,55 @@ class Ui_MainWindow(object):
         
         layout.addWidget(graphs_widget)
 
+    def setup_fan_speeds_tab(self):
+        self.tabFanSpeeds = QWidget()
+        self.trendSubTabs.addTab(self.tabFanSpeeds, "🌀 Fan Speeds")
+        layout = QVBoxLayout(self.tabFanSpeeds)
+        layout.setContentsMargins(16, 16, 16, 16)
+        
+        # Controls
+        controls_group = QGroupBox("Fan Speed Controls")
+        controls_layout = QHBoxLayout(controls_group)
+        controls_layout.setSpacing(12)
+        
+        self.comboFanSerial = QComboBox()
+        self.comboFanSerial.setMinimumWidth(120)
+        controls_layout.addWidget(QLabel("Serial:"))
+        controls_layout.addWidget(self.comboFanSerial)
+        
+        self.comboFanParam = QComboBox()
+        self.comboFanParam.setMinimumWidth(160)
+        controls_layout.addWidget(QLabel("Parameter:"))
+        controls_layout.addWidget(self.comboFanParam)
+        
+        self.btnRefreshFan = QPushButton("Refresh")
+        self.btnRefreshFan.setObjectName("primaryButton")
+        controls_layout.addWidget(self.btnRefreshFan)
+        controls_layout.addStretch()
+        
+        layout.addWidget(controls_group)
+        
+        # Two graphs layout (top and bottom)
+        graphs_widget = QWidget()
+        graphs_layout = QVBoxLayout(graphs_widget)
+        graphs_layout.setSpacing(12)
+        
+        self.fanGraphTop = QFrame()
+        self.fanGraphTop.setFrameStyle(QFrame.Box)
+        self.fanGraphTop.setObjectName("plotFrame")
+        self.fanGraphTop.setMinimumHeight(200)
+        self.fanGraphTop.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        graphs_layout.addWidget(self.fanGraphTop)
+        
+        self.fanGraphBottom = QFrame()
+        self.fanGraphBottom.setFrameStyle(QFrame.Box)
+        self.fanGraphBottom.setObjectName("plotFrame")
+        self.fanGraphBottom.setMinimumHeight(200)
+        self.fanGraphBottom.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        graphs_layout.addWidget(self.fanGraphBottom)
+        
+        layout.addWidget(graphs_widget)
+
     def setup_data_table_tab(self):
         self.tabDataTable = QWidget()
         self.tabWidget.addTab(self.tabDataTable, "📋 Data Table")
@@ -446,6 +499,152 @@ class Ui_MainWindow(object):
         )
         trends_layout.addWidget(self.tableTrends)
         layout.addWidget(trends_group)
+
+    def setup_mpc_tab(self):
+        self.tabMPC = QWidget()
+        self.tabWidget.addTab(self.tabMPC, "🔧 MPC")
+        layout = QVBoxLayout(self.tabMPC)
+        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        header_label = QLabel("<h2>Machine Performance Check Results</h2>")
+        header_label.setAlignment(Qt.AlignCenter)
+        header_label.setWordWrap(True)
+        layout.addWidget(header_label)
+
+        # Date selection controls
+        date_group = QGroupBox("Date Selection")
+        date_layout = QHBoxLayout(date_group)
+        date_layout.setSpacing(12)
+        date_layout.setContentsMargins(16, 16, 16, 16)
+        
+        # Date A selection
+        date_layout.addWidget(QLabel("Date A:"))
+        self.comboDateA = QComboBox()
+        self.comboDateA.setMinimumWidth(150)
+        self.comboDateA.setPlaceholderText("Select first date...")
+        date_layout.addWidget(self.comboDateA)
+        
+        # Date B selection  
+        date_layout.addWidget(QLabel("Date B:"))
+        self.comboDateB = QComboBox()
+        self.comboDateB.setMinimumWidth(150)
+        self.comboDateB.setPlaceholderText("Select second date...")
+        date_layout.addWidget(self.comboDateB)
+        
+        # Compare button
+        self.btnCompareMPC = QPushButton("Compare Results")
+        self.btnCompareMPC.setObjectName("primaryButton")
+        date_layout.addWidget(self.btnCompareMPC)
+        
+        date_layout.addStretch()
+        layout.addWidget(date_group)
+
+        # Results table
+        results_group = QGroupBox("MPC Comparison Results")
+        results_layout = QVBoxLayout(results_group)
+        results_layout.setContentsMargins(16, 16, 16, 16)
+
+        self.tableMPC = QTableWidget()
+        self.tableMPC.setAlternatingRowColors(True)
+        self.tableMPC.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.tableMPC.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tableMPC.setColumnCount(4)
+        self.tableMPC.setHorizontalHeaderLabels([
+            "Parameter",
+            "Date A Result", 
+            "Date B Result",
+            "Status"
+        ])
+        
+        # Set column widths
+        header = self.tableMPC.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Parameter
+        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Date A
+        header.setSectionResizeMode(2, QHeaderView.Stretch)  # Date B  
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Status
+        
+        self.tableMPC.setMinimumHeight(400)
+        results_layout.addWidget(self.tableMPC)
+
+        # Load sample MPC data
+        self._populate_sample_mpc_data()
+        
+        layout.addWidget(results_group)
+
+        # Statistics
+        stats_group = QGroupBox("MPC Statistics")
+        stats_layout = QHBoxLayout(stats_group)
+        stats_layout.setContentsMargins(16, 16, 16, 16)
+
+        self.lblMPCStats = QLabel("Select dates to view comparison statistics")
+        self.lblMPCStats.setWordWrap(True)
+        stats_layout.addWidget(self.lblMPCStats)
+
+        stats_layout.addStretch()
+        layout.addWidget(stats_group)
+
+    def _populate_sample_mpc_data(self):
+        """Populate sample MPC data for demonstration"""
+        # Sample MPC check categories and parameters
+        mpc_data = [
+            # Geometric Checks
+            ("Geometry", "Isocenter Radius (mm)", "0.8", "0.9", "PASS"),
+            ("Geometry", "Gantry Accuracy (°)", "0.1", "0.2", "PASS"), 
+            ("Geometry", "Collimator Accuracy (°)", "0.1", "0.1", "PASS"),
+            ("Geometry", "Couch Accuracy (°)", "0.3", "0.4", "PASS"),
+            ("Geometry", "Laser Alignment (mm)", "0.5", "0.8", "PASS"),
+            
+            # Dosimetric Checks
+            ("Dosimetry", "Beam Output Constancy (%)", "0.2", "0.3", "PASS"),
+            ("Dosimetry", "Beam Uniformity (%)", "1.2", "1.5", "PASS"),
+            ("Dosimetry", "Center Shift (mm)", "0.3", "0.4", "PASS"),
+            ("Dosimetry", "Energy Constancy (%)", "0.5", "0.8", "PASS"),
+            ("Dosimetry", "Dose Rate Constancy (%)", "0.8", "1.0", "PASS"),
+            
+            # MLC Checks
+            ("MLC", "Leaf Position Accuracy (mm)", "0.5", "0.7", "PASS"),
+            ("MLC", "Leaf Speed Constancy (%)", "1.0", "1.2", "PASS"),
+            ("MLC", "Leaf Gap Width (mm)", "0.1", "0.1", "PASS"),
+            
+            # Imaging Checks  
+            ("Imaging", "Image Quality Score", "95", "93", "PASS"),
+            ("Imaging", "Contrast Resolution (%)", "2.1", "2.3", "PASS"),
+            ("Imaging", "Spatial Resolution (lp/mm)", "0.8", "0.8", "PASS"),
+        ]
+
+        self.tableMPC.setRowCount(len(mpc_data))
+        
+        for row, (category, param, date_a, date_b, status) in enumerate(mpc_data):
+            # Parameter name with category
+            param_item = QLabel(f"<b>[{category}]</b><br>{param}")
+            param_item.setWordWrap(True)
+            self.tableMPC.setCellWidget(row, 0, param_item)
+            
+            # Date A result
+            self.tableMPC.setItem(row, 1, QTableWidgetItem(date_a))
+            
+            # Date B result  
+            self.tableMPC.setItem(row, 2, QTableWidgetItem(date_b))
+            
+            # Status with color coding
+            status_item = QLabel(status)
+            if status == "PASS":
+                status_item.setStyleSheet("color: green; font-weight: bold;")
+            elif status == "FAIL":
+                status_item.setStyleSheet("color: red; font-weight: bold;")
+            else:
+                status_item.setStyleSheet("color: orange; font-weight: bold;")
+            status_item.setAlignment(Qt.AlignCenter)
+            self.tableMPC.setCellWidget(row, 3, status_item)
+
+        # Update statistics
+        total_checks = len(mpc_data)
+        passed_checks = sum(1 for _, _, _, _, status in mpc_data if status == "PASS")
+        self.lblMPCStats.setText(
+            f"Total Checks: {total_checks} | Passed: {passed_checks} | "
+            f"Pass Rate: {(passed_checks/total_checks)*100:.1f}%"
+        )
 
     def setup_fault_code_tab(self):
         self.tabFaultCode = QWidget()

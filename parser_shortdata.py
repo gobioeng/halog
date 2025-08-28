@@ -157,32 +157,41 @@ class ShortDataParser:
         return None
     
     def _group_parameters(self, parameters: List[Dict]):
-        """Group parameters by type for organized visualization"""
+        """Group parameters by type for organized visualization - Enhanced for requirement specifications"""
         for param in parameters:
             param_name = param['parameter_name'].lower()
+            original_name = param['parameter_name']
             
-            # Temperature parameters
-            if any(term in param_name for term in ['temp', 'temperature', 'thermal']):
-                self.parameter_groups['temperature'].append(param)
-            
-            # Voltage parameters  
-            elif any(term in param_name for term in ['volt', '_v_', 'vref', '24v', '48v', '5v', '3v', '15v', '11v']):
-                self.parameter_groups['voltage'].append(param)
-            
-            # Humidity parameters
-            elif 'humidity' in param_name:
-                self.parameter_groups['humidity'].append(param)
-            
-            # Fan speed parameters
-            elif any(term in param_name for term in ['fan', 'speed']):
+            # Fan speed parameters (check first to catch fan-related temps)
+            if any(term in param_name for term in ['fanfanspeed', 'fanspeed', 'fan speed']):
                 self.parameter_groups['fan_speed'].append(param)
             
-            # Flow parameters
-            elif any(term in param_name for term in ['flow']):
+            # Voltage parameters (enhanced patterns)
+            elif any(term in param_name for term in [
+                'volt', '_v_', 'vref', '24v', '48v', '5v', '3v', '15v', '11v', '10v',
+                'mlc_adc_chan_', 'col_adc_chan_', 'motorpwr', 'motor_pwr'
+            ]):
+                self.parameter_groups['voltage'].append(param)
+            
+            # Temperature parameters (enhanced patterns)
+            elif any(term in param_name for term in [
+                'temp', 'temperature', 'thermal', 'fanremotetemp', 'pdu_boardtemp',
+                'col_board_temp', 'magnetrontemp', 'watertanktemp'
+            ]):
+                self.parameter_groups['temperature'].append(param)
+            
+            # Humidity parameters (include room temp per requirements)
+            elif any(term in param_name for term in ['humidity', 'fanremotetemp']):
+                self.parameter_groups['humidity'].append(param)
+            
+            # Flow parameters (enhanced patterns for water system)
+            elif any(term in param_name for term in [
+                'flow', 'magnetronflow', 'targetflow', 'citywater', 'chiller'
+            ]):
                 self.parameter_groups['flow'].append(param)
             
             # Pressure parameters
-            elif any(term in param_name for term in ['pressure']):
+            elif any(term in param_name for term in ['pressure', 'pumppressure']):
                 self.parameter_groups['pressure'].append(param)
     
     def _print_summary(self):
