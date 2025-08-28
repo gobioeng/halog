@@ -20,6 +20,15 @@ class ProgressDialog(QProgressDialog):
         self.setupUI()
         self.start_time = time.time()
         self.last_update_time = time.time()
+        
+        # Progress phases
+        self.current_phase = "initializing"
+        self.phases = {
+            "uploading": {"label": "Uploading file...", "progress_weight": 0.2},
+            "processing": {"label": "Processing data...", "progress_weight": 0.8},
+            "finalizing": {"label": "Finalizing...", "progress_weight": 0.05}
+        }
+        self.phase_progress = 0  # Progress within current phase (0-100)
 
         # Update timer for ETA calculations
         self.timer = QTimer()
@@ -137,6 +146,43 @@ class ProgressDialog(QProgressDialog):
             )
 
         self.last_update_time = time.time()
+
+    def set_phase(self, phase_name: str, phase_progress: float = 0):
+        """Set the current processing phase"""
+        if phase_name in self.phases:
+            self.current_phase = phase_name
+            self.phase_progress = max(0, min(100, phase_progress))
+            self.update_overall_progress()
+            
+    def update_phase_progress(self, progress: float):
+        """Update progress within the current phase"""
+        self.phase_progress = max(0, min(100, progress))
+        self.update_overall_progress()
+        
+    def update_overall_progress(self):
+        """Calculate and update overall progress across all phases"""
+        overall_progress = 0
+        
+        # Calculate progress based on completed phases and current phase
+        phase_order = ["uploading", "processing", "finalizing"]
+        current_index = phase_order.index(self.current_phase) if self.current_phase in phase_order else 0
+        
+        # Add progress from completed phases
+        for i, phase in enumerate(phase_order):
+            if i < current_index:
+                overall_progress += self.phases[phase]["progress_weight"] * 100
+            elif i == current_index:
+                # Add partial progress from current phase
+                phase_weight = self.phases[phase]["progress_weight"]
+                overall_progress += phase_weight * self.phase_progress
+                break
+                
+        # Update the progress bar
+        self.setValue(int(overall_progress))
+        
+        # Update the label text
+        phase_info = self.phases.get(self.current_phase, {"label": "Processing..."})
+        self.setLabelText(f"{phase_info['label']} ({self.phase_progress:.0f}%)")
 
     def update_eta(self):
         """Update estimated time remaining"""
