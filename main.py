@@ -874,6 +874,13 @@ class HALogApp:
                     parameters = self.shortdata_parameters.get('parameters', [])
                     serial_numbers = list(set(p['serial_number'] for p in parameters))
                     
+                    # Initialize parameter lists to avoid scope errors
+                    unique_flow_params = []
+                    unique_voltage_params = []
+                    unique_temp_params = []
+                    unique_humidity_params = []
+                    unique_fan_params = []
+                    
                     # Initialize Water System controls
                     if hasattr(self.ui, 'comboWaterSerial'):
                         self.ui.comboWaterSerial.clear()
@@ -885,6 +892,9 @@ class HALogApp:
                         if hasattr(self.ui, 'comboWaterParam'):
                             self.ui.comboWaterParam.clear()
                             self.ui.comboWaterParam.addItems(unique_flow_params)
+                            # Set default selection if parameters exist
+                            if unique_flow_params:
+                                self.ui.comboWaterParam.setCurrentIndex(0)
                     
                     # Initialize Voltage controls
                     if hasattr(self.ui, 'comboVoltageSerial'):
@@ -896,6 +906,9 @@ class HALogApp:
                         if hasattr(self.ui, 'comboVoltageParam'):
                             self.ui.comboVoltageParam.clear()
                             self.ui.comboVoltageParam.addItems(unique_voltage_params)
+                            # Set default selection if parameters exist
+                            if unique_voltage_params:
+                                self.ui.comboVoltageParam.setCurrentIndex(0)
                     
                     # Initialize Temperature controls
                     if hasattr(self.ui, 'comboTempSerial'):
@@ -907,6 +920,9 @@ class HALogApp:
                         if hasattr(self.ui, 'comboTempParam'):
                             self.ui.comboTempParam.clear()
                             self.ui.comboTempParam.addItems(unique_temp_params)
+                            # Set default selection if parameters exist
+                            if unique_temp_params:
+                                self.ui.comboTempParam.setCurrentIndex(0)
                     
                     # Initialize Humidity controls
                     if hasattr(self.ui, 'comboHumiditySerial'):
@@ -918,6 +934,9 @@ class HALogApp:
                         if hasattr(self.ui, 'comboHumidityParam'):
                             self.ui.comboHumidityParam.clear()
                             self.ui.comboHumidityParam.addItems(unique_humidity_params)
+                            # Set default selection if parameters exist
+                            if unique_humidity_params:
+                                self.ui.comboHumidityParam.setCurrentIndex(0)
                     
                     # Initialize Fan Speed controls
                     if hasattr(self.ui, 'comboFanSerial'):
@@ -929,6 +948,9 @@ class HALogApp:
                         if hasattr(self.ui, 'comboFanParam'):
                             self.ui.comboFanParam.clear()
                             self.ui.comboFanParam.addItems(unique_fan_params)
+                            # Set default selection if parameters exist
+                            if unique_fan_params:
+                                self.ui.comboFanParam.setCurrentIndex(0)
                     
                     print(f"✓ Trend controls initialized with {len(parameters)} parameters")
                     print(f"  - Flow: {len(unique_flow_params)} parameters")
@@ -1384,17 +1406,18 @@ class HALogApp:
                         serials = []
                         params = []
 
-                    self.ui.comboTrendSerial.blockSignals(True)
-                    self.ui.comboTrendParam.blockSignals(True)
-
-                    self.ui.comboTrendSerial.clear()
-                    self.ui.comboTrendParam.clear()
-
-                    self.ui.comboTrendSerial.addItems(["All"] + serials)
-                    self.ui.comboTrendParam.addItems(["All"] + params)
-
-                    self.ui.comboTrendSerial.blockSignals(False)
-                    self.ui.comboTrendParam.blockSignals(False)
+                    # Check if the UI elements exist before accessing them
+                    if hasattr(self.ui, 'comboTrendSerial'):
+                        self.ui.comboTrendSerial.blockSignals(True)
+                        self.ui.comboTrendSerial.clear()
+                        self.ui.comboTrendSerial.addItems(["All"] + serials)
+                        self.ui.comboTrendSerial.blockSignals(False)
+                    
+                    if hasattr(self.ui, 'comboTrendParam'):
+                        self.ui.comboTrendParam.blockSignals(True)
+                        self.ui.comboTrendParam.clear()
+                        self.ui.comboTrendParam.addItems(["All"] + params)
+                        self.ui.comboTrendParam.blockSignals(False)
 
                     self.update_trend()
                 except Exception as e:
@@ -1694,28 +1717,41 @@ class HALogApp:
                     traceback.print_exc()
 
             def import_log_file(self):
-                """MAIN LOG FILE IMPORT FUNCTION - FULLY CONNECTED"""
+                """MAIN LOG FILE IMPORT FUNCTION - Enhanced with multi-file selection and filtering"""
                 print("🔥 LOG FILE IMPORT TRIGGERED!")
                 try:
-                    file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
+                    # Enable multi-file selection
+                    file_paths, _ = QtWidgets.QFileDialog.getOpenFileNames(
                         self,
-                        "Open LINAC Log File",
+                        "Open LINAC Log Files (Select Multiple Files)",
                         "",
-                        "Log Files (*.txt *.log);;All Files (*)",
+                        "Log Files (*.txt *.log);;Text Files (*.txt);;All Files (*)",
                     )
 
-                    if not file_path:
-                        print("No file selected")
+                    if not file_paths:
+                        print("No files selected")
                         return
 
-                    print(f"Selected file: {file_path}")
-                    file_size = os.path.getsize(file_path)
-                    print(f"File size: {file_size} bytes")
+                    print(f"Selected {len(file_paths)} file(s):")
+                    for file_path in file_paths:
+                        print(f"  - {file_path}")
 
-                    if file_size < 5 * 1024 * 1024:
-                        self._import_small_file(file_path)
-                    else:
-                        self._import_large_file(file_path, file_size)
+                    # Process each file
+                    for file_path in file_paths:
+                        file_size = os.path.getsize(file_path)
+                        print(f"Processing file: {os.path.basename(file_path)} ({file_size} bytes)")
+                        
+                        # Check if it's a shortdata file (sample only)
+                        if 'shortdata' in os.path.basename(file_path).lower():
+                            print(f"⚠️ Treating {os.path.basename(file_path)} as sample data only (not permanently stored)")
+                            self._process_sample_shortdata(file_path)
+                        else:
+                            # Regular log file - filter for TB and HALfault entries only
+                            if file_size < 5 * 1024 * 1024:
+                                self._import_small_file_filtered(file_path)
+                            else:
+                                self._import_large_file_filtered(file_path, file_size)
+                        
                 except Exception as e:
                     print(f"Error in import_log_file: {e}")
                     traceback.print_exc()
@@ -1833,6 +1869,234 @@ class HALogApp:
                         self,
                         "Processing Error",
                         f"Error initializing file processing: {str(e)}",
+                    )
+                    traceback.print_exc()
+
+            def _process_sample_shortdata(self, file_path):
+                """Process shortdata as sample data only (not permanently stored)"""
+                try:
+                    print(f"📋 Processing shortdata as sample: {os.path.basename(file_path)}")
+                    
+                    # Parse shortdata for trend analysis only
+                    from parser_shortdata import ShortDataParser
+                    
+                    parser = ShortDataParser(file_path)
+                    parsed_data = parser.parse_log_file()
+                    
+                    if parsed_data:
+                        # Store in memory for trend analysis
+                        self.shortdata_parameters = parsed_data
+                        self.shortdata_parser = parser
+                        
+                        # Initialize trend controls with the parsed data
+                        self._initialize_trend_controls()
+                        
+                        print(f"✓ Shortdata processed successfully for trend analysis")
+                        QtWidgets.QMessageBox.information(
+                            self,
+                            "Sample Data Loaded", 
+                            f"Shortdata loaded as sample for trend analysis.\n"
+                            f"Parameters available: {len(parsed_data.get('parameters', []))}"
+                        )
+                    else:
+                        print("⚠️ No data extracted from shortdata file")
+                        
+                except Exception as e:
+                    print(f"Error processing shortdata: {e}")
+                    traceback.print_exc()
+
+            def _import_small_file_filtered(self, file_path):
+                """Import small log file with TB/HALfault filtering"""
+                try:
+                    progress_dialog = QtWidgets.QProgressDialog(
+                        "Processing file with filtering...", "Cancel", 0, 100, self
+                    )
+                    progress_dialog.setWindowTitle("Processing Filtered Log File")
+                    progress_dialog.setWindowModality(QtCore.Qt.WindowModal)
+                    progress_dialog.show()
+                    progress_dialog.setValue(10)
+                    QtWidgets.QApplication.processEvents()
+
+                    # Read file and filter for TB/HALfault entries only
+                    filtered_lines = []
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        for line in f:
+                            line_lower = line.lower()
+                            if 'tb' in line_lower or 'halfault' in line_lower or 'hal fault' in line_lower:
+                                filtered_lines.append(line)
+
+                    progress_dialog.setValue(30)
+                    QtWidgets.QApplication.processEvents()
+
+                    print(f"Filtered {len(filtered_lines)} relevant lines from file")
+
+                    if filtered_lines:
+                        # Create temporary filtered file
+                        import tempfile
+                        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
+                            temp_file.writelines(filtered_lines)
+                            temp_path = temp_file.name
+
+                        progress_dialog.setValue(50)
+                        QtWidgets.QApplication.processEvents()
+
+                        # Parse the filtered data
+                        from parser_linac import LinacParser
+                        parser = LinacParser()
+                        df = parser.parse_file_chunked(temp_path)
+
+                        progress_dialog.setValue(70)
+                        QtWidgets.QApplication.processEvents()
+
+                        # Insert only the filtered data
+                        records_inserted = self.db.insert_data_batch(df)
+
+                        progress_dialog.setValue(90)
+                        QtWidgets.QApplication.processEvents()
+
+                        # Clean up temporary file
+                        os.unlink(temp_path)
+
+                        # Store metadata
+                        filename = os.path.basename(file_path) + " (TB/HALfault filtered)"
+                        parsing_stats_json = f'{{"filtered_lines": {len(filtered_lines)}, "total_records": {records_inserted}}}'
+
+                        self.db.insert_file_metadata(
+                            filename=filename,
+                            file_size=len(''.join(filtered_lines)),
+                            records_imported=records_inserted,
+                            parsing_stats=parsing_stats_json,
+                        )
+
+                        progress_dialog.setValue(100)
+                        progress_dialog.close()
+
+                        # Refresh data
+                        try:
+                            self.df = self.db.get_all_logs(chunk_size=10000)
+                        except TypeError:
+                            self.df = self.db.get_all_logs()
+                        self.load_dashboard()
+
+                        QtWidgets.QMessageBox.information(
+                            self,
+                            "Import Successful",
+                            f"Successfully imported {records_inserted:,} filtered records (TB/HALfault only).",
+                        )
+                    else:
+                        progress_dialog.close()
+                        QtWidgets.QMessageBox.information(
+                            self,
+                            "No Relevant Data",
+                            "No TB or HALfault entries found in the selected file.",
+                        )
+
+                except Exception as e:
+                    QtWidgets.QMessageBox.critical(
+                        self, "Processing Error", f"An error occurred: {str(e)}"
+                    )
+                    traceback.print_exc()
+
+            def _import_large_file_filtered(self, file_path, file_size):
+                """Import large log file with TB/HALfault filtering"""
+                try:
+                    progress_dialog = QtWidgets.QProgressDialog(
+                        "Processing large file with filtering...", "Cancel", 0, 100, self
+                    )
+                    progress_dialog.setWindowTitle("Processing Large Filtered Log File")
+                    progress_dialog.setWindowModality(QtCore.Qt.WindowModal)
+                    progress_dialog.show()
+                    
+                    # Process file in chunks for large files
+                    chunk_size = 1024 * 1024  # 1MB chunks
+                    filtered_lines = []
+                    processed_bytes = 0
+                    
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        while True:
+                            chunk = f.read(chunk_size)
+                            if not chunk:
+                                break
+                                
+                            processed_bytes += len(chunk.encode('utf-8'))
+                            progress = min(50, int((processed_bytes / file_size) * 50))
+                            progress_dialog.setValue(progress)
+                            QtWidgets.QApplication.processEvents()
+                            
+                            if progress_dialog.wasCanceled():
+                                return
+                            
+                            # Filter lines in chunk
+                            lines = chunk.split('\n')
+                            for line in lines:
+                                line_lower = line.lower()
+                                if 'tb' in line_lower or 'halfault' in line_lower or 'hal fault' in line_lower:
+                                    filtered_lines.append(line + '\n')
+
+                    print(f"Filtered {len(filtered_lines)} relevant lines from large file")
+                    progress_dialog.setValue(60)
+                    QtWidgets.QApplication.processEvents()
+
+                    if filtered_lines:
+                        # Process filtered data
+                        import tempfile
+                        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
+                            temp_file.writelines(filtered_lines)
+                            temp_path = temp_file.name
+
+                        progress_dialog.setValue(70)
+                        QtWidgets.QApplication.processEvents()
+
+                        # Use existing large file processing for filtered data
+                        from parser_linac import LinacParser
+                        parser = LinacParser()
+                        df = parser.parse_file_chunked(temp_path)
+
+                        progress_dialog.setValue(85)
+                        QtWidgets.QApplication.processEvents()
+
+                        records_inserted = self.db.insert_data_batch(df)
+
+                        # Clean up
+                        os.unlink(temp_path)
+
+                        # Store metadata
+                        filename = os.path.basename(file_path) + " (TB/HALfault filtered)"
+                        parsing_stats_json = f'{{"filtered_lines": {len(filtered_lines)}, "total_records": {records_inserted}}}'
+
+                        self.db.insert_file_metadata(
+                            filename=filename,
+                            file_size=len(''.join(filtered_lines)),
+                            records_imported=records_inserted,
+                            parsing_stats=parsing_stats_json,
+                        )
+
+                        progress_dialog.setValue(100)
+                        progress_dialog.close()
+
+                        # Refresh data
+                        try:
+                            self.df = self.db.get_all_logs(chunk_size=10000)
+                        except TypeError:
+                            self.df = self.db.get_all_logs()
+                        self.load_dashboard()
+
+                        QtWidgets.QMessageBox.information(
+                            self,
+                            "Import Successful",
+                            f"Successfully imported {records_inserted:,} filtered records (TB/HALfault only).",
+                        )
+                    else:
+                        progress_dialog.close()
+                        QtWidgets.QMessageBox.information(
+                            self,
+                            "No Relevant Data",
+                            "No TB or HALfault entries found in the selected file.",
+                        )
+
+                except Exception as e:
+                    QtWidgets.QMessageBox.critical(
+                        self, "Processing Error", f"An error occurred: {str(e)}"
                     )
                     traceback.print_exc()
 
