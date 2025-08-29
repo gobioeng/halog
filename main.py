@@ -732,6 +732,15 @@ class HALogApp:
                     self.ui.actionRefresh.triggered.connect(self.load_dashboard)
                     print("✓ View menu actions connected")
 
+                    # DATA MENU ACTIONS
+                    if hasattr(self.ui, "actionClearAllData"):
+                        self.ui.actionClearAllData.triggered.connect(self.clear_all_data)
+                        print("✓ Clear data action connected")
+                    
+                    if hasattr(self.ui, "actionOptimizeDatabase"):
+                        self.ui.actionOptimizeDatabase.triggered.connect(self.optimize_database)
+                        print("✓ Optimize database action connected")
+
                     # HELP MENU ACTIONS
                     self.ui.actionAbout.triggered.connect(self.show_about_dialog)
                     print("✓ Help menu actions connected")
@@ -799,6 +808,12 @@ class HALogApp:
                     # MPC TAB ACTIONS - Updated for new single-data approach
                     if hasattr(self.ui, 'btnRefreshMPC'):
                         self.ui.btnRefreshMPC.clicked.connect(self.refresh_latest_mpc)
+                        
+                        # Connect MPC date selection dropdowns
+                        if hasattr(self.ui, 'comboMPCDateA'):
+                            self.ui.comboMPCDateA.currentIndexChanged.connect(self.refresh_latest_mpc)
+                        if hasattr(self.ui, 'comboMPCDateB'):
+                            self.ui.comboMPCDateB.currentIndexChanged.connect(self.refresh_latest_mpc)
                     
                     # ANALYSIS TAB ACTIONS - Enhanced controls
                     if hasattr(self.ui, 'btnRefreshAnalysis'):
@@ -1020,6 +1035,31 @@ class HALogApp:
                     selected_top_param = top_combo.currentText() if top_combo.currentIndex() > 0 else None
                     selected_bottom_param = bottom_combo.currentText() if bottom_combo.currentIndex() > 0 else None
                     
+                    # If no parameters selected, use default ones for this group
+                    if not selected_top_param or selected_top_param == "Select parameter...":
+                        if group_name == 'flow':
+                            selected_top_param = "Mag Flow"
+                        elif group_name == 'voltage':
+                            selected_top_param = "MLC Bank A 24V"
+                        elif group_name == 'temperature':
+                            selected_top_param = "Temp Room"
+                        elif group_name == 'humidity':
+                            selected_top_param = "Room Humidity"
+                        elif group_name == 'fan_speed':
+                            selected_top_param = "Speed FAN 1"
+                    
+                    if not selected_bottom_param or selected_bottom_param == "Select parameter...":
+                        if group_name == 'flow':
+                            selected_bottom_param = "Flow Chiller Water"
+                        elif group_name == 'voltage':
+                            selected_bottom_param = "MLC Bank B 24V"
+                        elif group_name == 'temperature':
+                            selected_bottom_param = "Temp Magnetron"
+                        elif group_name == 'humidity':
+                            selected_bottom_param = "Temp Room"  # Fallback if only humidity param available
+                        elif group_name == 'fan_speed':
+                            selected_bottom_param = "Speed FAN 2"
+                    
                     print(f"🔄 Refreshing {group_name} trends - Top: {selected_top_param}, Bottom: {selected_bottom_param}")
                     
                     # Import plotting utilities
@@ -1054,53 +1094,81 @@ class HALogApp:
                     traceback.print_exc()
 
             def _get_parameter_data_by_description(self, parameter_description):
-                """Get parameter data by its user-friendly description"""
+                """Get parameter data by its user-friendly description from the database"""
                 try:
-                    # Create a mapping from descriptions to parameter keys
-                    if not hasattr(self, 'linac_parser'):
-                        print("⚠️ Linac parser not available")
+                    if not hasattr(self, 'df') or self.df.empty:
+                        print("⚠️ No data available in database")
                         return pd.DataFrame()
                     
                     # Find the parameter key that matches this description
-                    for param_key, config in self.linac_parser.parameter_mapping.items():
-                        if config.get("description") == parameter_description:
-                            # Try to get data from shortdata parser if available
-                            if hasattr(self, 'shortdata_parser'):
-                                # Look for this parameter in the shortdata
-                                # For now, return sample data structure
-                                import pandas as pd
-                                import numpy as np
-                                from datetime import datetime, timedelta
-                                
-                                # Generate sample time series data
-                                dates = [datetime.now() - timedelta(hours=i) for i in range(24, 0, -1)]
-                                values = np.random.normal(25, 5, 24)  # Sample data
-                                
-                                return pd.DataFrame({
-                                    'datetime': dates,
-                                    'avg': values,
-                                    'parameter_name': [parameter_description] * 24
-                                })
+                    from parser_linac import LinacParser
+                    parser = LinacParser()
                     
-                    print(f"⚠️ Parameter '{parameter_description}' not found in mapping")
-                    return pd.DataFrame()
+                    param_key = None
+                    for key, config in parser.parameter_mapping.items():
+                        if config.get("description") == parameter_description:
+                            param_key = key
+                            break
+                    
+                    if not param_key:
+                        print(f"⚠️ Parameter '{parameter_description}' not found in mapping")
+                        return pd.DataFrame()
+                    
+                    # Get data from database for this parameter
+                    param_data = self.df[self.df['param'] == param_key].copy()
+                    
+                    if param_data.empty:
+                        print(f"⚠️ No data found for parameter '{param_key}' in database")
+                        return pd.DataFrame()
+                    
+                    # Sort by datetime and return in the format expected by plotting functions
+                    param_data = param_data.sort_values('datetime')
+                    
+                    # Rename columns to match plotting expectations
+                    result_df = pd.DataFrame({
+                        'datetime': param_data['datetime'],
+                        'avg': param_data['average'],
+                        'parameter_name': [parameter_description] * len(param_data)
+                    })
+                    
+                    print(f"✓ Retrieved {len(result_df)} data points for '{parameter_description}'")
+                    return result_df
                     
                 except Exception as e:
-                    print(f"❌ Error getting parameter data: {e}")
+                    print(f"❌ Error getting parameter data for '{parameter_description}': {e}")
+                    import traceback
+                    traceback.print_exc()
                     return pd.DataFrame()
 
             def refresh_latest_mpc(self):
-                """Load and display the latest MPC results"""
+                """Load and display MPC results from database with date selection"""
                 try:
-                    print("🔄 Loading latest MPC results...")
+                    print("🔄 Loading MPC data from database...")
                     
-                    # Get the latest MPC data from available sources
-                    latest_mpc_data = self._get_latest_mpc_data()
+                    # Update available dates in dropdowns
+                    self._populate_mpc_date_dropdowns()
                     
-                    if not latest_mpc_data:
+                    # Get selected dates
+                    date_a = None
+                    date_b = None
+                    
+                    if hasattr(self.ui, 'comboMPCDateA') and self.ui.comboMPCDateA.currentIndex() > 0:
+                        date_a = self.ui.comboMPCDateA.currentText()
+                    
+                    if hasattr(self.ui, 'comboMPCDateB') and self.ui.comboMPCDateB.currentIndex() > 0:
+                        date_b = self.ui.comboMPCDateB.currentText()
+                    
+                    # Get MPC data for comparison
+                    mpc_data = self._get_mpc_comparison_data(date_a, date_b)
+                    
+                    if not mpc_data:
+                        # Show helpful message about what data is needed
                         QtWidgets.QMessageBox.information(
                             self, "No MPC Data", 
-                            "No MPC data available. Import log files containing MPC results."
+                            "No machine performance data available.\n\n"
+                            "Import log files containing machine performance parameters "
+                            "(magnetron flow, temperature readings, voltage levels, etc.) "
+                            "to enable MPC analysis."
                         )
                         return
                     
@@ -1108,22 +1176,241 @@ class HALogApp:
                     if hasattr(self.ui, 'lblLastMPCUpdate'):
                         from datetime import datetime
                         update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        self.ui.lblLastMPCUpdate.setText(f"Last MPC Data: {update_time}")
+                        date_info = ""
+                        if date_a and date_b:
+                            date_info = f" (Comparing {date_a} vs {date_b})"
+                        elif date_a:
+                            date_info = f" (Date A: {date_a})"
+                        elif date_b:
+                            date_info = f" (Date B: {date_b})"
+                        self.ui.lblLastMPCUpdate.setText(f"Last MPC Update: {update_time}{date_info}")
                     
-                    # Update the MPC table with latest data
-                    self._populate_mpc_table(latest_mpc_data)
+                    # Update the MPC table with comparison data
+                    self._populate_mpc_comparison_table(mpc_data, date_a, date_b)
                     
-                    # Update statistics
-                    self._update_mpc_statistics(latest_mpc_data)
-                    
-                    print("✅ Latest MPC results loaded successfully")
+                    print("✅ MPC data loaded successfully")
                     
                 except Exception as e:
-                    print(f"❌ Error loading latest MPC results: {e}")
+                    print(f"❌ Error loading MPC data: {e}")
+                    import traceback
+                    traceback.print_exc()
                     QtWidgets.QMessageBox.critical(
                         self, "MPC Load Error", 
-                        f"Error loading MPC results: {str(e)}"
+                        f"Error loading MPC data: {str(e)}"
                     )
+
+            def _populate_mpc_date_dropdowns(self):
+                """Populate MPC date selection dropdowns with available dates from database"""
+                try:
+                    if not hasattr(self, 'df') or self.df.empty:
+                        print("No data available for MPC date selection")
+                        return
+                    
+                    # Get unique dates from the database
+                    unique_dates = sorted(self.df['datetime'].dt.date.unique(), reverse=True)
+                    date_strings = [date.strftime('%Y-%m-%d') for date in unique_dates]
+                    
+                    # Update Date A dropdown
+                    if hasattr(self.ui, 'comboMPCDateA'):
+                        current_a = self.ui.comboMPCDateA.currentText()
+                        self.ui.comboMPCDateA.blockSignals(True)
+                        self.ui.comboMPCDateA.clear()
+                        self.ui.comboMPCDateA.addItem("Select Date A...")
+                        self.ui.comboMPCDateA.addItems(date_strings)
+                        
+                        # Restore selection if it still exists
+                        if current_a in date_strings:
+                            index = self.ui.comboMPCDateA.findText(current_a)
+                            if index >= 0:
+                                self.ui.comboMPCDateA.setCurrentIndex(index)
+                        
+                        self.ui.comboMPCDateA.blockSignals(False)
+                    
+                    # Update Date B dropdown
+                    if hasattr(self.ui, 'comboMPCDateB'):
+                        current_b = self.ui.comboMPCDateB.currentText()
+                        self.ui.comboMPCDateB.blockSignals(True)
+                        self.ui.comboMPCDateB.clear()
+                        self.ui.comboMPCDateB.addItem("Select Date B...")
+                        self.ui.comboMPCDateB.addItems(date_strings)
+                        
+                        # Restore selection if it still exists
+                        if current_b in date_strings:
+                            index = self.ui.comboMPCDateB.findText(current_b)
+                            if index >= 0:
+                                self.ui.comboMPCDateB.setCurrentIndex(index)
+                        
+                        self.ui.comboMPCDateB.blockSignals(False)
+                    
+                    print(f"Updated MPC date dropdowns with {len(date_strings)} dates")
+                    
+                except Exception as e:
+                    print(f"Error populating MPC date dropdowns: {e}")
+
+            def _get_mpc_comparison_data(self, date_a=None, date_b=None):
+                """Get MPC data for comparison between two dates"""
+                try:
+                    if not hasattr(self, 'df') or self.df.empty:
+                        return None
+                    
+                    # Define key MPC parameters to monitor
+                    mpc_params = [
+                        'magnetronFlow', 'magnetronTemp', 'targetAndCirculatorFlow', 'targetAndCirculatorTemp',
+                        'FanremoteTempStatistics', 'FanhumidityStatistics', 
+                        'FanfanSpeed1Statistics', 'FanfanSpeed2Statistics', 'FanfanSpeed3Statistics', 'FanfanSpeed4Statistics',
+                        'MLC_ADC_CHAN_TEMP_BANKA_STAT_24V', 'MLC_ADC_CHAN_TEMP_BANKB_STAT_24V'
+                    ]
+                    
+                    import pandas as pd
+                    results = []
+                    
+                    for param in mpc_params:
+                        param_data = self.df[self.df['param'] == param]
+                        
+                        if param_data.empty:
+                            continue
+                        
+                        # Get description from parser mapping if available
+                        description = param
+                        if hasattr(self, 'parser') and hasattr(self.parser, 'parameter_mapping'):
+                            mapping = self.parser.parameter_mapping.get(param, {})
+                            description = mapping.get('description', param)
+                        
+                        value_a = "NA"
+                        value_b = "NA"
+                        status = "NA"
+                        
+                        # Get data for Date A
+                        if date_a:
+                            date_a_data = param_data[param_data['datetime'].dt.date == pd.to_datetime(date_a).date()]
+                            if not date_a_data.empty:
+                                value_a = f"{date_a_data['average'].iloc[-1]:.2f}"
+                        
+                        # Get data for Date B  
+                        if date_b:
+                            date_b_data = param_data[param_data['datetime'].dt.date == pd.to_datetime(date_b).date()]
+                            if not date_b_data.empty:
+                                value_b = f"{date_b_data['average'].iloc[-1]:.2f}"
+                        
+                        # Determine status based on comparison
+                        if value_a != "NA" and value_b != "NA":
+                            try:
+                                diff_percent = abs((float(value_a) - float(value_b)) / float(value_a)) * 100
+                                if diff_percent < 5:  # Within 5% tolerance
+                                    status = "PASS"
+                                elif diff_percent < 10:  # Within 10% tolerance
+                                    status = "WARNING"
+                                else:
+                                    status = "FAIL"
+                            except:
+                                status = "CHECK"
+                        elif value_a != "NA" or value_b != "NA":
+                            status = "PARTIAL"
+                        
+                        results.append({
+                            'parameter': description,
+                            'date_a_value': value_a,
+                            'date_b_value': value_b,
+                            'status': status
+                        })
+                    
+                    return results if results else None
+                    
+                except Exception as e:
+                    print(f"Error getting MPC comparison data: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    return None
+
+            def _populate_mpc_comparison_table(self, mpc_data, date_a, date_b):
+                """Populate MPC table with comparison data"""
+                try:
+                    if not mpc_data:
+                        self.ui.tableMPC.setRowCount(0)
+                        return
+                    
+                    self.ui.tableMPC.setRowCount(len(mpc_data))
+                    
+                    for row, data in enumerate(mpc_data):
+                        # Parameter name
+                        param_item = QtWidgets.QLabel(data['parameter'])
+                        param_item.setWordWrap(True)
+                        param_item.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                        param_item.setMargin(5)
+                        self.ui.tableMPC.setCellWidget(row, 0, param_item)
+                        
+                        # Date A value
+                        date_a_item = QtWidgets.QTableWidgetItem(data['date_a_value'])
+                        if data['date_a_value'] == "NA":
+                            date_a_item.setBackground(Qt.lightGray)
+                        date_a_item.setTextAlignment(Qt.AlignCenter)
+                        self.ui.tableMPC.setItem(row, 1, date_a_item)
+                        
+                        # Date B value
+                        date_b_item = QtWidgets.QTableWidgetItem(data['date_b_value'])
+                        if data['date_b_value'] == "NA":
+                            date_b_item.setBackground(Qt.lightGray)
+                        date_b_item.setTextAlignment(Qt.AlignCenter)
+                        self.ui.tableMPC.setItem(row, 2, date_b_item)
+                        
+                        # Status with color coding
+                        status_item = QtWidgets.QLabel(data['status'])
+                        status_item.setAlignment(Qt.AlignCenter)
+                        
+                        if data['status'] == "PASS":
+                            status_item.setStyleSheet("color: green; font-weight: bold; background-color: #d4edda; padding: 4px; border-radius: 3px;")
+                        elif data['status'] == "FAIL":
+                            status_item.setStyleSheet("color: red; font-weight: bold; background-color: #f8d7da; padding: 4px; border-radius: 3px;")
+                        elif data['status'] == "WARNING":
+                            status_item.setStyleSheet("color: orange; font-weight: bold; background-color: #fff3cd; padding: 4px; border-radius: 3px;")
+                        elif data['status'] == "NA":
+                            status_item.setStyleSheet("color: gray; font-weight: bold; background-color: #f0f0f0; padding: 4px; border-radius: 3px;")
+                        else:
+                            status_item.setStyleSheet("color: blue; font-weight: bold; background-color: #cce7ff; padding: 4px; border-radius: 3px;")
+                        
+                        self.ui.tableMPC.setCellWidget(row, 3, status_item)
+                    
+                    # Resize rows to fit content
+                    self.ui.tableMPC.resizeRowsToContents()
+                    
+                    # Update statistics
+                    self._update_mpc_comparison_statistics(mpc_data)
+                    
+                except Exception as e:
+                    print(f"Error populating MPC table: {e}")
+                    import traceback
+                    traceback.print_exc()
+
+            def _update_mpc_comparison_statistics(self, mpc_data):
+                """Update MPC statistics based on comparison data"""
+                try:
+                    if not mpc_data:
+                        return
+                    
+                    total = len(mpc_data)
+                    passed = sum(1 for item in mpc_data if item['status'] == 'PASS')
+                    failed = sum(1 for item in mpc_data if item['status'] == 'FAIL')
+                    warnings = sum(1 for item in mpc_data if item['status'] == 'WARNING')
+                    na_count = sum(1 for item in mpc_data if item['status'] == 'NA')
+                    
+                    # Update statistics labels if they exist
+                    if hasattr(self.ui, 'lblTotalParams'):
+                        self.ui.lblTotalParams.setText(f"Total Parameters: {total}")
+                    if hasattr(self.ui, 'lblPassedParams'):
+                        self.ui.lblPassedParams.setText(f"Passed: {passed}")
+                    if hasattr(self.ui, 'lblFailedParams'):
+                        self.ui.lblFailedParams.setText(f"Failed: {failed}")
+                    if hasattr(self.ui, 'lblWarningParams'):
+                        self.ui.lblWarningParams.setText(f"Warnings: {warnings}")
+                    
+                    # Calculate pass rate excluding NA values
+                    evaluated = total - na_count
+                    pass_rate = (passed / evaluated * 100) if evaluated > 0 else 0
+                    
+                    print(f"MPC Statistics: {passed}/{evaluated} passed ({pass_rate:.1f}%), {warnings} warnings, {failed} failed, {na_count} NA")
+                    
+                except Exception as e:
+                    print(f"Error updating MPC statistics: {e}")
 
             def _get_latest_mpc_data(self):
                 """Get the latest MPC data from available sources"""
@@ -1537,12 +1824,144 @@ class HALogApp:
                     self.update_data_table()
                     self.update_analysis_tab()
                     
+                    # Initialize trend graphs with default parameters
+                    QtCore.QTimer.singleShot(300, self._refresh_all_trends)
+                    
                     # Initialize MPC tab with default data
                     QtCore.QTimer.singleShot(200, self.refresh_latest_mpc)
 
                 except Exception as e:
                     print(f"Error loading dashboard: {e}")
                     traceback.print_exc()
+
+            def _refresh_all_trends(self):
+                """Refresh all trend graphs with default data"""
+                try:
+                    print("🔄 Refreshing all trend graphs with default data...")
+                    
+                    # Refresh each trend group with default parameters
+                    trend_groups = ['flow', 'voltage', 'temperature', 'humidity', 'fan_speed']
+                    
+                    for group in trend_groups:
+                        try:
+                            self.refresh_trend_tab(group)
+                        except Exception as e:
+                            print(f"Error refreshing {group} trends: {e}")
+                    
+                    print("✅ All trend graphs refreshed")
+                    
+                except Exception as e:
+                    print(f"Error refreshing trends: {e}")
+
+            def clear_all_data(self):
+                """Clear all imported data from the database"""
+                try:
+                    reply = QtWidgets.QMessageBox.question(
+                        self, 
+                        "Clear All Data", 
+                        "Are you sure you want to clear all imported log data?\n\n"
+                        "This action cannot be undone and will remove:\n"
+                        "• All imported machine log data\n"
+                        "• All file import history\n"
+                        "• All trend and analysis data\n\n"
+                        "Note: This will NOT affect the original log files.",
+                        QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                        QtWidgets.QMessageBox.No
+                    )
+                    
+                    if reply == QtWidgets.QMessageBox.Yes:
+                        if not hasattr(self, 'db'):
+                            QtWidgets.QMessageBox.warning(self, "Error", "Database not initialized")
+                            return
+                        
+                        # Clear the database
+                        self.db.clear_all()
+                        
+                        # Clear UI data
+                        import pandas as pd
+                        if hasattr(self, 'df'):
+                            self.df = pd.DataFrame()
+                        
+                        # Refresh UI
+                        self.load_dashboard()
+                        
+                        QtWidgets.QMessageBox.information(
+                            self, 
+                            "Data Cleared", 
+                            "All data has been successfully cleared from the database."
+                        )
+                        
+                        print("✅ All data cleared successfully")
+                    
+                except Exception as e:
+                    print(f"Error clearing data: {e}")
+                    QtWidgets.QMessageBox.critical(
+                        self, 
+                        "Clear Data Error", 
+                        f"Error clearing data: {str(e)}"
+                    )
+
+            def optimize_database(self):
+                """Optimize the database for better performance"""
+                try:
+                    if not hasattr(self, 'db'):
+                        QtWidgets.QMessageBox.warning(self, "Error", "Database not initialized")
+                        return
+                    
+                    # Show progress dialog
+                    progress = QtWidgets.QProgressDialog(
+                        "Optimizing database...", None, 0, 100, self
+                    )
+                    progress.setWindowTitle("Database Optimization")
+                    progress.setWindowModality(QtCore.Qt.WindowModal)
+                    progress.show()
+                    progress.setValue(25)
+                    QtWidgets.QApplication.processEvents()
+                    
+                    # Get database size before optimization
+                    size_before = self.db.get_database_size()
+                    
+                    progress.setValue(50)
+                    progress.setLabelText("Running VACUUM operation...")
+                    QtWidgets.QApplication.processEvents()
+                    
+                    # Optimize database
+                    self.db.vacuum_database()
+                    
+                    progress.setValue(75)
+                    progress.setLabelText("Applying reading optimizations...")
+                    QtWidgets.QApplication.processEvents()
+                    
+                    # Apply reading optimizations
+                    self.db.optimize_for_reading()
+                    
+                    progress.setValue(100)
+                    QtWidgets.QApplication.processEvents()
+                    
+                    # Get database size after optimization
+                    size_after = self.db.get_database_size()
+                    size_saved = size_before - size_after
+                    size_saved_mb = size_saved / (1024 * 1024) if size_saved > 0 else 0
+                    
+                    progress.close()
+                    
+                    QtWidgets.QMessageBox.information(
+                        self, 
+                        "Database Optimized", 
+                        f"Database optimization completed successfully.\n\n"
+                        f"Space saved: {size_saved_mb:.2f} MB\n"
+                        f"Database should now perform better for queries and analysis."
+                    )
+                    
+                    print(f"✅ Database optimized - saved {size_saved_mb:.2f} MB")
+                    
+                except Exception as e:
+                    print(f"Error optimizing database: {e}")
+                    QtWidgets.QMessageBox.critical(
+                        self, 
+                        "Optimization Error", 
+                        f"Error optimizing database: {str(e)}"
+                    )
 
             def update_trend_combos(self):
                 """Update trend combo boxes with professional styling"""
@@ -1830,43 +2249,59 @@ class HALogApp:
                     print(f"Error populating trends table: {e}")
 
             def _get_enhanced_parameter_name(self, param_name):
-                """Map original parameter names to enhanced display names"""
-                parameter_name_mapping = {
-                    # Water System
-                    "magnetronFlow": "Mag Flow",
-                    "targetAndCirculatorFlow": "Flow Target",
-                    "cityWaterFlow": "Flow Chiller Water", 
-                    "pumpPressure": "Cooling Pump Pressure",
+                """Map original parameter names to enhanced display names using parser mapping"""
+                try:
+                    # Try to get the enhanced name from the parser mapping first
+                    from parser_linac import LinacParser
+                    parser = LinacParser()
                     
-                    # Voltages
-                    "MLC_ADC_CHAN_TEMP_BANKA_STAT_48V": "MLC Bank A 48V",
-                    "MLC_ADC_CHAN_TEMP_BANKB_STAT_48V": "MLC Bank B 48V",
-                    "MLC_ADC_CHAN_TEMP_BANKA_STAT_24V": "MLC Bank A 24V",
-                    "MLC_ADC_CHAN_TEMP_BANKB_STAT_24V": "MLC Bank B 24V",
-                    "COL_ADC_CHAN_TEMP_24V_MON": "COL 24V Monitor",
-                    "COL_ADC_CHAN_TEMP_5V_MON": "COL 5V Monitor",
+                    # Check if this parameter has a mapping with description
+                    if param_name in parser.parameter_mapping:
+                        description = parser.parameter_mapping[param_name].get('description', param_name)
+                        if description != param_name:
+                            return description
                     
-                    # Temperatures
-                    "magnetronTemp": "Temp Magnetron",
-                    "colBoardTemp": "Temp COL Board", 
-                    "pduTemp": "Temp PDU",
-                    "FanremoteTempStatistics": "Temp Room",
-                    "waterTankTemp": "Temp Water Tank",
+                    # Fallback to hardcoded mapping for compatibility
+                    parameter_name_mapping = {
+                        # Water System
+                        "magnetronFlow": "Mag Flow",
+                        "targetAndCirculatorFlow": "Flow Target",
+                        "cityWaterFlow": "Flow Chiller Water", 
+                        "pumpPressure": "Cooling Pump Pressure",
+                        
+                        # Voltages
+                        "MLC_ADC_CHAN_TEMP_BANKA_STAT_48V": "MLC Bank A 48V",
+                        "MLC_ADC_CHAN_TEMP_BANKB_STAT_48V": "MLC Bank B 48V",
+                        "MLC_ADC_CHAN_TEMP_BANKA_STAT_24V": "MLC Bank A 24V",
+                        "MLC_ADC_CHAN_TEMP_BANKB_STAT_24V": "MLC Bank B 24V",
+                        "COL_ADC_CHAN_TEMP_24V_MON": "COL 24V Monitor",
+                        "COL_ADC_CHAN_TEMP_5V_MON": "COL 5V Monitor",
+                        
+                        # Temperatures
+                        "magnetronTemp": "Temp Magnetron",
+                        "colBoardTemp": "Temp COL Board", 
+                        "pduTemp": "Temp PDU",
+                        "FanremoteTempStatistics": "Temp Room",
+                        "waterTankTemp": "Temp Water Tank",
+                        
+                        # Fan Speeds
+                        "FanfanSpeed1Statistics": "Speed FAN 1",
+                        "FanfanSpeed2Statistics": "Speed FAN 2",
+                        "FanfanSpeed3Statistics": "Speed FAN 3",
+                        "FanfanSpeed4Statistics": "Speed FAN 4",
+                        "FanSpeed1Statistics": "Speed FAN 1",
+                        "FanSpeed2Statistics": "Speed FAN 2",
+                        
+                        # Humidity
+                        "FanhumidityStatistics": "Room Humidity",
+                    }
                     
-                    # Fan Speeds
-                    "FanfanSpeed1Statistics": "Speed FAN 1",
-                    "FanfanSpeed2Statistics": "Speed FAN 2",
-                    "FanfanSpeed3Statistics": "Speed FAN 3",
-                    "FanfanSpeed4Statistics": "Speed FAN 4",
-                    "FanSpeed1Statistics": "Speed FAN 1",
-                    "FanSpeed2Statistics": "Speed FAN 2",
+                    # Return enhanced name if mapping exists, otherwise return original
+                    return parameter_name_mapping.get(param_name, param_name)
                     
-                    # Humidity
-                    "FanhumidityStatistics": "Room Humidity",
-                }
-                
-                # Return enhanced name if mapping exists, otherwise return original
-                return parameter_name_mapping.get(param_name, param_name)
+                except Exception as e:
+                    print(f"Error getting enhanced parameter name for '{param_name}': {e}")
+                    return param_name
 
             def _get_parameter_group(self, param_name):
                 """Determine parameter group for categorization"""
@@ -2028,16 +2463,26 @@ class HALogApp:
                         file_size = os.path.getsize(file_path)
                         print(f"Processing file: {os.path.basename(file_path)} ({file_size} bytes)")
                         
+                        filename = os.path.basename(file_path).lower()
+                        
                         # Check if it's a shortdata file (sample only)
-                        if 'shortdata' in os.path.basename(file_path).lower():
+                        if 'shortdata' in filename:
                             print(f"⚠️ Treating {os.path.basename(file_path)} as sample data only (not permanently stored)")
                             self._process_sample_shortdata(file_path)
-                        else:
-                            # Regular log file - filter for TB and HALfault entries only
+                        # Check if it's a fault file that should be filtered and stored permanently
+                        elif 'tbfault' in filename or 'halfault' in filename:
+                            print(f"🔍 Processing fault file with filtering: {os.path.basename(file_path)}")
                             if file_size < 5 * 1024 * 1024:
                                 self._import_small_file_filtered(file_path)
                             else:
                                 self._import_large_file_filtered(file_path, file_size)
+                        else:
+                            # Regular machine log file - import all data for MPC, trend, analysis
+                            print(f"📊 Processing machine log file: {os.path.basename(file_path)}")
+                            if file_size < 5 * 1024 * 1024:
+                                self._import_small_file(file_path)
+                            else:
+                                self._import_large_file(file_path, file_size)
                         
                 except Exception as e:
                     print(f"Error in import_log_file: {e}")

@@ -79,6 +79,20 @@ class Ui_MainWindow(object):
         self.actionRefresh.setStatusTip("Refresh all data")
         self.menuView.addAction(self.actionRefresh)
 
+        # Data Menu
+        self.menuData = self.menubar.addMenu("&Data")
+        self.actionClearAllData = QAction(MainWindow)
+        self.actionClearAllData.setObjectName("actionClearAllData")
+        self.actionClearAllData.setText("&Clear All Data...")
+        self.actionClearAllData.setStatusTip("Clear all imported log data from database")
+        self.menuData.addAction(self.actionClearAllData)
+        
+        self.actionOptimizeDatabase = QAction(MainWindow)
+        self.actionOptimizeDatabase.setObjectName("actionOptimizeDatabase")
+        self.actionOptimizeDatabase.setText("&Optimize Database")
+        self.actionOptimizeDatabase.setStatusTip("Optimize database for better performance")
+        self.menuData.addAction(self.actionOptimizeDatabase)
+
         # Help Menu
         self.menuHelp = self.menubar.addMenu("&Help")
         self.actionAbout = QAction(MainWindow)
@@ -687,7 +701,39 @@ class Ui_MainWindow(object):
         header_label.setWordWrap(True)
         layout.addWidget(header_label)
 
-        # Data info and refresh controls (simplified)
+        
+        # Date selection controls for MPC comparison
+        date_group = QGroupBox("Date Selection for Comparison")
+        date_layout = QHBoxLayout(date_group)
+        date_layout.setSpacing(16)
+        date_layout.setContentsMargins(16, 16, 16, 16)
+        
+        # Date A selection
+        date_a_label = QLabel("Date A:")
+        date_a_label.setMinimumWidth(80)
+        date_layout.addWidget(date_a_label)
+        
+        self.comboMPCDateA = QComboBox()
+        self.comboMPCDateA.setMinimumWidth(200)
+        self.comboMPCDateA.addItem("Select Date A...")
+        date_layout.addWidget(self.comboMPCDateA)
+        
+        date_layout.addSpacing(20)
+        
+        # Date B selection  
+        date_b_label = QLabel("Date B:")
+        date_b_label.setMinimumWidth(80)
+        date_layout.addWidget(date_b_label)
+        
+        self.comboMPCDateB = QComboBox()
+        self.comboMPCDateB.setMinimumWidth(200)
+        self.comboMPCDateB.addItem("Select Date B...")
+        date_layout.addWidget(self.comboMPCDateB)
+        
+        date_layout.addStretch()
+        layout.addWidget(date_group)
+
+        # Data info and refresh controls
         info_group = QGroupBox("MPC Data Status")
         info_layout = QHBoxLayout(info_group)
         info_layout.setSpacing(12)
@@ -715,18 +761,20 @@ class Ui_MainWindow(object):
         self.tableMPC = QTableWidget()
         self.tableMPC.setAlternatingRowColors(True)
         self.tableMPC.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.tableMPC.setColumnCount(3)  # Reduced columns: Parameter, Result, Status
+        self.tableMPC.setColumnCount(4)  # Updated for comparison: Parameter, Date A, Date B, Status
         self.tableMPC.setHorizontalHeaderLabels([
             "Parameter",
-            "Result", 
+            "Date A Result", 
+            "Date B Result",
             "Status"
         ])
         
         # Set responsive column widths with better text handling
         header = self.tableMPC.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Interactive)  # Parameter - allow resize
-        header.setSectionResizeMode(1, QHeaderView.Stretch)     # Result - stretch to fill
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Status - fit content
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)     # Date A - fit content
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)     # Date B - fit content
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Status - fit content
         
         # Set minimum column widths for parameter names
         header.setMinimumSectionSize(200)  # Minimum width for parameter column
