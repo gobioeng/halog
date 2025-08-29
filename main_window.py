@@ -79,6 +79,20 @@ class Ui_MainWindow(object):
         self.actionRefresh.setStatusTip("Refresh all data")
         self.menuView.addAction(self.actionRefresh)
 
+        # Data Menu
+        self.menuData = self.menubar.addMenu("&Data")
+        self.actionClearAllData = QAction(MainWindow)
+        self.actionClearAllData.setObjectName("actionClearAllData")
+        self.actionClearAllData.setText("&Clear All Data...")
+        self.actionClearAllData.setStatusTip("Clear all imported log data from database")
+        self.menuData.addAction(self.actionClearAllData)
+        
+        self.actionOptimizeDatabase = QAction(MainWindow)
+        self.actionOptimizeDatabase.setObjectName("actionOptimizeDatabase")
+        self.actionOptimizeDatabase.setText("&Optimize Database")
+        self.actionOptimizeDatabase.setStatusTip("Optimize database for better performance")
+        self.menuData.addAction(self.actionOptimizeDatabase)
+
         # Help Menu
         self.menuHelp = self.menubar.addMenu("&Help")
         self.actionAbout = QAction(MainWindow)

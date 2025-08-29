@@ -732,6 +732,15 @@ class HALogApp:
                     self.ui.actionRefresh.triggered.connect(self.load_dashboard)
                     print("✓ View menu actions connected")
 
+                    # DATA MENU ACTIONS
+                    if hasattr(self.ui, "actionClearAllData"):
+                        self.ui.actionClearAllData.triggered.connect(self.clear_all_data)
+                        print("✓ Clear data action connected")
+                    
+                    if hasattr(self.ui, "actionOptimizeDatabase"):
+                        self.ui.actionOptimizeDatabase.triggered.connect(self.optimize_database)
+                        print("✓ Optimize database action connected")
+
                     # HELP MENU ACTIONS
                     self.ui.actionAbout.triggered.connect(self.show_about_dialog)
                     print("✓ Help menu actions connected")
@@ -1844,6 +1853,116 @@ class HALogApp:
                 except Exception as e:
                     print(f"Error refreshing trends: {e}")
 
+            def clear_all_data(self):
+                """Clear all imported data from the database"""
+                try:
+                    reply = QtWidgets.QMessageBox.question(
+                        self, 
+                        "Clear All Data", 
+                        "Are you sure you want to clear all imported log data?\n\n"
+                        "This action cannot be undone and will remove:\n"
+                        "• All imported machine log data\n"
+                        "• All file import history\n"
+                        "• All trend and analysis data\n\n"
+                        "Note: This will NOT affect the original log files.",
+                        QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                        QtWidgets.QMessageBox.No
+                    )
+                    
+                    if reply == QtWidgets.QMessageBox.Yes:
+                        if not hasattr(self, 'db'):
+                            QtWidgets.QMessageBox.warning(self, "Error", "Database not initialized")
+                            return
+                        
+                        # Clear the database
+                        self.db.clear_all()
+                        
+                        # Clear UI data
+                        import pandas as pd
+                        if hasattr(self, 'df'):
+                            self.df = pd.DataFrame()
+                        
+                        # Refresh UI
+                        self.load_dashboard()
+                        
+                        QtWidgets.QMessageBox.information(
+                            self, 
+                            "Data Cleared", 
+                            "All data has been successfully cleared from the database."
+                        )
+                        
+                        print("✅ All data cleared successfully")
+                    
+                except Exception as e:
+                    print(f"Error clearing data: {e}")
+                    QtWidgets.QMessageBox.critical(
+                        self, 
+                        "Clear Data Error", 
+                        f"Error clearing data: {str(e)}"
+                    )
+
+            def optimize_database(self):
+                """Optimize the database for better performance"""
+                try:
+                    if not hasattr(self, 'db'):
+                        QtWidgets.QMessageBox.warning(self, "Error", "Database not initialized")
+                        return
+                    
+                    # Show progress dialog
+                    progress = QtWidgets.QProgressDialog(
+                        "Optimizing database...", None, 0, 100, self
+                    )
+                    progress.setWindowTitle("Database Optimization")
+                    progress.setWindowModality(QtCore.Qt.WindowModal)
+                    progress.show()
+                    progress.setValue(25)
+                    QtWidgets.QApplication.processEvents()
+                    
+                    # Get database size before optimization
+                    size_before = self.db.get_database_size()
+                    
+                    progress.setValue(50)
+                    progress.setLabelText("Running VACUUM operation...")
+                    QtWidgets.QApplication.processEvents()
+                    
+                    # Optimize database
+                    self.db.vacuum_database()
+                    
+                    progress.setValue(75)
+                    progress.setLabelText("Applying reading optimizations...")
+                    QtWidgets.QApplication.processEvents()
+                    
+                    # Apply reading optimizations
+                    self.db.optimize_for_reading()
+                    
+                    progress.setValue(100)
+                    QtWidgets.QApplication.processEvents()
+                    
+                    # Get database size after optimization
+                    size_after = self.db.get_database_size()
+                    size_saved = size_before - size_after
+                    size_saved_mb = size_saved / (1024 * 1024) if size_saved > 0 else 0
+                    
+                    progress.close()
+                    
+                    QtWidgets.QMessageBox.information(
+                        self, 
+                        "Database Optimized", 
+                        f"Database optimization completed successfully.\n\n"
+                        f"Space saved: {size_saved_mb:.2f} MB\n"
+                        f"Database should now perform better for queries and analysis."
+                    )
+                    
+                    print(f"✅ Database optimized - saved {size_saved_mb:.2f} MB")
+                    
+                except Exception as e:
+                    print(f"Error optimizing database: {e}")
+                    QtWidgets.QMessageBox.critical(
+                        self, 
+                        "Optimization Error", 
+                        f"Error optimizing database: {str(e)}"
+                    )
+
             def update_trend_combos(self):
                 """Update trend combo boxes with professional styling"""
                 try:
@@ -2130,43 +2249,59 @@ class HALogApp:
                     print(f"Error populating trends table: {e}")
 
             def _get_enhanced_parameter_name(self, param_name):
-                """Map original parameter names to enhanced display names"""
-                parameter_name_mapping = {
-                    # Water System
-                    "magnetronFlow": "Mag Flow",
-                    "targetAndCirculatorFlow": "Flow Target",
-                    "cityWaterFlow": "Flow Chiller Water", 
-                    "pumpPressure": "Cooling Pump Pressure",
+                """Map original parameter names to enhanced display names using parser mapping"""
+                try:
+                    # Try to get the enhanced name from the parser mapping first
+                    from parser_linac import LinacParser
+                    parser = LinacParser()
                     
-                    # Voltages
-                    "MLC_ADC_CHAN_TEMP_BANKA_STAT_48V": "MLC Bank A 48V",
-                    "MLC_ADC_CHAN_TEMP_BANKB_STAT_48V": "MLC Bank B 48V",
-                    "MLC_ADC_CHAN_TEMP_BANKA_STAT_24V": "MLC Bank A 24V",
-                    "MLC_ADC_CHAN_TEMP_BANKB_STAT_24V": "MLC Bank B 24V",
-                    "COL_ADC_CHAN_TEMP_24V_MON": "COL 24V Monitor",
-                    "COL_ADC_CHAN_TEMP_5V_MON": "COL 5V Monitor",
+                    # Check if this parameter has a mapping with description
+                    if param_name in parser.parameter_mapping:
+                        description = parser.parameter_mapping[param_name].get('description', param_name)
+                        if description != param_name:
+                            return description
                     
-                    # Temperatures
-                    "magnetronTemp": "Temp Magnetron",
-                    "colBoardTemp": "Temp COL Board", 
-                    "pduTemp": "Temp PDU",
-                    "FanremoteTempStatistics": "Temp Room",
-                    "waterTankTemp": "Temp Water Tank",
+                    # Fallback to hardcoded mapping for compatibility
+                    parameter_name_mapping = {
+                        # Water System
+                        "magnetronFlow": "Mag Flow",
+                        "targetAndCirculatorFlow": "Flow Target",
+                        "cityWaterFlow": "Flow Chiller Water", 
+                        "pumpPressure": "Cooling Pump Pressure",
+                        
+                        # Voltages
+                        "MLC_ADC_CHAN_TEMP_BANKA_STAT_48V": "MLC Bank A 48V",
+                        "MLC_ADC_CHAN_TEMP_BANKB_STAT_48V": "MLC Bank B 48V",
+                        "MLC_ADC_CHAN_TEMP_BANKA_STAT_24V": "MLC Bank A 24V",
+                        "MLC_ADC_CHAN_TEMP_BANKB_STAT_24V": "MLC Bank B 24V",
+                        "COL_ADC_CHAN_TEMP_24V_MON": "COL 24V Monitor",
+                        "COL_ADC_CHAN_TEMP_5V_MON": "COL 5V Monitor",
+                        
+                        # Temperatures
+                        "magnetronTemp": "Temp Magnetron",
+                        "colBoardTemp": "Temp COL Board", 
+                        "pduTemp": "Temp PDU",
+                        "FanremoteTempStatistics": "Temp Room",
+                        "waterTankTemp": "Temp Water Tank",
+                        
+                        # Fan Speeds
+                        "FanfanSpeed1Statistics": "Speed FAN 1",
+                        "FanfanSpeed2Statistics": "Speed FAN 2",
+                        "FanfanSpeed3Statistics": "Speed FAN 3",
+                        "FanfanSpeed4Statistics": "Speed FAN 4",
+                        "FanSpeed1Statistics": "Speed FAN 1",
+                        "FanSpeed2Statistics": "Speed FAN 2",
+                        
+                        # Humidity
+                        "FanhumidityStatistics": "Room Humidity",
+                    }
                     
-                    # Fan Speeds
-                    "FanfanSpeed1Statistics": "Speed FAN 1",
-                    "FanfanSpeed2Statistics": "Speed FAN 2",
-                    "FanfanSpeed3Statistics": "Speed FAN 3",
-                    "FanfanSpeed4Statistics": "Speed FAN 4",
-                    "FanSpeed1Statistics": "Speed FAN 1",
-                    "FanSpeed2Statistics": "Speed FAN 2",
+                    # Return enhanced name if mapping exists, otherwise return original
+                    return parameter_name_mapping.get(param_name, param_name)
                     
-                    # Humidity
-                    "FanhumidityStatistics": "Room Humidity",
-                }
-                
-                # Return enhanced name if mapping exists, otherwise return original
-                return parameter_name_mapping.get(param_name, param_name)
+                except Exception as e:
+                    print(f"Error getting enhanced parameter name for '{param_name}': {e}")
+                    return param_name
 
             def _get_parameter_group(self, param_name):
                 """Determine parameter group for categorization"""
