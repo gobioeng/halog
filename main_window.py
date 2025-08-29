@@ -212,12 +212,13 @@ class Ui_MainWindow(object):
         self.comboWaterTopGraph = QComboBox()
         self.comboWaterTopGraph.setMinimumWidth(160)
         self.comboWaterTopGraph.addItems([
-            "Select parameter...",
-            "Mag Flow",
+            "Mag Flow",  # Remove "Select parameter..." and make first item default
             "Flow Target", 
             "Flow Chiller Water",
             "Cooling Pump Pressure"
         ])
+        # Set default selection to first parameter
+        self.comboWaterTopGraph.setCurrentIndex(0)
         controls_layout.addWidget(self.comboWaterTopGraph)
         
         # Bottom graph selector
@@ -225,12 +226,13 @@ class Ui_MainWindow(object):
         self.comboWaterBottomGraph = QComboBox()
         self.comboWaterBottomGraph.setMinimumWidth(160)
         self.comboWaterBottomGraph.addItems([
-            "Select parameter...",
+            "Flow Target",  # Remove "Select parameter..." and set different default
             "Mag Flow",
-            "Flow Target",
             "Flow Chiller Water", 
             "Cooling Pump Pressure"
         ])
+        # Set default selection to first parameter (different from top graph)
+        self.comboWaterBottomGraph.setCurrentIndex(0)
         controls_layout.addWidget(self.comboWaterBottomGraph)
         
         self.btnRefreshWater = QPushButton("Update Graphs")
@@ -277,8 +279,7 @@ class Ui_MainWindow(object):
         self.comboVoltageTopGraph = QComboBox()
         self.comboVoltageTopGraph.setMinimumWidth(160)
         self.comboVoltageTopGraph.addItems([
-            "Select parameter...",
-            "MLC Bank A 24V",
+            "MLC Bank A 24V",  # Remove "Select parameter..." and make first item default
             "MLC Bank B 24V",
             "COL 48V",
             "MLC Bank A 48V",
@@ -290,6 +291,8 @@ class Ui_MainWindow(object):
             "Motor PWR 48V",
             "Motor PWR -48V"
         ])
+        # Set default selection to first parameter
+        self.comboVoltageTopGraph.setCurrentIndex(0)
         controls_layout.addWidget(self.comboVoltageTopGraph)
         
         # Bottom graph selector
@@ -297,9 +300,8 @@ class Ui_MainWindow(object):
         self.comboVoltageBottomGraph = QComboBox()
         self.comboVoltageBottomGraph.setMinimumWidth(160)
         self.comboVoltageBottomGraph.addItems([
-            "Select parameter...",
+            "MLC Bank B 24V",  # Remove "Select parameter..." and set different default
             "MLC Bank A 24V",
-            "MLC Bank B 24V",
             "COL 48V",
             "MLC Bank A 48V", 
             "MLC Bank B 48V",
@@ -310,6 +312,8 @@ class Ui_MainWindow(object):
             "Motor PWR 48V",
             "Motor PWR -48V"
         ])
+        # Set default selection to first parameter (different from top graph)
+        self.comboVoltageBottomGraph.setCurrentIndex(0)
         controls_layout.addWidget(self.comboVoltageBottomGraph)
         
         self.btnRefreshVoltage = QPushButton("Update Graphs")
@@ -356,8 +360,7 @@ class Ui_MainWindow(object):
         self.comboTempTopGraph = QComboBox()
         self.comboTempTopGraph.setMinimumWidth(160)
         self.comboTempTopGraph.addItems([
-            "Select parameter...",
-            "Temp Room",
+            "Temp Room",  # Remove "Select parameter..." and make first item default
             "Temp PDU",
             "Temp COL Board",
             "Temp Magnetron",
@@ -365,6 +368,8 @@ class Ui_MainWindow(object):
             "Temp MLC Bank A",
             "Temp MLC Bank B"
         ])
+        # Set default selection to first parameter
+        self.comboTempTopGraph.setCurrentIndex(0)
         controls_layout.addWidget(self.comboTempTopGraph)
         
         # Bottom graph selector
@@ -372,15 +377,16 @@ class Ui_MainWindow(object):
         self.comboTempBottomGraph = QComboBox()
         self.comboTempBottomGraph.setMinimumWidth(160)
         self.comboTempBottomGraph.addItems([
-            "Select parameter...",
-            "Temp Room",
-            "Temp PDU",
+            "Temp PDU",  # Remove "Select parameter..." and set different default from top
+            "Temp Room", 
             "Temp COL Board",
             "Temp Magnetron",
             "Temp Water Tank",
             "Temp MLC Bank A",
             "Temp MLC Bank B"
         ])
+        # Set default selection to first parameter (different from top graph)
+        self.comboTempBottomGraph.setCurrentIndex(0)
         controls_layout.addWidget(self.comboTempBottomGraph)
         
         self.btnRefreshTemp = QPushButton("Update Graphs")
@@ -427,10 +433,11 @@ class Ui_MainWindow(object):
         self.comboHumidityTopGraph = QComboBox()
         self.comboHumidityTopGraph.setMinimumWidth(160)
         self.comboHumidityTopGraph.addItems([
-            "Select parameter...",
-            "Room Humidity",
+            "Room Humidity",  # Remove "Select parameter..." and make first item default
             "Temp Room"  # Per requirements: include room temp in humidity tab
         ])
+        # Set default selection to first parameter
+        self.comboHumidityTopGraph.setCurrentIndex(0)
         controls_layout.addWidget(self.comboHumidityTopGraph)
         
         # Bottom graph selector
@@ -438,10 +445,11 @@ class Ui_MainWindow(object):
         self.comboHumidityBottomGraph = QComboBox()
         self.comboHumidityBottomGraph.setMinimumWidth(160)
         self.comboHumidityBottomGraph.addItems([
-            "Select parameter...",
-            "Room Humidity",
-            "Temp Room"  # Per requirements: include room temp in humidity tab
+            "Temp Room",  # Remove "Select parameter..." and set different default
+            "Room Humidity"
         ])
+        # Set default selection to first parameter (different from top graph)
+        self.comboHumidityBottomGraph.setCurrentIndex(0)
         controls_layout.addWidget(self.comboHumidityBottomGraph)
         
         self.btnRefreshHumidity = QPushButton("Update Graphs")
@@ -488,12 +496,13 @@ class Ui_MainWindow(object):
         self.comboFanTopGraph = QComboBox()
         self.comboFanTopGraph.setMinimumWidth(160)
         self.comboFanTopGraph.addItems([
-            "Select parameter...",
-            "Speed FAN 1",
+            "Speed FAN 1",  # Remove "Select parameter..." and make first item default
             "Speed FAN 2",
             "Speed FAN 3",
             "Speed FAN 4"
         ])
+        # Set default selection to first parameter
+        self.comboFanTopGraph.setCurrentIndex(0)
         controls_layout.addWidget(self.comboFanTopGraph)
         
         # Bottom graph selector
@@ -501,12 +510,13 @@ class Ui_MainWindow(object):
         self.comboFanBottomGraph = QComboBox()
         self.comboFanBottomGraph.setMinimumWidth(160)
         self.comboFanBottomGraph.addItems([
-            "Select parameter...",
+            "Speed FAN 2",  # Remove "Select parameter..." and set different default
             "Speed FAN 1",
-            "Speed FAN 2", 
             "Speed FAN 3",
             "Speed FAN 4"
         ])
+        # Set default selection to first parameter (different from top graph)
+        self.comboFanBottomGraph.setCurrentIndex(0)
         controls_layout.addWidget(self.comboFanBottomGraph)
         
         self.btnRefreshFan = QPushButton("Update Graphs")
@@ -654,13 +664,17 @@ class Ui_MainWindow(object):
             "Status"
         ])
         
-        # Set column widths
+        # Set column widths and enable text wrapping
         header = self.tableMPC.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Parameter
+        header.setSectionResizeMode(0, QHeaderView.Stretch)  # Parameter - allow more space for text wrapping
         header.setSectionResizeMode(1, QHeaderView.Stretch)  # Date A
         header.setSectionResizeMode(2, QHeaderView.Stretch)  # Date B  
         header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Status
         
+        # Enable word wrap and adjust row heights for better text display
+        self.tableMPC.setWordWrap(True)
+        self.tableMPC.setTextElideMode(Qt.ElideNone)
+        self.tableMPC.resizeRowsToContents()
         self.tableMPC.setMinimumHeight(400)
         results_layout.addWidget(self.tableMPC)
 
@@ -682,7 +696,7 @@ class Ui_MainWindow(object):
         self._populate_sample_mpc_data()
 
     def _populate_sample_mpc_data(self):
-        """Populate sample MPC data for demonstration"""
+        """Populate sample MPC data for demonstration with NA handling"""
         # Sample MPC check categories and parameters
         mpc_data = [
             # Geometric Checks
@@ -708,40 +722,66 @@ class Ui_MainWindow(object):
             ("Imaging", "Image Quality Score", "95", "93", "PASS"),
             ("Imaging", "Contrast Resolution (%)", "2.1", "2.3", "PASS"),
             ("Imaging", "Spatial Resolution (lp/mm)", "0.8", "0.8", "PASS"),
+            
+            # Example with missing data
+            ("Geometry", "Long Parameter Name That Needs Wrapping to Show Full Text", "NA", "0.5", "NA"),
+            ("Dosimetry", "Missing Data Example", "NA", "NA", "NA"),
         ]
 
         self.tableMPC.setRowCount(len(mpc_data))
         
         for row, (category, param, date_a, date_b, status) in enumerate(mpc_data):
-            # Parameter name with category
+            # Parameter name with category - improved text wrapping
             param_item = QLabel(f"<b>[{category}]</b><br>{param}")
             param_item.setWordWrap(True)
+            param_item.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+            param_item.setMargin(5)
             self.tableMPC.setCellWidget(row, 0, param_item)
             
-            # Date A result
-            self.tableMPC.setItem(row, 1, QTableWidgetItem(date_a))
+            # Date A result - handle NA values
+            date_a_display = "NA" if date_a == "NA" or not date_a else date_a
+            date_a_item = QTableWidgetItem(date_a_display)
+            if date_a_display == "NA":
+                date_a_item.setBackground(Qt.lightGray)
+            self.tableMPC.setItem(row, 1, date_a_item)
             
-            # Date B result  
-            self.tableMPC.setItem(row, 2, QTableWidgetItem(date_b))
+            # Date B result - handle NA values 
+            date_b_display = "NA" if date_b == "NA" or not date_b else date_b
+            date_b_item = QTableWidgetItem(date_b_display)
+            if date_b_display == "NA":
+                date_b_item.setBackground(Qt.lightGray)
+            self.tableMPC.setItem(row, 2, date_b_item)
             
-            # Status with color coding
-            status_item = QLabel(status)
-            if status == "PASS":
+            # Status with color coding - handle NA values
+            status_display = "NA" if status == "NA" or not status else status
+            status_item = QLabel(status_display)
+            if status_display == "PASS":
                 status_item.setStyleSheet("color: green; font-weight: bold;")
-            elif status == "FAIL":
+            elif status_display == "FAIL":
                 status_item.setStyleSheet("color: red; font-weight: bold;")
+            elif status_display == "NA":
+                status_item.setStyleSheet("color: gray; font-weight: bold; background-color: #f0f0f0;")
             else:
                 status_item.setStyleSheet("color: orange; font-weight: bold;")
             status_item.setAlignment(Qt.AlignCenter)
             self.tableMPC.setCellWidget(row, 3, status_item)
 
-        # Update statistics
+        # Update statistics with NA handling
         total_checks = len(mpc_data)
         passed_checks = sum(1 for _, _, _, _, status in mpc_data if status == "PASS")
-        self.lblMPCStats.setText(
-            f"Total Checks: {total_checks} | Passed: {passed_checks} | "
-            f"Pass Rate: {(passed_checks/total_checks)*100:.1f}%"
-        )
+        na_checks = sum(1 for _, _, _, _, status in mpc_data if status == "NA")
+        
+        if total_checks > 0:
+            pass_rate = (passed_checks / (total_checks - na_checks)) * 100 if (total_checks - na_checks) > 0 else 0
+            self.lblMPCStats.setText(
+                f"Total Checks: {total_checks} | Passed: {passed_checks} | NA: {na_checks} | "
+                f"Pass Rate: {pass_rate:.1f}% (excluding NA)"
+            )
+        else:
+            self.lblMPCStats.setText("No MPC data available")
+        
+        # Resize rows to fit content after populating
+        self.tableMPC.resizeRowsToContents()
 
     def setup_fault_code_tab(self):
         self.tabFaultCode = QWidget()
