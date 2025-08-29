@@ -14,6 +14,7 @@ class DataAnalyzer:
 
     def __init__(self):
         self.parameter_thresholds = {
+            # Water System Parameters
             "pumpPressure": {
                 "min": 170,
                 "max": 230,
@@ -30,7 +31,23 @@ class DataAnalyzer:
                 "unit": "L/min",
                 "cv_threshold": 0.08,
             },
+            "Mag Flow": {  # Updated parameter name
+                "min": 3,
+                "max": 10,
+                "optimal_min": 5,
+                "optimal_max": 7,
+                "unit": "L/min",
+                "cv_threshold": 0.08,
+            },
             "targetAndCirculatorFlow": {
+                "min": 2,
+                "max": 5,
+                "optimal_min": 2.8,
+                "optimal_max": 3.5,
+                "unit": "L/min",
+                "cv_threshold": 0.06,
+            },
+            "Flow Target": {  # Updated parameter name
                 "min": 2,
                 "max": 5,
                 "optimal_min": 2.8,
@@ -45,6 +62,158 @@ class DataAnalyzer:
                 "optimal_max": 14,
                 "unit": "L/min",
                 "cv_threshold": 0.07,
+            },
+            "Flow Chiller Water": {  # Updated parameter name
+                "min": 8,
+                "max": 18,
+                "optimal_min": 11,
+                "optimal_max": 14,
+                "unit": "L/min",
+                "cv_threshold": 0.07,
+            },
+            "Cooling Pump Pressure": {  # Updated parameter name
+                "min": 170,
+                "max": 230,
+                "optimal_min": 190,
+                "optimal_max": 210,
+                "unit": "PSI",
+                "cv_threshold": 0.05,
+            },
+            
+            # Voltage Parameters
+            "MLC Bank A 48V": {
+                "min": 46.0,
+                "max": 50.0,
+                "optimal_min": 47.5,
+                "optimal_max": 48.5,
+                "unit": "V",
+                "cv_threshold": 0.02,
+            },
+            "MLC Bank B 48V": {
+                "min": 46.0,
+                "max": 50.0,
+                "optimal_min": 47.5,
+                "optimal_max": 48.5,
+                "unit": "V",
+                "cv_threshold": 0.02,
+            },
+            "MLC Bank A 24V": {
+                "min": 23.0,
+                "max": 25.0,
+                "optimal_min": 23.8,
+                "optimal_max": 24.2,
+                "unit": "V",
+                "cv_threshold": 0.02,
+            },
+            "MLC Bank B 24V": {
+                "min": 23.0,
+                "max": 25.0,
+                "optimal_min": 23.8,
+                "optimal_max": 24.2,
+                "unit": "V",
+                "cv_threshold": 0.02,
+            },
+            "COL 24V Monitor": {
+                "min": 23.0,
+                "max": 25.0,
+                "optimal_min": 23.8,
+                "optimal_max": 24.2,
+                "unit": "V",
+                "cv_threshold": 0.02,
+            },
+            "COL 5V Monitor": {
+                "min": 4.8,
+                "max": 5.2,
+                "optimal_min": 4.9,
+                "optimal_max": 5.1,
+                "unit": "V",
+                "cv_threshold": 0.01,
+            },
+            
+            # Temperature Parameters
+            "Temp Magnetron": {
+                "min": 20.0,
+                "max": 60.0,
+                "optimal_min": 30.0,
+                "optimal_max": 50.0,
+                "unit": "°C",
+                "cv_threshold": 0.10,
+            },
+            "Temp COL Board": {
+                "min": 20.0,
+                "max": 55.0,
+                "optimal_min": 25.0,
+                "optimal_max": 45.0,
+                "unit": "°C",
+                "cv_threshold": 0.08,
+            },
+            "Temp PDU": {
+                "min": 20.0,
+                "max": 50.0,
+                "optimal_min": 25.0,
+                "optimal_max": 40.0,
+                "unit": "°C",
+                "cv_threshold": 0.08,
+            },
+            "Temp Room": {
+                "min": 18.0,
+                "max": 28.0,
+                "optimal_min": 20.0,
+                "optimal_max": 25.0,
+                "unit": "°C",
+                "cv_threshold": 0.05,
+            },
+            "Temp Water Tank": {
+                "min": 15.0,
+                "max": 30.0,
+                "optimal_min": 18.0,
+                "optimal_max": 25.0,
+                "unit": "°C",
+                "cv_threshold": 0.08,
+            },
+            
+            # Fan Speed Parameters
+            "Speed FAN 1": {
+                "min": 2500,
+                "max": 3500,
+                "optimal_min": 2800,
+                "optimal_max": 3200,
+                "unit": "RPM",
+                "cv_threshold": 0.05,
+            },
+            "Speed FAN 2": {
+                "min": 2500,
+                "max": 3500,
+                "optimal_min": 2700,
+                "optimal_max": 3100,
+                "unit": "RPM",
+                "cv_threshold": 0.05,
+            },
+            "Speed FAN 3": {
+                "min": 2500,
+                "max": 3500,
+                "optimal_min": 2900,
+                "optimal_max": 3300,
+                "unit": "RPM",
+                "cv_threshold": 0.05,
+            },
+            "Speed FAN 4": {
+                "min": 2500,
+                "max": 3500,
+                "optimal_min": 2750,
+                "optimal_max": 3150,
+                "unit": "RPM",
+                "cv_threshold": 0.05,
+            },
+            
+            # Humidity Parameters
+            "Room Humidity": {
+                "min": 30.0,
+                "max": 70.0,
+                "optimal_min": 40.0,
+                "optimal_max": 60.0,
+                "unit": "%",
+                "cv_threshold": 0.15,
             },
         }
 

@@ -800,6 +800,12 @@ class HALogApp:
                     if hasattr(self.ui, 'btnRefreshMPC'):
                         self.ui.btnRefreshMPC.clicked.connect(self.refresh_latest_mpc)
                     
+                    # ANALYSIS TAB ACTIONS - Enhanced controls
+                    if hasattr(self.ui, 'btnRefreshAnalysis'):
+                        self.ui.btnRefreshAnalysis.clicked.connect(self.update_analysis_tab)
+                    if hasattr(self.ui, 'comboAnalysisFilter'):
+                        self.ui.comboAnalysisFilter.currentIndexChanged.connect(self._filter_analysis_results)
+                    
                     # FAULT CODE TAB ACTIONS
                     if hasattr(self.ui, 'btnSearchCode'):
                         self.ui.btnSearchCode.clicked.connect(self.search_fault_code)
@@ -1755,63 +1761,163 @@ class HALogApp:
                     print(f"Error handling analysis error: {e}")
 
             def _populate_trends_table(self, trends_df):
-                """Populate trends table with analysis results"""
+                """Populate trends table with enhanced analysis results"""
                 try:
+                    from PyQt5 import QtGui
+                    
                     if trends_df.empty:
                         self.ui.tableTrends.setRowCount(0)
                         return
 
                     self.ui.tableTrends.setRowCount(len(trends_df))
                     for i, (_, row) in enumerate(trends_df.iterrows()):
+                        # Enhanced parameter name display
+                        param_name = str(row.get("parameter_type", ""))
+                        enhanced_name = self._get_enhanced_parameter_name(param_name)
+                        
+                        param_item = QtWidgets.QTableWidgetItem(enhanced_name)
+                        param_item.setToolTip(f"Original: {param_name}")  # Show original name in tooltip
+                        self.ui.tableTrends.setItem(i, 0, param_item)
+                        
+                        # Parameter group
+                        group = self._get_parameter_group(param_name)
+                        group_item = QtWidgets.QTableWidgetItem(group)
+                        self.ui.tableTrends.setItem(i, 1, group_item)
+                        
+                        # Other columns
                         self.ui.tableTrends.setItem(
-                            i,
-                            0,
-                            QtWidgets.QTableWidgetItem(
-                                str(row.get("parameter_type", ""))
-                            ),
+                            i, 2, QtWidgets.QTableWidgetItem(str(row.get("statistic_type", "")))
                         )
                         self.ui.tableTrends.setItem(
-                            i,
-                            1,
-                            QtWidgets.QTableWidgetItem(
-                                str(row.get("statistic_type", ""))
-                            ),
+                            i, 3, QtWidgets.QTableWidgetItem(str(row.get("data_points", "")))
                         )
                         self.ui.tableTrends.setItem(
-                            i,
-                            2,
-                            QtWidgets.QTableWidgetItem(str(row.get("data_points", ""))),
+                            i, 4, QtWidgets.QTableWidgetItem(f"{row.get('time_span_hours', 0):.1f}")
                         )
-                        self.ui.tableTrends.setItem(
-                            i,
-                            3,
-                            QtWidgets.QTableWidgetItem(
-                                f"{row.get('time_span_hours', 0):.1f}"
-                            ),
-                        )
-                        self.ui.tableTrends.setItem(
-                            i,
-                            4,
-                            QtWidgets.QTableWidgetItem(
-                                f"{row.get('trend_slope', 0):.4f}"
-                            ),
-                        )
-                        self.ui.tableTrends.setItem(
-                            i,
-                            5,
-                            QtWidgets.QTableWidgetItem(
-                                str(row.get("trend_direction", ""))
-                            ),
-                        )
-                        self.ui.tableTrends.setItem(
-                            i,
-                            6,
-                            QtWidgets.QTableWidgetItem(
-                                str(row.get("trend_strength", ""))
-                            ),
-                        )
+                        
+                        # Slope with color coding
+                        slope = row.get('trend_slope', 0)
+                        slope_item = QtWidgets.QTableWidgetItem(f"{slope:.4f}")
+                        if slope > 0.01:
+                            slope_item.setBackground(QtGui.QColor(255, 200, 200))  # Light red for increasing
+                        elif slope < -0.01:
+                            slope_item.setBackground(QtGui.QColor(200, 255, 200))  # Light green for decreasing
+                        self.ui.tableTrends.setItem(i, 5, slope_item)
+                        
+                        # Direction with icons
+                        direction = str(row.get("trend_direction", ""))
+                        if direction.lower() == "increasing":
+                            direction = "📈 Increasing"
+                        elif direction.lower() == "decreasing":
+                            direction = "📉 Decreasing"
+                        elif direction.lower() == "stable":
+                            direction = "➡️ Stable"
+                        self.ui.tableTrends.setItem(i, 6, QtWidgets.QTableWidgetItem(direction))
+                        
+                        # Strength with color coding
+                        strength = str(row.get("trend_strength", ""))
+                        strength_item = QtWidgets.QTableWidgetItem(strength)
+                        if strength.lower() == "strong":
+                            strength_item.setBackground(QtGui.QColor(255, 255, 200))  # Light yellow
+                        elif strength.lower() == "weak":
+                            strength_item.setBackground(QtGui.QColor(240, 240, 240))  # Light gray
+                        self.ui.tableTrends.setItem(i, 7, strength_item)
+                        
+                    # Ensure proper row heights
+                    self.ui.tableTrends.resizeRowsToContents()
+                    
                 except Exception as e:
                     print(f"Error populating trends table: {e}")
+
+            def _get_enhanced_parameter_name(self, param_name):
+                """Map original parameter names to enhanced display names"""
+                parameter_name_mapping = {
+                    # Water System
+                    "magnetronFlow": "Mag Flow",
+                    "targetAndCirculatorFlow": "Flow Target",
+                    "cityWaterFlow": "Flow Chiller Water", 
+                    "pumpPressure": "Cooling Pump Pressure",
+                    
+                    # Voltages
+                    "MLC_ADC_CHAN_TEMP_BANKA_STAT_48V": "MLC Bank A 48V",
+                    "MLC_ADC_CHAN_TEMP_BANKB_STAT_48V": "MLC Bank B 48V",
+                    "MLC_ADC_CHAN_TEMP_BANKA_STAT_24V": "MLC Bank A 24V",
+                    "MLC_ADC_CHAN_TEMP_BANKB_STAT_24V": "MLC Bank B 24V",
+                    "COL_ADC_CHAN_TEMP_24V_MON": "COL 24V Monitor",
+                    "COL_ADC_CHAN_TEMP_5V_MON": "COL 5V Monitor",
+                    
+                    # Temperatures
+                    "magnetronTemp": "Temp Magnetron",
+                    "colBoardTemp": "Temp COL Board", 
+                    "pduTemp": "Temp PDU",
+                    "FanremoteTempStatistics": "Temp Room",
+                    "waterTankTemp": "Temp Water Tank",
+                    
+                    # Fan Speeds
+                    "FanfanSpeed1Statistics": "Speed FAN 1",
+                    "FanfanSpeed2Statistics": "Speed FAN 2",
+                    "FanfanSpeed3Statistics": "Speed FAN 3",
+                    "FanfanSpeed4Statistics": "Speed FAN 4",
+                    "FanSpeed1Statistics": "Speed FAN 1",
+                    "FanSpeed2Statistics": "Speed FAN 2",
+                    
+                    # Humidity
+                    "FanhumidityStatistics": "Room Humidity",
+                }
+                
+                # Return enhanced name if mapping exists, otherwise return original
+                return parameter_name_mapping.get(param_name, param_name)
+
+            def _get_parameter_group(self, param_name):
+                """Determine parameter group for categorization"""
+                param_lower = param_name.lower()
+                
+                if any(term in param_lower for term in ['flow', 'pressure', 'pump']):
+                    return "Water System"
+                elif any(term in param_lower for term in ['volt', '_v_', '24v', '48v', '5v', 'mlc_adc', 'col_adc']):
+                    return "Voltages"
+                elif any(term in param_lower for term in ['temp', 'temperature']):
+                    return "Temperatures"
+                elif any(term in param_lower for term in ['fan', 'speed']):
+                    return "Fan Speeds"
+                elif any(term in param_lower for term in ['humidity']):
+                    return "Humidity"
+                else:
+                    return "Other"
+
+            def _filter_analysis_results(self):
+                """Filter analysis results based on selected group"""
+                try:
+                    if not hasattr(self.ui, 'comboAnalysisFilter'):
+                        return
+                        
+                    selected_filter = self.ui.comboAnalysisFilter.currentText()
+                    
+                    if selected_filter == "All Parameters":
+                        # Show all rows
+                        for row in range(self.ui.tableTrends.rowCount()):
+                            self.ui.tableTrends.setRowHidden(row, False)
+                    else:
+                        # Hide rows that don't match the filter
+                        filter_mapping = {
+                            "Water System": "Water System",
+                            "Voltages": "Voltages",
+                            "Temperatures": "Temperatures", 
+                            "Fan Speeds": "Fan Speeds",
+                            "Humidity": "Humidity"
+                        }
+                        
+                        target_group = filter_mapping.get(selected_filter, "")
+                        
+                        for row in range(self.ui.tableTrends.rowCount()):
+                            group_item = self.ui.tableTrends.item(row, 1)  # Group is column 1
+                            if group_item:
+                                group_text = group_item.text()
+                                should_hide = (target_group != group_text)
+                                self.ui.tableTrends.setRowHidden(row, should_hide)
+                                
+                except Exception as e:
+                    print(f"Error filtering analysis results: {e}")
 
             def on_tab_changed(self, index):
                 """Handle tab changes with professional animations"""

@@ -585,17 +585,46 @@ class Ui_MainWindow(object):
         layout = QVBoxLayout(self.tabAnalysis)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        trends_group = QGroupBox("Parameter Trend Analysis")
+        # Analysis controls
+        controls_group = QGroupBox("Analysis Controls")
+        controls_layout = QHBoxLayout(controls_group)
+        controls_layout.setSpacing(12)
+        controls_layout.setContentsMargins(16, 16, 16, 16)
+        
+        # Parameter filter
+        controls_layout.addWidget(QLabel("Filter Parameters:"))
+        self.comboAnalysisFilter = QComboBox()
+        self.comboAnalysisFilter.setMinimumWidth(150)
+        self.comboAnalysisFilter.addItems([
+            "All Parameters",
+            "Water System",
+            "Voltages", 
+            "Temperatures",
+            "Fan Speeds",
+            "Humidity"
+        ])
+        controls_layout.addWidget(self.comboAnalysisFilter)
+        
+        # Refresh button
+        self.btnRefreshAnalysis = QPushButton("Refresh Analysis")
+        self.btnRefreshAnalysis.setObjectName("primaryButton")
+        controls_layout.addWidget(self.btnRefreshAnalysis)
+        
+        controls_layout.addStretch()
+        layout.addWidget(controls_group)
+
+        # Enhanced trends analysis table
+        trends_group = QGroupBox("Enhanced Parameter Trend Analysis")
         trends_layout = QVBoxLayout(trends_group)
 
         self.tableTrends = QTableWidget()
         self.tableTrends.setAlternatingRowColors(True)
         self.tableTrends.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.tableTrends.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tableTrends.setColumnCount(7)
+        self.tableTrends.setColumnCount(8)  # Added one more column
         self.tableTrends.setHorizontalHeaderLabels(
             [
                 "Parameter",
+                "Group",  # New column for parameter group
                 "Statistic",
                 "Data Points",
                 "Time Span (hrs)",
@@ -604,6 +633,45 @@ class Ui_MainWindow(object):
                 "Strength",
             ]
         )
+        
+        # Enhanced column sizing for better display
+        header = self.tableTrends.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Interactive)  # Parameter - resizable
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Group - fit content
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Statistic - fit content
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Data Points - fit content
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Time Span - fit content
+        header.setSectionResizeMode(5, QHeaderView.Stretch)  # Slope - stretch
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Direction - fit content
+        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Strength - fit content
+        
+        # Set minimum column widths
+        header.setMinimumSectionSize(120)
+        header.resizeSection(0, 200)  # Parameter column wider
+        
+        # Enhanced table styling for better readability
+        self.tableTrends.setStyleSheet("""
+            QTableWidget {
+                gridline-color: #E0E0E0;
+                font-size: 11px;
+                selection-background-color: #E3F2FD;
+            }
+            QTableWidget::item {
+                padding: 6px;
+                border-bottom: 1px solid #E0E0E0;
+            }
+            QTableWidget::item:selected {
+                background-color: #E3F2FD;
+                color: #0D47A1;
+            }
+            QHeaderView::section {
+                background-color: #F5F5F5;
+                padding: 8px;
+                border: 1px solid #E0E0E0;
+                font-weight: bold;
+            }
+        """)
+        
         trends_layout.addWidget(self.tableTrends)
         layout.addWidget(trends_group)
 
