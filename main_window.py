@@ -585,17 +585,46 @@ class Ui_MainWindow(object):
         layout = QVBoxLayout(self.tabAnalysis)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        trends_group = QGroupBox("Parameter Trend Analysis")
+        # Analysis controls
+        controls_group = QGroupBox("Analysis Controls")
+        controls_layout = QHBoxLayout(controls_group)
+        controls_layout.setSpacing(12)
+        controls_layout.setContentsMargins(16, 16, 16, 16)
+        
+        # Parameter filter
+        controls_layout.addWidget(QLabel("Filter Parameters:"))
+        self.comboAnalysisFilter = QComboBox()
+        self.comboAnalysisFilter.setMinimumWidth(150)
+        self.comboAnalysisFilter.addItems([
+            "All Parameters",
+            "Water System",
+            "Voltages", 
+            "Temperatures",
+            "Fan Speeds",
+            "Humidity"
+        ])
+        controls_layout.addWidget(self.comboAnalysisFilter)
+        
+        # Refresh button
+        self.btnRefreshAnalysis = QPushButton("Refresh Analysis")
+        self.btnRefreshAnalysis.setObjectName("primaryButton")
+        controls_layout.addWidget(self.btnRefreshAnalysis)
+        
+        controls_layout.addStretch()
+        layout.addWidget(controls_group)
+
+        # Enhanced trends analysis table
+        trends_group = QGroupBox("Enhanced Parameter Trend Analysis")
         trends_layout = QVBoxLayout(trends_group)
 
         self.tableTrends = QTableWidget()
         self.tableTrends.setAlternatingRowColors(True)
         self.tableTrends.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.tableTrends.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tableTrends.setColumnCount(7)
+        self.tableTrends.setColumnCount(8)  # Added one more column
         self.tableTrends.setHorizontalHeaderLabels(
             [
                 "Parameter",
+                "Group",  # New column for parameter group
                 "Statistic",
                 "Data Points",
                 "Time Span (hrs)",
@@ -604,6 +633,45 @@ class Ui_MainWindow(object):
                 "Strength",
             ]
         )
+        
+        # Enhanced column sizing for better display
+        header = self.tableTrends.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Interactive)  # Parameter - resizable
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Group - fit content
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Statistic - fit content
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Data Points - fit content
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Time Span - fit content
+        header.setSectionResizeMode(5, QHeaderView.Stretch)  # Slope - stretch
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Direction - fit content
+        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Strength - fit content
+        
+        # Set minimum column widths
+        header.setMinimumSectionSize(120)
+        header.resizeSection(0, 200)  # Parameter column wider
+        
+        # Enhanced table styling for better readability
+        self.tableTrends.setStyleSheet("""
+            QTableWidget {
+                gridline-color: #E0E0E0;
+                font-size: 11px;
+                selection-background-color: #E3F2FD;
+            }
+            QTableWidget::item {
+                padding: 6px;
+                border-bottom: 1px solid #E0E0E0;
+            }
+            QTableWidget::item:selected {
+                background-color: #E3F2FD;
+                color: #0D47A1;
+            }
+            QHeaderView::section {
+                background-color: #F5F5F5;
+                padding: 8px;
+                border: 1px solid #E0E0E0;
+                font-weight: bold;
+            }
+        """)
+        
         trends_layout.addWidget(self.tableTrends)
         layout.addWidget(trends_group)
 
@@ -614,80 +682,125 @@ class Ui_MainWindow(object):
         layout.setSpacing(16)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        header_label = QLabel("<h2>Machine Performance Check Results</h2>")
+        header_label = QLabel("<h2>Latest Machine Performance Check Results</h2>")
         header_label.setAlignment(Qt.AlignCenter)
         header_label.setWordWrap(True)
         layout.addWidget(header_label)
 
-        # Date selection controls
-        date_group = QGroupBox("Date Selection")
-        date_layout = QHBoxLayout(date_group)
-        date_layout.setSpacing(12)
-        date_layout.setContentsMargins(16, 16, 16, 16)
+        # Data info and refresh controls (simplified)
+        info_group = QGroupBox("MPC Data Status")
+        info_layout = QHBoxLayout(info_group)
+        info_layout.setSpacing(12)
+        info_layout.setContentsMargins(16, 16, 16, 16)
         
-        # Date A selection
-        date_layout.addWidget(QLabel("Date A:"))
-        self.comboDateA = QComboBox()
-        self.comboDateA.setMinimumWidth(150)
-        self.comboDateA.setPlaceholderText("Select first date...")
-        date_layout.addWidget(self.comboDateA)
+        # Last update info
+        self.lblLastMPCUpdate = QLabel("Last MPC Data: Loading...")
+        self.lblLastMPCUpdate.setWordWrap(True)
+        info_layout.addWidget(self.lblLastMPCUpdate)
         
-        # Date B selection  
-        date_layout.addWidget(QLabel("Date B:"))
-        self.comboDateB = QComboBox()
-        self.comboDateB.setMinimumWidth(150)
-        self.comboDateB.setPlaceholderText("Select second date...")
-        date_layout.addWidget(self.comboDateB)
+        # Refresh button
+        self.btnRefreshMPC = QPushButton("Refresh Latest Data")
+        self.btnRefreshMPC.setObjectName("primaryButton")
+        self.btnRefreshMPC.setMaximumWidth(200)
+        info_layout.addWidget(self.btnRefreshMPC)
         
-        # Compare button
-        self.btnCompareMPC = QPushButton("Compare Results")
-        self.btnCompareMPC.setObjectName("primaryButton")
-        date_layout.addWidget(self.btnCompareMPC)
-        
-        date_layout.addStretch()
-        layout.addWidget(date_group)
+        info_layout.addStretch()
+        layout.addWidget(info_group)
 
-        # Results table
-        results_group = QGroupBox("MPC Comparison Results")
+        # Results table with responsive design
+        results_group = QGroupBox("Latest MPC Results")
         results_layout = QVBoxLayout(results_group)
         results_layout.setContentsMargins(16, 16, 16, 16)
 
         self.tableMPC = QTableWidget()
         self.tableMPC.setAlternatingRowColors(True)
         self.tableMPC.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.tableMPC.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tableMPC.setColumnCount(4)
+        self.tableMPC.setColumnCount(3)  # Reduced columns: Parameter, Result, Status
         self.tableMPC.setHorizontalHeaderLabels([
             "Parameter",
-            "Date A Result", 
-            "Date B Result",
+            "Result", 
             "Status"
         ])
         
-        # Set column widths and enable text wrapping
+        # Set responsive column widths with better text handling
         header = self.tableMPC.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)  # Parameter - allow more space for text wrapping
-        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Date A
-        header.setSectionResizeMode(2, QHeaderView.Stretch)  # Date B  
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Status
+        header.setSectionResizeMode(0, QHeaderView.Interactive)  # Parameter - allow resize
+        header.setSectionResizeMode(1, QHeaderView.Stretch)     # Result - stretch to fill
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Status - fit content
         
-        # Enable word wrap and adjust row heights for better text display
+        # Set minimum column widths for parameter names
+        header.setMinimumSectionSize(200)  # Minimum width for parameter column
+        header.resizeSection(0, 300)  # Default width for parameter column
+        
+        # Enhanced text wrapping and row height management
         self.tableMPC.setWordWrap(True)
         self.tableMPC.setTextElideMode(Qt.ElideNone)
-        self.tableMPC.resizeRowsToContents()
-        self.tableMPC.setMinimumHeight(400)
+        self.tableMPC.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.tableMPC.setMinimumHeight(450)
+        
+        # Enable better text display with automatic row height adjustment
+        self.tableMPC.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.tableMPC.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
+        # Add custom styling for better text readability
+        self.tableMPC.setStyleSheet("""
+            QTableWidget {
+                gridline-color: #E0E0E0;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+            QTableWidget::item {
+                padding: 8px;
+                border: 1px solid #E0E0E0;
+            }
+            QTableWidget::item:selected {
+                background-color: #E3F2FD;
+                color: #0D47A1;
+            }
+        """)
+        
         results_layout.addWidget(self.tableMPC)
-
         layout.addWidget(results_group)
 
-        # Statistics
-        stats_group = QGroupBox("MPC Statistics")
-        stats_layout = QHBoxLayout(stats_group)
+        # Enhanced statistics display
+        stats_group = QGroupBox("MPC Summary")
+        stats_layout = QVBoxLayout(stats_group)
         stats_layout.setContentsMargins(16, 16, 16, 16)
 
-        self.lblMPCStats = QLabel("Select dates to view comparison statistics")
+        # Summary metrics in a grid layout
+        metrics_layout = QGridLayout()
+        
+        self.lblTotalParams = QLabel("Total Parameters: -")
+        self.lblPassedParams = QLabel("Passed: -")
+        self.lblFailedParams = QLabel("Failed: -")
+        self.lblWarningParams = QLabel("Warnings: -")
+        
+        # Style the summary labels
+        for label in [self.lblTotalParams, self.lblPassedParams, self.lblFailedParams, self.lblWarningParams]:
+            label.setStyleSheet("""
+                QLabel {
+                    font-weight: bold;
+                    padding: 8px;
+                    border-radius: 4px;
+                    background-color: #F5F5F5;
+                    margin: 2px;
+                }
+            """)
+        
+        metrics_layout.addWidget(self.lblTotalParams, 0, 0)
+        metrics_layout.addWidget(self.lblPassedParams, 0, 1)
+        metrics_layout.addWidget(self.lblFailedParams, 0, 2)
+        metrics_layout.addWidget(self.lblWarningParams, 0, 3)
+        
+        stats_layout.addLayout(metrics_layout)
+        
+        # Additional info
+        self.lblMPCStats = QLabel("Load MPC data to view detailed statistics")
         self.lblMPCStats.setWordWrap(True)
+        self.lblMPCStats.setAlignment(Qt.AlignCenter)
         stats_layout.addWidget(self.lblMPCStats)
+
+        layout.addWidget(stats_group)
 
         stats_layout.addStretch()
         layout.addWidget(stats_group)
