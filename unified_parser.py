@@ -47,18 +47,13 @@ class UnifiedParser:
             "datetime_alt": re.compile(
                 r"(\d{1,2}/\d{1,2}/\d{4})[ \t]+(\d{1,2}:\d{2}:\d{2})"
             ),
-            # Enhanced water system parameter patterns
+            # Enhanced parameter patterns - more flexible for actual log files
             "water_parameters": re.compile(
-                r"("
-                r"cooling\s*pump\s*high\s*statistics|CoolingpumpHighStatistics|pumpPressure|PumpPressure|pump_pressure|"
-                r"magnetron\s*flow|magnetronFlow|CoolingmagnetronFlowLowStatistics|coolingmagnetronflowlowstatistics|"
-                r"target\s*(?:and\s*)?circulator\s*flow|targetAndCirculatorFlow|coolingtargetflowlowstatistics|"
-                r"cooling\s*city\s*water\s*flow\s*statistics|CoolingcityWaterFlowLowStatistics|cityWaterFlow|city_water_flow"
-                r")"
-                r"[:\s]*count=(\d+),?\s*"
-                r"max=([\d.]+),?\s*"
-                r"min=([\d.]+),?\s*"
-                r"avg=([\d.]+)",
+                r"([a-zA-Z][a-zA-Z0-9_\s]*[a-zA-Z0-9])"  # Capture parameter name (letters, numbers, underscores, spaces)
+                r"[:\s]*count\s*=\s*(\d+),?\s*"           # count=N
+                r"max\s*=\s*([\d.-]+),?\s*"               # max=N.N
+                r"min\s*=\s*([\d.-]+),?\s*"               # min=N.N  
+                r"avg\s*=\s*([\d.-]+)",                   # avg=N.N
                 re.IGNORECASE,
             ),
             # Serial number patterns
@@ -68,35 +63,23 @@ class UnifiedParser:
         }
 
     def _init_parameter_mapping(self):
-        """Initialize unified parameter mapping with all real log variants"""
+        """Initialize parameter mapping for trend tab parameters only"""
         self.parameter_mapping = {
-            "pumpPressure": {
-                "patterns": [
-                    "cooling pump high statistics",
-                    "CoolingpumpHighStatistics",
-                    "pump_pressure",
-                ],
-                "unit": "PSI",
-                "description": "Cooling Pump Pressure",
-                "expected_range": (170, 230),
-                "critical_range": (160, 240),
-            },
+            # Water/Flow parameters (for Water System tab)
             "magnetronFlow": {
                 "patterns": [
-                    "magnetron flow",
-                    "magnetronFlow",
-                    "CoolingmagnetronFlowLowStatistics",
+                    "magnetron flow", "magnetronFlow", "CoolingmagnetronFlowLowStatistics",
+                    "coolingmagnetronflowlowstatistics"
                 ],
                 "unit": "L/min",
                 "description": "Mag Flow",
                 "expected_range": (8, 18),
                 "critical_range": (6, 20),
             },
-            "targetFlow": {
+            "targetAndCirculatorFlow": {
                 "patterns": [
-                    "target and circulator flow",
-                    "targetAndCirculatorFlow",
-                    "CoolingtargetFlowLowStatistics",
+                    "target and circulator flow", "targetAndCirculatorFlow", 
+                    "CoolingtargetFlowLowStatistics", "coolingtargetflowlowstatistics"
                 ],
                 "unit": "L/min",
                 "description": "Flow Target",
@@ -105,60 +88,53 @@ class UnifiedParser:
             },
             "cityWaterFlow": {
                 "patterns": [
-                    "cooling city water flow statistics",
-                    "CoolingcityWaterFlowLowStatistics",
-                    "cityWaterFlow",
-                    "city_water_flow",
+                    "cooling city water flow statistics", "CoolingcityWaterFlowLowStatistics",
+                    "cityWaterFlow", "city_water_flow"
                 ],
                 "unit": "L/min",
                 "description": "Flow Chiller Water",
                 "expected_range": (8, 18),
                 "critical_range": (6, 20),
             },
-            # Temperature parameters
-            "CoolingtargetTempStatistics": {
-                "patterns": [
-                    "CoolingtargetTempStatistics",
-                    "coolingtargettempstatistics",
-                    "Cooling target Temp Statistics",
-                    "targetTempStatistics",
-                ],
-                "unit": "°C",
-                "description": "Flow Target",
-                "expected_range": (40, 80),
-                "critical_range": (30, 90),
-            },
+            
+            # Temperature parameters (for Temperature tab)
             "FanremoteTempStatistics": {
                 "patterns": [
-                    "FanremoteTempStatistics",
-                    "fanremotetempstatistics",
-                    "Fan remote Temp Statistics",
-                    "remoteTempStatistics",
+                    "FanremoteTempStatistics", "fanremotetempstatistics",
+                    "Fan remote Temp Statistics", "remoteTempStatistics"
                 ],
                 "unit": "°C",
                 "description": "Temp Room",
                 "expected_range": (18, 25),
                 "critical_range": (15, 30),
             },
+            "magnetronTemp": {
+                "patterns": [
+                    "magnetronTemp", "magnetron temp", "magnetron temperature"
+                ],
+                "unit": "°C",
+                "description": "Temp Magnetron",
+                "expected_range": (30, 50),
+                "critical_range": (20, 60),
+            },
+            
+            # Humidity parameters (for Humidity tab)
             "FanhumidityStatistics": {
                 "patterns": [
-                    "FanhumidityStatistics",
-                    "fanhumiditystatistics",
-                    "Fan humidity Statistics",
-                    "humidityStatistics",
+                    "FanhumidityStatistics", "fanhumiditystatistics",
+                    "Fan humidity Statistics", "humidityStatistics"
                 ],
                 "unit": "%",
                 "description": "Room Humidity",
                 "expected_range": (40, 60),
                 "critical_range": (30, 80),
             },
-            # Fan speed parameters
+            
+            # Fan speed parameters (for Fan Speed tab)
             "FanfanSpeed1Statistics": {
                 "patterns": [
-                    "FanfanSpeed1Statistics",
-                    "fanfanspeed1statistics",
-                    "Fan fan Speed 1 Statistics",
-                    "fanSpeed1Statistics",
+                    "FanfanSpeed1Statistics", "fanfanspeed1statistics",
+                    "Fan fan Speed 1 Statistics", "fanSpeed1Statistics"
                 ],
                 "unit": "RPM",
                 "description": "Speed FAN 1",
@@ -167,10 +143,8 @@ class UnifiedParser:
             },
             "FanfanSpeed2Statistics": {
                 "patterns": [
-                    "FanfanSpeed2Statistics", 
-                    "fanfanspeed2statistics",
-                    "Fan fan Speed 2 Statistics",
-                    "fanSpeed2Statistics",
+                    "FanfanSpeed2Statistics", "fanfanspeed2statistics",
+                    "Fan fan Speed 2 Statistics", "fanSpeed2Statistics"
                 ],
                 "unit": "RPM",
                 "description": "Speed FAN 2",
@@ -179,10 +153,8 @@ class UnifiedParser:
             },
             "FanfanSpeed3Statistics": {
                 "patterns": [
-                    "FanfanSpeed3Statistics",
-                    "fanfanspeed3statistics", 
-                    "Fan fan Speed 3 Statistics",
-                    "fanSpeed3Statistics",
+                    "FanfanSpeed3Statistics", "fanfanspeed3statistics",
+                    "Fan fan Speed 3 Statistics", "fanSpeed3Statistics"
                 ],
                 "unit": "RPM",
                 "description": "Speed FAN 3",
@@ -191,33 +163,30 @@ class UnifiedParser:
             },
             "FanfanSpeed4Statistics": {
                 "patterns": [
-                    "FanfanSpeed4Statistics",
-                    "fanfanspeed4statistics",
-                    "Fan fan Speed 4 Statistics", 
-                    "fanSpeed4Statistics",
+                    "FanfanSpeed4Statistics", "fanfanspeed4statistics",
+                    "Fan fan Speed 4 Statistics", "fanSpeed4Statistics"
                 ],
                 "unit": "RPM",
                 "description": "Speed FAN 4",
                 "expected_range": (1000, 3000),
                 "critical_range": (500, 4000),
             },
-            # Voltage parameters
+            
+            # Voltage parameters (for Voltage tab)
             "MLC_ADC_CHAN_TEMP_BANKA_STAT_24V": {
                 "patterns": [
-                    "MLC_ADC_CHAN_TEMP_BANKA_STAT",
-                    "mlc_adc_chan_temp_banka_stat",
-                    "MLC ADC CHAN TEMP BANKA STAT",
+                    "MLC_ADC_CHAN_TEMP_BANKA_STAT", "mlc_adc_chan_temp_banka_stat",
+                    "MLC ADC CHAN TEMP BANKA STAT", "BANKA"
                 ],
                 "unit": "V",
-                "description": "MLC Bank A 24V", 
+                "description": "MLC Bank A 24V",
                 "expected_range": (22, 26),
                 "critical_range": (20, 28),
             },
             "MLC_ADC_CHAN_TEMP_BANKB_STAT_24V": {
                 "patterns": [
-                    "MLC_ADC_CHAN_TEMP_BANKB_STAT",
-                    "mlc_adc_chan_temp_bankb_stat",
-                    "MLC ADC CHAN TEMP BANKB STAT",
+                    "MLC_ADC_CHAN_TEMP_BANKB_STAT", "mlc_adc_chan_temp_bankb_stat",
+                    "MLC ADC CHAN TEMP BANKB STAT", "BANKB"
                 ],
                 "unit": "V",
                 "description": "MLC Bank B 24V",
@@ -230,7 +199,7 @@ class UnifiedParser:
         self.pattern_to_unified = {}
         for unified_name, config in self.parameter_mapping.items():
             for pattern in config["patterns"]:
-                key = pattern.lower().replace(" ", "").replace(":", "")
+                key = pattern.lower().replace(" ", "").replace(":", "").replace("_", "")
                 self.pattern_to_unified[key] = unified_name
 
     def parse_linac_file(
@@ -298,14 +267,23 @@ class UnifiedParser:
         # Extract serial number
         serial_number = self._extract_serial_number(line)
 
-        # Extract water system parameters
+        # Extract parameters with statistics
         water_match = self.patterns["water_parameters"].search(line)
         if water_match:
             param_name = water_match.group(1).strip()
 
-            # Filter: Only process target parameters (water, voltage, humidity, temperature)
+            # Debug output for actual log files
+            if line_number <= 10:  # Only for first 10 lines to avoid spam
+                print(f"Line {line_number}: Found parameter '{param_name}'")
+
+            # Filter: Only process target parameters
             if not self._is_target_parameter(param_name):
+                if line_number <= 10:
+                    print(f"Line {line_number}: Parameter '{param_name}' filtered out")
                 return records
+
+            if line_number <= 10:
+                print(f"Line {line_number}: Parameter '{param_name}' accepted for processing")
 
             count = int(water_match.group(2))
             max_val = float(water_match.group(3))
@@ -376,32 +354,34 @@ class UnifiedParser:
 
     def _normalize_parameter_name(self, param_name: str) -> str:
         """Normalize parameter names to fix common naming issues"""
-        # Remove spaces, colons, convert to lowercase for lookup
-        lookup_key = param_name.lower().replace(" ", "").replace(":", "")
+        # Remove spaces, colons, underscores, convert to lowercase for lookup
+        lookup_key = param_name.lower().replace(" ", "").replace(":", "").replace("_", "")
 
         # Return unified name if found, otherwise return cleaned original
         return self.pattern_to_unified.get(lookup_key, param_name.strip())
 
     def _is_target_parameter(self, param_name: str) -> bool:
-        """Check if parameter is one of the target categories: water, voltage, humidity, temperature"""
-        param_lower = param_name.lower()
-
-        # Water system parameters
-        water_keywords = ['flow', 'pump', 'pressure', 'water', 'magnetron', 'target', 'circulator', 'city']
-
-        # Voltage parameters  
-        voltage_keywords = ['volt', '_v_', '24v', '48v', '5v', 'mlc_adc', 'col_adc', 'mlc', 'bank', 'distal', 'proximal', 'motor', 'pwr']
-
-        # Temperature parameters
-        temp_keywords = ['temp', 'temperature', '°c', 'celsius']
-
-        # Humidity parameters
-        humidity_keywords = ['humidity', 'humid']
-
-        # Check if parameter matches any target category
-        all_keywords = water_keywords + voltage_keywords + temp_keywords + humidity_keywords
-
-        return any(keyword in param_lower for keyword in all_keywords)
+        """Check if parameter is one of the specific trend tab parameters only"""
+        param_lower = param_name.lower().replace(" ", "").replace(":", "").replace("_", "")
+        
+        # Only allow parameters that match our exact trend tab parameter patterns
+        target_patterns = []
+        for param_config in self.parameter_mapping.values():
+            for pattern in param_config["patterns"]:
+                target_patterns.append(pattern.lower().replace(" ", "").replace(":", "").replace("_", ""))
+        
+        # Check if the parameter name contains any of our target patterns
+        for pattern in target_patterns:
+            pattern_clean = pattern.lower().replace(" ", "").replace(":", "").replace("_", "")
+            if pattern_clean in param_lower or param_lower in pattern_clean:
+                return True
+        
+        # Also check if it's in our pattern-to-unified mapping
+        lookup_key = param_name.lower().replace(" ", "").replace(":", "").replace("_", "")
+        if lookup_key in self.pattern_to_unified:
+            return True
+            
+        return False
 
     def _assess_data_quality(self, param_name: str, value: float, count: int) -> str:
         """Assess data quality for each reading"""
@@ -442,8 +422,37 @@ class UnifiedParser:
                 subset=["datetime", "serial_number", "parameter_type", "statistic_type"]
             )
 
+            # Create additional columns needed by database manager for compatibility
+            if 'avg_value' in df.columns:
+                # Create separate records for avg, min, max for database compatibility
+                records = []
+                for _, row in df.iterrows():
+                    base_record = row.to_dict()
+                    
+                    # Average record
+                    avg_record = base_record.copy()
+                    avg_record['value'] = row['avg_value']
+                    avg_record['statistic_type'] = 'avg'
+                    records.append(avg_record)
+                    
+                    # Min record
+                    min_record = base_record.copy()
+                    min_record['value'] = row['min_value']
+                    min_record['statistic_type'] = 'min'
+                    records.append(min_record)
+                    
+                    # Max record
+                    max_record = base_record.copy()
+                    max_record['value'] = row['max_value']
+                    max_record['statistic_type'] = 'max'
+                    records.append(max_record)
+                
+                df = pd.DataFrame(records)
+
             # Reset index
             df = df.reset_index(drop=True)
+
+            print(f"✓ Data cleaned: {len(df)} records ready for database")
 
         except Exception as e:
             print(f"Error cleaning data: {e}")

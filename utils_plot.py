@@ -336,7 +336,7 @@ class PlotUtils:
     
     @staticmethod
     def _plot_parameter_data(ax, data, title):
-        """Plot parameter data on a specific axis"""
+        """Plot parameter data on a specific axis - FIXED for actual data format"""
         if data is None or data.empty:
             ax.text(0.5, 0.5, 'No data available', 
                    horizontalalignment='center', verticalalignment='center',
@@ -360,15 +360,33 @@ class PlotUtils:
         colors = PlotUtils.get_group_colors()
         color_cycle = list(colors.values())
         
-        if 'parameter' in data.columns:
+        # Determine value column to use
+        value_col = None
+        possible_value_cols = ['avg', 'avg_value', 'Average', 'value']
+        for col in possible_value_cols:
+            if col in data.columns:
+                value_col = col
+                break
+        
+        if not value_col:
+            ax.text(0.5, 0.5, f'No value column found\nAvailable: {list(data.columns)}', 
+                   horizontalalignment='center', verticalalignment='center',
+                   transform=ax.transAxes, fontsize=10, color='red')
+            ax.set_title(title, fontsize=12, fontweight='bold')
+            return
+        
+        print(f"🔍 Using value column: '{value_col}' for plotting")
+        
+        if 'parameter' in data.columns or 'parameter_name' in data.columns:
             # Multiple parameters
-            unique_params = data['parameter'].unique()
+            param_col = 'parameter' if 'parameter' in data.columns else 'parameter_name'
+            unique_params = data[param_col].unique()
             for i, param in enumerate(unique_params):
-                param_data = data[data['parameter'] == param]
+                param_data = data[data[param_col] == param]
                 color = color_cycle[i % len(color_cycle)]
                 
-                if 'datetime' in param_data.columns and 'avg_value' in param_data.columns:
-                    ax.plot(param_data['datetime'], param_data['avg_value'], 
+                if 'datetime' in param_data.columns and value_col in param_data.columns:
+                    ax.plot(param_data['datetime'], param_data[value_col], 
                            label=param, color=color, linewidth=2, marker='o', markersize=4)
                     
                     # Add error bands if min/max available
@@ -376,15 +394,25 @@ class PlotUtils:
                         ax.fill_between(param_data['datetime'], 
                                       param_data['min_value'], param_data['max_value'],
                                       alpha=0.2, color=color)
+                    elif 'Min' in param_data.columns and 'Max' in param_data.columns:
+                        ax.fill_between(param_data['datetime'], 
+                                      param_data['Min'], param_data['Max'],
+                                      alpha=0.2, color=color)
         else:
             # Single parameter
-            if 'datetime' in data.columns and 'avg_value' in data.columns:
-                ax.plot(data['datetime'], data['avg_value'], 
-                       color=color_cycle[0], linewidth=2, marker='o', markersize=4)
+            if 'datetime' in data.columns and value_col in data.columns:
+                ax.plot(data['datetime'], data[value_col], 
+                       color=color_cycle[0], linewidth=2, marker='o', markersize=4, 
+                       label=title)
                 
+                # Add error bands if min/max available
                 if 'min_value' in data.columns and 'max_value' in data.columns:
                     ax.fill_between(data['datetime'], 
                                   data['min_value'], data['max_value'],
+                                  alpha=0.2, color=color_cycle[0])
+                elif 'Min' in data.columns and 'Max' in data.columns:
+                    ax.fill_between(data['datetime'], 
+                                  data['Min'], data['Max'],
                                   alpha=0.2, color=color_cycle[0])
         
         # Format axes
@@ -392,15 +420,25 @@ class PlotUtils:
         ax.grid(True, alpha=0.3)
         
         if 'datetime' in data.columns:
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-            ax.xaxis.set_major_locator(mdates.HourLocator(interval=1))
+            # Better date formatting for the actual data
+            date_range = data['datetime'].max() - data['datetime'].min()
+            if date_range.total_seconds() < 3600:  # Less than 1 hour
+                ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+                ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=10))
+            elif date_range.total_seconds() < 86400:  # Less than 1 day
+                ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+                ax.xaxis.set_major_locator(mdates.HourLocator(interval=1))
+            else:
+                ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
+                ax.xaxis.set_major_locator(mdates.HourLocator(interval=6))
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
         
         # Auto-scale with some padding
         ax.margins(x=0.02, y=0.05)
         
         # Add legend if multiple parameters
-        if 'parameter' in data.columns and len(data['parameter'].unique()) > 1:
+        if ('parameter' in data.columns and len(data['parameter'].unique()) > 1) or \
+           ('parameter_name' in data.columns and len(data['parameter_name'].unique()) > 1):
             ax.legend(loc='best', framealpha=0.9)
     
     @staticmethod
