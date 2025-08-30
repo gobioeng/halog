@@ -599,7 +599,7 @@ class Ui_MainWindow(object):
         layout = QVBoxLayout(self.tabAnalysis)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        # Analysis controls with improved layout
+        # Analysis controls
         controls_group = QGroupBox("Analysis Controls")
         controls_layout = QHBoxLayout(controls_group)
         controls_layout.setSpacing(12)
@@ -627,141 +627,62 @@ class Ui_MainWindow(object):
         controls_layout.addStretch()
         layout.addWidget(controls_group)
 
-        # Enhanced parameter overview table - shows ALL parsed parameters
-        overview_group = QGroupBox("All Parsed Parameters Overview")
-        overview_layout = QVBoxLayout(overview_group)
-
-        self.tableParameterOverview = QTableWidget()
-        self.tableParameterOverview.setAlternatingRowColors(True)
-        self.tableParameterOverview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.tableParameterOverview.setColumnCount(6)
-        self.tableParameterOverview.setHorizontalHeaderLabels([
-            "Parameter Name",
-            "Category",
-            "Unit", 
-            "Expected Range",
-            "Data Quality",
-            "Last Value"
-        ])
-        
-        # Enhanced column sizing
-        header = self.tableParameterOverview.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)  # Parameter name
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Category
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Unit
-        header.setSectionResizeMode(3, QHeaderView.Stretch)  # Expected range
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Data quality
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Last value
-        
-        # Enhanced color scheme and styling
-        self.tableParameterOverview.setStyleSheet("""
-            QTableWidget {
-                gridline-color: #e1e8ed;
-                font-size: 11px;
-                selection-background-color: #e3f2fd;
-                background-color: #fafbfc;
-                border: 1px solid #d1d9e0;
-                border-radius: 6px;
-            }
-            QTableWidget::item {
-                padding: 8px;
-                border-bottom: 1px solid #e1e8ed;
-                border-right: 1px solid #e1e8ed;
-            }
-            QTableWidget::item:selected {
-                background-color: #e3f2fd;
-                color: #1565c0;
-            }
-            QTableWidget::item:hover {
-                background-color: #f5f5f5;
-            }
-            QHeaderView::section {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 #f8f9fa, stop: 1 #e9ecef);
-                padding: 10px;
-                border: 1px solid #d1d9e0;
-                font-weight: bold;
-                color: #495057;
-                font-size: 11px;
-            }
-            QHeaderView::section:hover {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 #e9ecef, stop: 1 #dee2e6);
-            }
-        """)
-        
-        overview_layout.addWidget(self.tableParameterOverview)
-        layout.addWidget(overview_group)
-
-        # Enhanced trends analysis table with better color scheme
-        trends_group = QGroupBox("Parameter Trend Analysis")
+        # Enhanced trends analysis table
+        trends_group = QGroupBox("Enhanced Parameter Trend Analysis")
         trends_layout = QVBoxLayout(trends_group)
 
         self.tableTrends = QTableWidget()
         self.tableTrends.setAlternatingRowColors(True)
-        self.tableTrends.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.tableTrends.setMaximumHeight(300)  # Limit height to show both tables
-        self.tableTrends.setColumnCount(8)
-        self.tableTrends.setHorizontalHeaderLabels([
-            "Parameter",
-            "Category",
-            "Statistic",
-            "Data Points",
-            "Time Span (hrs)",
-            "Slope",
-            "Direction",
-            "Strength",
-        ])
+        self.tableTrends.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.tableTrends.setColumnCount(8)  # Added one more column
+        self.tableTrends.setHorizontalHeaderLabels(
+            [
+                "Parameter",
+                "Group",  # New column for parameter group
+                "Statistic",
+                "Data Points",
+                "Time Span (hrs)",
+                "Slope",
+                "Direction",
+                "Strength",
+            ]
+        )
         
         # Enhanced column sizing for better display
         header = self.tableTrends.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Interactive)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.Stretch)
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(0, QHeaderView.Interactive)  # Parameter - resizable
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Group - fit content
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Statistic - fit content
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Data Points - fit content
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Time Span - fit content
+        header.setSectionResizeMode(5, QHeaderView.Stretch)  # Slope - stretch
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Direction - fit content
+        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Strength - fit content
         
         # Set minimum column widths
-        header.setMinimumSectionSize(100)
-        header.resizeSection(0, 180)
+        header.setMinimumSectionSize(120)
+        header.resizeSection(0, 200)  # Parameter column wider
         
-        # Enhanced table styling matching the overview table
+        # Enhanced table styling for better readability
         self.tableTrends.setStyleSheet("""
             QTableWidget {
-                gridline-color: #e1e8ed;
+                gridline-color: #E0E0E0;
                 font-size: 11px;
-                selection-background-color: #e3f2fd;
-                background-color: #fafbfc;
-                border: 1px solid #d1d9e0;
-                border-radius: 6px;
+                selection-background-color: #E3F2FD;
             }
             QTableWidget::item {
                 padding: 6px;
-                border-bottom: 1px solid #e1e8ed;
-                border-right: 1px solid #e1e8ed;
+                border-bottom: 1px solid #E0E0E0;
             }
             QTableWidget::item:selected {
-                background-color: #e3f2fd;
-                color: #1565c0;
-            }
-            QTableWidget::item:hover {
-                background-color: #f5f5f5;
+                background-color: #E3F2FD;
+                color: #0D47A1;
             }
             QHeaderView::section {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 #f8f9fa, stop: 1 #e9ecef);
+                background-color: #F5F5F5;
                 padding: 8px;
-                border: 1px solid #d1d9e0;
+                border: 1px solid #E0E0E0;
                 font-weight: bold;
-                color: #495057;
-                font-size: 11px;
-            }
-            QHeaderView::section:hover {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 #e9ecef, stop: 1 #dee2e6);
             }
         """)
         
@@ -772,31 +693,13 @@ class Ui_MainWindow(object):
         self.tabMPC = QWidget()
         self.tabWidget.addTab(self.tabMPC, "🔧 MPC")
         layout = QVBoxLayout(self.tabMPC)
-        layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
 
-        # Under Development Notice
-        dev_notice = QLabel()
-        dev_notice.setText("""
-        <div style='text-align: center; padding: 40px; background-color: #fff3cd; border: 2px solid #ffeaa7; border-radius: 8px;'>
-            <h2 style='color: #856404; margin-bottom: 16px;'>🚧 Under Development</h2>
-            <p style='color: #856404; font-size: 14px; line-height: 1.6;'>
-                The MPC (Machine Performance Check) functionality is currently under development.<br/>
-                This feature will provide comprehensive machine performance comparisons<br/>
-                and quality assurance metrics in future releases.
-            </p>
-            <p style='color: #6c757d; font-size: 12px; margin-top: 20px;'>
-                <i>Contact gobioeng.com for updates on development progress.</i>
-            </p>
-        </div>
-        """)
-        dev_notice.setWordWrap(True)
-        dev_notice.setAlignment(Qt.AlignCenter)
-        layout.addWidget(dev_notice)
-        
-        # Add some vertical spacing
-        layout.addStretch()
-        return  # Skip the rest of the complex MPC setup
+        header_label = QLabel("<h2>Latest Machine Performance Check Results</h2>")
+        header_label.setAlignment(Qt.AlignCenter)
+        header_label.setWordWrap(True)
+        layout.addWidget(header_label)
 
         
         # Date selection controls for MPC comparison
