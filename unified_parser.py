@@ -36,7 +36,7 @@ class UnifiedParser:
             "processing_time": 0,
         }
         self.fault_codes: Dict[str, Dict[str, str]] = {}
-        
+
     def _compile_patterns(self):
         """Compile regex patterns for enhanced log parsing"""
         self.patterns = {
@@ -242,74 +242,79 @@ class UnifiedParser:
     ) -> pd.DataFrame:
         """Parse LINAC log file with chunked processing for large files"""
         records = []
-        
+
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
-                
+
             total_lines = len(lines)
             self.parsing_stats["lines_processed"] = 0
-            
+
             for i in range(0, total_lines, chunk_size):
                 if cancel_callback and cancel_callback():
                     break
-                    
+
                 chunk_lines = [(i + j, lines[i + j].strip()) 
                               for j in range(min(chunk_size, total_lines - i))]
-                
+
                 chunk_records = self._process_chunk(chunk_lines)
                 records.extend(chunk_records)
-                
+
                 self.parsing_stats["lines_processed"] += len(chunk_lines)
-                
+
                 if progress_callback:
                     progress = (i + len(chunk_lines)) / total_lines * 100
                     progress_callback(progress)
-                    
+
         except Exception as e:
             print(f"Error reading file {file_path}: {e}")
             self.parsing_stats["errors_encountered"] += 1
-            
+
         df = pd.DataFrame(records)
         return self._clean_and_validate_data(df)
 
     def _process_chunk(self, chunk_lines: List[Tuple[int, str]]) -> List[Dict]:
         """Process a chunk of lines"""
         records = []
-        
+
         for line_number, line in chunk_lines:
             try:
                 parsed_records = self._parse_line_enhanced(line, line_number)
                 records.extend(parsed_records)
             except Exception as e:
                 self.parsing_stats["errors_encountered"] += 1
-                
+
         return records
 
     def _parse_line_enhanced(self, line: str, line_number: int) -> List[Dict]:
-        """Enhanced line parsing with unified parameter mapping"""
+        """Enhanced line parsing with unified parameter mapping and filtering"""
         records = []
-        
+
         # Extract datetime
         datetime_str = self._extract_datetime(line)
         if not datetime_str:
             return records
-            
+
         # Extract serial number
         serial_number = self._extract_serial_number(line)
-        
+
         # Extract water system parameters
         water_match = self.patterns["water_parameters"].search(line)
         if water_match:
             param_name = water_match.group(1).strip()
+
+            # Filter: Only process target parameters (water, voltage, humidity, temperature)
+            if not self._is_target_parameter(param_name):
+                return records
+
             count = int(water_match.group(2))
             max_val = float(water_match.group(3))
             min_val = float(water_match.group(4))
             avg_val = float(water_match.group(5))
-            
+
             # Normalize parameter name
             normalized_param = self._normalize_parameter_name(param_name)
-            
+
             record = {
                 'datetime': datetime_str,
                 'serial_number': serial_number,
@@ -323,7 +328,7 @@ class UnifiedParser:
                 'quality': self._assess_data_quality(normalized_param, avg_val, count)
             }
             records.append(record)
-            
+
         return records
 
     def _extract_datetime(self, line: str) -> Optional[str]:
@@ -340,7 +345,7 @@ class UnifiedParser:
         if match:
             date_part = match.group(1)
             time_part = match.group(2)
-            
+
             # Convert MM/DD/YYYY to YYYY-MM-DD
             try:
                 date_obj = datetime.strptime(date_part, "%m/%d/%Y")
@@ -357,25 +362,46 @@ class UnifiedParser:
         match = self.patterns["serial_number"].search(line)
         if match:
             return match.group(1)
-            
+
         # Try alternative patterns
         match = self.patterns["serial_alt"].search(line)
         if match:
             return match.group(1)
-            
+
         match = self.patterns["machine_id"].search(line)
         if match:
             return match.group(1)
-            
+
         return "Unknown"
 
     def _normalize_parameter_name(self, param_name: str) -> str:
         """Normalize parameter names to fix common naming issues"""
         # Remove spaces, colons, convert to lowercase for lookup
         lookup_key = param_name.lower().replace(" ", "").replace(":", "")
-        
+
         # Return unified name if found, otherwise return cleaned original
         return self.pattern_to_unified.get(lookup_key, param_name.strip())
+
+    def _is_target_parameter(self, param_name: str) -> bool:
+        """Check if parameter is one of the target categories: water, voltage, humidity, temperature"""
+        param_lower = param_name.lower()
+
+        # Water system parameters
+        water_keywords = ['flow', 'pump', 'pressure', 'water', 'magnetron', 'target', 'circulator', 'city']
+
+        # Voltage parameters  
+        voltage_keywords = ['volt', '_v_', '24v', '48v', '5v', 'mlc_adc', 'col_adc', 'mlc', 'bank', 'distal', 'proximal', 'motor', 'pwr']
+
+        # Temperature parameters
+        temp_keywords = ['temp', 'temperature', '°c', 'celsius']
+
+        # Humidity parameters
+        humidity_keywords = ['humidity', 'humid']
+
+        # Check if parameter matches any target category
+        all_keywords = water_keywords + voltage_keywords + temp_keywords + humidity_keywords
+
+        return any(keyword in param_lower for keyword in all_keywords)
 
     def _assess_data_quality(self, param_name: str, value: float, count: int) -> str:
         """Assess data quality for each reading"""
@@ -433,13 +459,13 @@ class UnifiedParser:
         """
         try:
             self.fault_codes = {}
-            
+
             if not os.path.exists(file_path):
                 return False
-                
+
             # Try different encodings
             encodings = ['utf-8', 'latin-1', 'cp1252']
-            
+
             for encoding in encodings:
                 try:
                     with open(file_path, 'r', encoding=encoding) as file:
@@ -447,7 +473,7 @@ class UnifiedParser:
                             line = line.strip()
                             if not line or line.startswith('#'):
                                 continue
-                                
+
                             # Parse fault code line
                             fault_info = self._parse_fault_code_line(line)
                             if fault_info:
@@ -457,16 +483,16 @@ class UnifiedParser:
                                     'source': fault_info.get('source', 'uploaded'),
                                     'line_number': line_num
                                 }
-                    
+
                     print(f"✓ Loaded {len(self.fault_codes)} fault codes from uploaded file")
                     return True
-                    
+
                 except UnicodeDecodeError:
                     continue
-                    
+
             print(f"❌ Failed to load fault codes from {file_path}")
             return False
-            
+
         except Exception as e:
             print(f"Error loading fault codes: {e}")
             return False
@@ -479,7 +505,7 @@ class UnifiedParser:
             r'^(\d+)\s+(.+)$',          # "12345 Description"
             r'^Code\s*(\d+)\s*[:\-\s]*(.+)$',  # "Code 12345: Description"
         ]
-        
+
         for pattern in patterns:
             match = re.match(pattern, line, re.IGNORECASE)
             if match:
@@ -487,13 +513,13 @@ class UnifiedParser:
                     'code': match.group(1).strip(),
                     'description': match.group(2).strip()
                 }
-        
+
         return None
 
     def search_fault_code(self, code: str) -> Dict:
         """Search for fault code in loaded database"""
         code = str(code).strip()
-        
+
         if code in self.fault_codes:
             return {
                 'found': True,
@@ -525,22 +551,22 @@ class UnifiedParser:
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
-                
+
             parameters = []
             for line_num, line in enumerate(lines, 1):
                 parsed = self._parse_statistics_line(line, line_num)
                 if parsed:
                     parameters.append(parsed)
-                    
+
             grouped_params = self._group_parameters(parameters)
-            
+
             return {
                 'success': True,
                 'parameters': parameters,
                 'grouped_parameters': grouped_params,
                 'total_parameters': len(parameters)
             }
-            
+
         except Exception as e:
             return {
                 'success': False,
@@ -551,46 +577,50 @@ class UnifiedParser:
             }
 
     def _parse_statistics_line(self, line: str, line_num: int) -> Optional[Dict]:
-        """Parse a single statistics log line from short data"""
+        """Parse a single statistics log line from short data with filtering"""
         try:
             # Extract basic info - split by tabs
             parts = line.split('\t')
             if len(parts) < 8:
                 return None
-            
+
             date_str = parts[0]
             time_str = parts[1]
-            
+
             # Extract serial number
             sn_match = re.search(r'SN# (\d+)', line)
             serial_number = sn_match.group(1) if sn_match else "Unknown"
-            
+
             # Look for statistics pattern - extract parameter name after SN# portion
             # Find the parameter name between SN# and the colon
             param_match = re.search(r'SN#\s+\d+\s+(.+?)\s*:\s*count=', line)
             if not param_match:
                 return None
-            
+
             param_name_raw = param_match.group(1).strip()
-            
+
+            # Filter: Only process target parameters (water, voltage, humidity, temperature)
+            if not self._is_target_parameter(param_name_raw):
+                return None
+
             # Now extract the statistics
             stat_pattern = r'count=(\d+),?\s*max=([\d.-]+),?\s*min=([\d.-]+),?\s*avg=([\d.-]+)'
             stat_match = re.search(stat_pattern, line)
-            
+
             if stat_match:
                 param_name = self._normalize_parameter_name(param_name_raw)
                 count = int(stat_match.group(1))
                 max_val = float(stat_match.group(2))
                 min_val = float(stat_match.group(3))
                 avg_val = float(stat_match.group(4))
-                
+
                 # Create datetime
                 try:
                     datetime_str = f"{date_str} {time_str}"
                     dt = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
                 except:
                     dt = None
-                
+
                 return {
                     'datetime': dt,
                     'serial_number': serial_number,
@@ -601,10 +631,10 @@ class UnifiedParser:
                     'avg_value': avg_val,
                     'line_number': line_num
                 }
-        
+
         except Exception as e:
             print(f"Warning: Error parsing line {line_num}: {e}")
-        
+
         return None
 
     def _group_parameters(self, parameters: List[Dict]) -> Dict:
@@ -617,10 +647,10 @@ class UnifiedParser:
             'fan_speeds': [],
             'other': []
         }
-        
+
         for param in parameters:
             param_name = param['parameter_name'].lower()
-            
+
             if any(keyword in param_name for keyword in ['flow', 'pump', 'water']):
                 groups['water_system'].append(param)
             elif any(keyword in param_name for keyword in ['temp', 'temperature']):
@@ -633,20 +663,20 @@ class UnifiedParser:
                 groups['fan_speeds'].append(param)
             else:
                 groups['other'].append(param)
-                
+
         return groups
 
     def convert_short_data_to_dataframe(self, short_data_result: Dict) -> pd.DataFrame:
         """Convert parsed short data to DataFrame format compatible with analysis functions"""
         import pandas as pd
-        
+
         if not short_data_result.get('success') or not short_data_result.get('parameters'):
             return pd.DataFrame()
-        
+
         try:
             records = []
             parameters = short_data_result['parameters']
-            
+
             for param in parameters:
                 # Create records for each statistic type (avg, max, min)
                 base_record = {
@@ -656,7 +686,7 @@ class UnifiedParser:
                     'count': param.get('count', 0),
                     'line_number': param.get('line_number', 0)
                 }
-                
+
                 # Add record for average value
                 avg_record = base_record.copy()
                 avg_record.update({
@@ -667,7 +697,7 @@ class UnifiedParser:
                     'min_value': param.get('min_value', 0)
                 })
                 records.append(avg_record)
-                
+
                 # Add record for max value  
                 max_record = base_record.copy()
                 max_record.update({
@@ -678,7 +708,7 @@ class UnifiedParser:
                     'min_value': param.get('min_value', 0)
                 })
                 records.append(max_record)
-                
+
                 # Add record for min value
                 min_record = base_record.copy()
                 min_record.update({
@@ -689,15 +719,15 @@ class UnifiedParser:
                     'min_value': param.get('min_value', 0)
                 })
                 records.append(min_record)
-            
+
             # Create DataFrame
             df = pd.DataFrame(records)
-            
+
             # Clean and validate the data
             df = self._clean_and_validate_data(df)
-            
+
             return df
-            
+
         except Exception as e:
             print(f"Error converting short data to DataFrame: {e}")
             import traceback
@@ -727,7 +757,7 @@ class UnifiedParser:
         parameter counts.
         """
         simplified = []
-        
+
         for param_key, config in self.parameter_mapping.items():
             simplified.append({
                 'key': param_key,
@@ -735,13 +765,13 @@ class UnifiedParser:
                 'unit': config['unit'],
                 'category': self._categorize_parameter(param_key)
             })
-            
+
         return simplified
 
     def _categorize_parameter(self, param_key: str) -> str:
         """Categorize parameter for grouping"""
         key_lower = param_key.lower()
-        
+
         if 'flow' in key_lower or 'pump' in key_lower:
             return 'Water System'
         elif 'temp' in key_lower:
@@ -754,3 +784,137 @@ class UnifiedParser:
             return 'Voltage'
         else:
             return 'Other'
+
+    def _get_parameter_data_by_description(self, parameter_description):
+        """Get parameter data by its user-friendly description from the database"""
+        try:
+            if not hasattr(self, 'df') or self.df.empty:
+                print("⚠️ No data available in database")
+                return pd.DataFrame()
+
+            print(f"🔍 DataFrame columns: {list(self.df.columns)}")
+            print(f"🔍 DataFrame shape: {self.df.shape}")
+
+            # Check which column name exists in the DataFrame
+            param_column = None
+            possible_columns = ['param', 'parameter_type', 'parameter_name']
+
+            for col in possible_columns:
+                if col in self.df.columns:
+                    param_column = col
+                    break
+
+            if not param_column:
+                print(f"⚠️ No parameter column found in DataFrame. Available columns: {list(self.df.columns)}")
+                return pd.DataFrame()
+
+            print(f"🔍 Using parameter column: '{param_column}'")
+
+            # Enhanced mapping to match actual database format with partial string matching
+            description_to_patterns = {
+                "Mag Flow": ["magnetronFlow", "magnetron"],
+                "Flow Target": ["targetAndCirculatorFlow", "target", "circulator"],
+                "Flow Chiller Water": ["cityWaterFlow", "chiller", "city", "water"],
+                "Temp Room": ["FanremoteTempStatistics", "remoteTemp", "roomTemp"],
+                "Room Humidity": ["FanhumidityStatistics", "humidity"],
+                "Temp Magnetron": ["magnetronTemp", "magnetron"],
+                "Speed FAN 1": ["fanSpeed1", "FanSpeed1", "Speed1"],
+                "Speed FAN 2": ["fanSpeed2", "FanSpeed2", "Speed2"],
+                "Speed FAN 3": ["fanSpeed3", "FanSpeed3", "Speed3"],
+                "Speed FAN 4": ["fanSpeed4", "FanSpeed4", "Speed4"],
+                "MLC Bank A 24V": ["BANKA", "BankA", "24V"],
+                "MLC Bank B 24V": ["BANKB", "BankB", "24V"],
+            }
+
+            # Get all available parameters
+            all_params = self.df[param_column].unique()
+            print(f"🔍 Available parameters: {all_params[:10]}")
+
+            # Find matching parameter using enhanced pattern matching
+            matching_params = []
+            patterns = description_to_patterns.get(parameter_description, [parameter_description])
+
+            print(f"🔍 Looking for patterns: {patterns}")
+
+            # Enhanced search with flexible matching
+            for pattern in patterns:
+                for param in all_params:
+                    param_lower = param.lower()
+                    pattern_lower = pattern.lower()
+                    
+                    # Check if pattern is contained in the parameter name
+                    if pattern_lower in param_lower and param not in matching_params:
+                        matching_params.append(param)
+                        print(f"✓ Pattern '{pattern}' matched parameter: '{param}'")
+
+            # If no matches found, try even more flexible matching
+            if not matching_params:
+                print(f"🔍 No direct matches found, trying flexible matching...")
+                # Try matching based on key words in the description
+                key_words = {
+                    "Mag Flow": ["magnetron", "flow"],
+                    "Flow Target": ["target", "flow"],
+                    "Flow Chiller Water": ["water", "flow"],
+                    "Temp Room": ["temp", "remote", "fan"],
+                    "Room Humidity": ["humidity", "fan"],
+                    "Temp Magnetron": ["magnetron", "temp"],
+                    "Speed FAN 1": ["speed", "fan", "1"],
+                    "Speed FAN 2": ["speed", "fan", "2"],
+                    "Speed FAN 3": ["speed", "fan", "3"],
+                    "Speed FAN 4": ["speed", "fan", "4"],
+                }
+                
+                if parameter_description in key_words:
+                    words = key_words[parameter_description]
+                    for param in all_params:
+                        param_lower = param.lower()
+                        if all(word.lower() in param_lower for word in words):
+                            matching_params.append(param)
+                            print(f"✓ Flexible match found: '{param}' for '{parameter_description}'")
+                            break
+
+            if matching_params:
+                # Use the first matching parameter
+                selected_param = matching_params[0]
+                param_data = self.df[self.df[param_column] == selected_param].copy()
+                print(f"✓ Using parameter: '{selected_param}'")
+            else:
+                print(f"⚠️ No data found for parameter '{parameter_description}'")
+                print(f"⚠️ Available parameters: {all_params}")
+                return pd.DataFrame()
+
+            if param_data.empty:
+                print(f"⚠️ Parameter data is empty for '{selected_param}'")
+                return pd.DataFrame()
+
+            # Sort by datetime and return in the format expected by plotting functions
+            param_data = param_data.sort_values('datetime')
+
+            # Check which value column exists
+            value_column = None
+            possible_value_columns = ['avg', 'average', 'avg_value', 'value']
+
+            for col in possible_value_columns:
+                if col in param_data.columns:
+                    value_column = col
+                    break
+
+            if not value_column:
+                print(f"⚠️ No value column found in DataFrame. Available columns: {list(param_data.columns)}")
+                return pd.DataFrame()
+
+            # Rename columns to match plotting expectations
+            result_df = pd.DataFrame({
+                'datetime': param_data['datetime'],
+                'avg': param_data[value_column],
+                'parameter_name': [parameter_description] * len(param_data)
+            })
+
+            print(f"✓ Retrieved {len(result_df)} data points for '{parameter_description}'")
+            return result_df
+
+        except Exception as e:
+            print(f"❌ Error getting parameter data for '{parameter_description}': {e}")
+            import traceback
+            traceback.print_exc()
+            return pd.DataFrame()

@@ -917,110 +917,117 @@ class HALogApp:
                     print(f"Error initializing fault code tab: {e}")
 
             def _initialize_trend_controls(self):
-                """Initialize the trend controls with shortdata parameters"""
+                """Initialize the trend controls with available parameters from database"""
                 try:
-                    if not hasattr(self, 'shortdata_parameters') or not self.shortdata_parameters:
-                        print("⚠️ No shortdata parameters available")
+                    if not hasattr(self, 'df') or self.df.empty:
+                        print("⚠️ No database data available for trend controls")
                         return
                     
-                    groups = self.shortdata_parameters.get('groups', {})
+                    # Get unique serial numbers from database
+                    if 'serial_number' in self.df.columns:
+                        serial_numbers = sorted(list(set(self.df['serial_number'].astype(str).unique())))
+                    elif 'serial' in self.df.columns:
+                        serial_numbers = sorted(list(set(self.df['serial'].astype(str).unique())))
+                    else:
+                        serial_numbers = ['All']
                     
-                    # Get unique serial numbers
-                    parameters = self.shortdata_parameters.get('parameters', [])
-                    serial_numbers = list(set(p['serial_number'] for p in parameters))
+                    # Get all available parameters from database
+                    param_column = 'parameter_type' if 'parameter_type' in self.df.columns else 'param'
+                    all_params = list(self.df[param_column].unique())
                     
-                    # Initialize parameter lists to avoid scope errors
-                    unique_flow_params = []
-                    unique_voltage_params = []
-                    unique_temp_params = []
-                    unique_humidity_params = []
-                    unique_fan_params = []
+                    print(f"🔧 Initializing trend controls with {len(all_params)} parameters")
                     
-                    # Initialize Water System controls
-                    if hasattr(self.ui, 'comboWaterSerial'):
-                        self.ui.comboWaterSerial.clear()
-                        self.ui.comboWaterSerial.addItems(serial_numbers)
-                        
-                        # Add flow parameters to water system
-                        flow_params = [p['parameter_name'] for p in groups.get('flow', [])]
-                        unique_flow_params = list(set(flow_params))
-                        if hasattr(self.ui, 'comboWaterParam'):
-                            self.ui.comboWaterParam.clear()
-                            self.ui.comboWaterParam.addItems(unique_flow_params)
-                            # Set default selection if parameters exist
-                            if unique_flow_params:
-                                self.ui.comboWaterParam.setCurrentIndex(0)
+                    # Categorize parameters by type
+                    flow_params = []
+                    voltage_params = []
+                    temp_params = []
+                    humidity_params = []
+                    fan_params = []
                     
-                    # Initialize Voltage controls
-                    if hasattr(self.ui, 'comboVoltageSerial'):
-                        self.ui.comboVoltageSerial.clear()
-                        self.ui.comboVoltageSerial.addItems(serial_numbers)
-                        
-                        voltage_params = [p['parameter_name'] for p in groups.get('voltage', [])]
-                        unique_voltage_params = list(set(voltage_params))[:10]  # Limit to first 10
-                        if hasattr(self.ui, 'comboVoltageParam'):
-                            self.ui.comboVoltageParam.clear()
-                            self.ui.comboVoltageParam.addItems(unique_voltage_params)
-                            # Set default selection if parameters exist
-                            if unique_voltage_params:
-                                self.ui.comboVoltageParam.setCurrentIndex(0)
+                    for param in all_params:
+                        param_lower = param.lower()
+                        if any(keyword in param_lower for keyword in ['flow', 'pump', 'water', 'magnetron']):
+                            flow_params.append(param)
+                        elif any(keyword in param_lower for keyword in ['volt', '_v_', '24v', '48v', '5v', 'bank', 'adc']):
+                            voltage_params.append(param)
+                        elif any(keyword in param_lower for keyword in ['temp', 'temperature']):
+                            temp_params.append(param)
+                        elif any(keyword in param_lower for keyword in ['humidity', 'humid']):
+                            humidity_params.append(param)
+                        elif any(keyword in param_lower for keyword in ['fan', 'speed']):
+                            fan_params.append(param)
                     
-                    # Initialize Temperature controls
-                    if hasattr(self.ui, 'comboTempSerial'):
-                        self.ui.comboTempSerial.clear()
-                        self.ui.comboTempSerial.addItems(serial_numbers)
-                        
-                        temp_params = [p['parameter_name'] for p in groups.get('temperature', [])]
-                        unique_temp_params = list(set(temp_params))
-                        if hasattr(self.ui, 'comboTempParam'):
-                            self.ui.comboTempParam.clear()
-                            self.ui.comboTempParam.addItems(unique_temp_params)
-                            # Set default selection if parameters exist
-                            if unique_temp_params:
-                                self.ui.comboTempParam.setCurrentIndex(0)
+                    # Populate dropdown controls with actual parameters
+                    dropdown_configs = [
+                        ('comboWaterTopGraph', flow_params),
+                        ('comboWaterBottomGraph', flow_params),
+                        ('comboVoltageTopGraph', voltage_params),
+                        ('comboVoltageBottomGraph', voltage_params),
+                        ('comboTempTopGraph', temp_params),
+                        ('comboTempBottomGraph', temp_params),
+                        ('comboHumidityTopGraph', humidity_params),
+                        ('comboHumidityBottomGraph', humidity_params),
+                        ('comboFanTopGraph', fan_params),
+                        ('comboFanBottomGraph', fan_params),
+                    ]
                     
-                    # Initialize Humidity controls
-                    if hasattr(self.ui, 'comboHumiditySerial'):
-                        self.ui.comboHumiditySerial.clear()
-                        self.ui.comboHumiditySerial.addItems(serial_numbers)
-                        
-                        humidity_params = [p['parameter_name'] for p in groups.get('humidity', [])]
-                        unique_humidity_params = list(set(humidity_params))
-                        if hasattr(self.ui, 'comboHumidityParam'):
-                            self.ui.comboHumidityParam.clear()
-                            self.ui.comboHumidityParam.addItems(unique_humidity_params)
-                            # Set default selection if parameters exist
-                            if unique_humidity_params:
-                                self.ui.comboHumidityParam.setCurrentIndex(0)
+                    for combo_name, params in dropdown_configs:
+                        if hasattr(self.ui, combo_name):
+                            combo = getattr(self.ui, combo_name)
+                            combo.clear()
+                            combo.addItem("Select parameter...")
+                            if params:
+                                # Use simplified names for display
+                                for param in params[:10]:  # Limit to first 10
+                                    display_name = self._get_display_name_for_param(param)
+                                    combo.addItem(display_name)
                     
-                    # Initialize Fan Speed controls
-                    if hasattr(self.ui, 'comboFanSerial'):
-                        self.ui.comboFanSerial.clear()
-                        self.ui.comboFanSerial.addItems(serial_numbers)
-                        
-                        fan_params = [p['parameter_name'] for p in groups.get('fan_speed', [])]
-                        unique_fan_params = list(set(fan_params))
-                        if hasattr(self.ui, 'comboFanParam'):
-                            self.ui.comboFanParam.clear()
-                            self.ui.comboFanParam.addItems(unique_fan_params)
-                            # Set default selection if parameters exist
-                            if unique_fan_params:
-                                self.ui.comboFanParam.setCurrentIndex(0)
-                    
-                    print(f"✓ Trend controls initialized with {len(parameters)} parameters")
-                    print(f"  - Flow: {len(unique_flow_params)} parameters")
-                    print(f"  - Voltage: {len(unique_voltage_params)} parameters") 
-                    print(f"  - Temperature: {len(unique_temp_params)} parameters")
-                    print(f"  - Humidity: {len(unique_humidity_params)} parameters")
-                    print(f"  - Fan Speed: {len(unique_fan_params)} parameters")
+                    print(f"✓ Trend controls populated:")
+                    print(f"  - Flow parameters: {len(flow_params)}")
+                    print(f"  - Voltage parameters: {len(voltage_params)}")
+                    print(f"  - Temperature parameters: {len(temp_params)}")
+                    print(f"  - Humidity parameters: {len(humidity_params)}")
+                    print(f"  - Fan parameters: {len(fan_params)}")
                     
                     # Initialize default trend graphs after controls are setup
-                    QtCore.QTimer.singleShot(100, self._initialize_default_trend_displays)
+                    QtCore.QTimer.singleShot(200, self._initialize_default_trend_displays)
                     
                 except Exception as e:
                     print(f"Error initializing trend controls: {e}")
                     import traceback
                     traceback.print_exc()
+            
+            def _get_display_name_for_param(self, param_name):
+                """Convert raw parameter name to user-friendly display name"""
+                param_lower = param_name.lower()
+                
+                if 'magnetronflow' in param_lower:
+                    return "Mag Flow"
+                elif 'targetandcirculatorflow' in param_lower:
+                    return "Flow Target"
+                elif 'remotetemp' in param_lower:
+                    return "Temp Room"
+                elif 'humidity' in param_lower:
+                    return "Room Humidity"
+                elif 'magnetrontemp' in param_lower:
+                    return "Temp Magnetron"
+                elif 'banka' in param_lower and '24v' in param_lower:
+                    return "MLC Bank A 24V"
+                elif 'bankb' in param_lower and '24v' in param_lower:
+                    return "MLC Bank B 24V"
+                elif 'speed1' in param_lower or 'fan1' in param_lower:
+                    return "Speed FAN 1"
+                elif 'speed2' in param_lower or 'fan2' in param_lower:
+                    return "Speed FAN 2"
+                elif 'speed3' in param_lower or 'fan3' in param_lower:
+                    return "Speed FAN 3"
+                elif 'speed4' in param_lower or 'fan4' in param_lower:
+                    return "Speed FAN 4"
+                else:
+                    # Return shortened version of original name
+                    if len(param_name) > 50:
+                        return param_name.split('::')[-1] if '::' in param_name else param_name[:50] + '...'
+                    return param_name
 
             def refresh_trend_tab(self, group_name):
                 """Refresh trend data for specific parameter group with new dropdown structure"""
@@ -1134,34 +1141,126 @@ class HALogApp:
                         print("⚠️ No data available in database")
                         return pd.DataFrame()
                     
-                    # Find the parameter key that matches this description
-                    from unified_parser import UnifiedParser
-                    parser = UnifiedParser()
+                    print(f"🔍 DataFrame columns: {list(self.df.columns)}")
+                    print(f"🔍 DataFrame shape: {self.df.shape}")
                     
-                    param_key = None
-                    for key, config in parser.parameter_mapping.items():
-                        if config.get("description") == parameter_description:
-                            param_key = key
+                    # Check which column name exists in the DataFrame
+                    param_column = None
+                    possible_columns = ['param', 'parameter_type', 'parameter_name']
+                    
+                    for col in possible_columns:
+                        if col in self.df.columns:
+                            param_column = col
                             break
                     
-                    if not param_key:
-                        print(f"⚠️ Parameter '{parameter_description}' not found in mapping")
+                    if not param_column:
+                        print(f"⚠️ No parameter column found in DataFrame. Available columns: {list(self.df.columns)}")
                         return pd.DataFrame()
                     
-                    # Get data from database for this parameter
-                    param_data = self.df[self.df['param'] == param_key].copy()
+                    print(f"🔍 Using parameter column: '{param_column}'")
+                    
+                    # Enhanced mapping to match actual database format with full parameter names
+                    description_to_patterns = {
+                        "Mag Flow": ["magnetronFlow"],
+                        "Flow Target": ["targetAndCirculatorFlow"],
+                        "Flow Chiller Water": ["cityWaterFlow"],
+                        "Temp Room": ["FanremoteTempStatistics"],
+                        "Room Humidity": ["FanhumidityStatistics"],
+                        "Temp Magnetron": ["magnetronTemp"],
+                        "Speed FAN 1": ["fanSpeed1"],
+                        "Speed FAN 2": ["fanSpeed2"],
+                        "Speed FAN 3": ["fanSpeed3"],
+                        "Speed FAN 4": ["fanSpeed4"],
+                        "MLC Bank A 24V": ["BANKA"],
+                        "MLC Bank B 24V": ["BANKB"],
+                    }
+                    
+                    # Get all available parameters
+                    all_params = self.df[param_column].unique()
+                    print(f"🔍 Available parameters: {all_params[:10]}")
+                    
+                    # Find matching parameter by searching within the full parameter names
+                    matching_params = []
+                    patterns = description_to_patterns.get(parameter_description, [parameter_description])
+                    
+                    print(f"🔍 Looking for patterns: {patterns}")
+                    
+                    # Search for patterns within the full parameter names
+                    for pattern in patterns:
+                        for param in all_params:
+                            # Check if pattern exists anywhere in the parameter name
+                            if pattern in param:
+                                matching_params.append(param)
+                                print(f"✓ Pattern '{pattern}' matched parameter: '{param}'")
+                                break  # Take first match for each pattern
+                    
+                    # If no exact matches found, try case-insensitive search
+                    if not matching_params:
+                        print(f"🔍 No exact matches found, trying case-insensitive search...")
+                        for pattern in patterns:
+                            pattern_lower = pattern.lower()
+                            for param in all_params:
+                                if pattern_lower in param.lower():
+                                    matching_params.append(param)
+                                    print(f"✓ Case-insensitive match: '{param}' for pattern '{pattern}'")
+                                    break
+                    
+                    # If still no matches, try partial keyword matching
+                    if not matching_params:
+                        print(f"🔍 No matches found, trying keyword search...")
+                        keyword_mapping = {
+                            "Mag Flow": ["magnetron", "flow"],
+                            "Flow Target": ["target", "flow"],
+                            "Flow Chiller Water": ["water", "flow", "city"],
+                            "Temp Room": ["remote", "temp", "fan"],
+                            "Room Humidity": ["humidity", "fan"],
+                            "Temp Magnetron": ["magnetron", "temp"],
+                        }
+                        
+                        if parameter_description in keyword_mapping:
+                            keywords = keyword_mapping[parameter_description]
+                            for param in all_params:
+                                param_lower = param.lower()
+                                # Check if all keywords are present
+                                if all(keyword.lower() in param_lower for keyword in keywords):
+                                    matching_params.append(param)
+                                    print(f"✓ Keyword match: '{param}' for '{parameter_description}'")
+                                    break
+                    
+                    if matching_params:
+                        # Use the first matching parameter
+                        selected_param = matching_params[0]
+                        param_data = self.df[self.df[param_column] == selected_param].copy()
+                        print(f"✓ Using parameter: '{selected_param}'")
+                    else:
+                        print(f"⚠️ No data found for parameter '{parameter_description}'")
+                        print(f"⚠️ Available parameters: {all_params}")
+                        return pd.DataFrame()
                     
                     if param_data.empty:
-                        print(f"⚠️ No data found for parameter '{param_key}' in database")
+                        print(f"⚠️ Parameter data is empty for '{selected_param}'")
                         return pd.DataFrame()
                     
                     # Sort by datetime and return in the format expected by plotting functions
                     param_data = param_data.sort_values('datetime')
                     
+                    # Check which value column exists
+                    value_column = None
+                    possible_value_columns = ['avg_value', 'avg', 'average', 'value']
+                    
+                    for col in possible_value_columns:
+                        if col in param_data.columns:
+                            value_column = col
+                            break
+                    
+                    if not value_column:
+                        print(f"⚠️ No value column found in DataFrame. Available columns: {list(param_data.columns)}")
+                        return pd.DataFrame()
+                    
                     # Rename columns to match plotting expectations
                     result_df = pd.DataFrame({
                         'datetime': param_data['datetime'],
-                        'avg': param_data['average'],
+                        'avg': param_data[value_column],
                         'parameter_name': [parameter_description] * len(param_data)
                     })
                     
@@ -2001,8 +2100,25 @@ class HALogApp:
                 """Update trend combo boxes with professional styling"""
                 try:
                     if hasattr(self, "df") and not self.df.empty:
-                        serials = sorted(set(map(str, self.df["serial"].unique())))
-                        params = sorted(set(map(str, self.df["param"].unique())))
+                        # Find correct column names dynamically
+                        serial_col = None
+                        param_col = None
+                        
+                        for col in self.df.columns:
+                            if col in ['serial', 'serial_number']:
+                                serial_col = col
+                            elif col in ['param', 'parameter_type', 'parameter_name']:
+                                param_col = col
+                        
+                        if serial_col:
+                            serials = sorted(set(map(str, self.df[serial_col].unique())))
+                        else:
+                            serials = []
+                            
+                        if param_col:
+                            params = sorted(set(map(str, self.df[param_col].unique())))
+                        else:
+                            params = []
                     else:
                         serials = []
                         params = []
@@ -2051,6 +2167,25 @@ class HALogApp:
 
                     self.ui.tableData.setUpdatesEnabled(False)
 
+                    # Map column names dynamically
+                    serial_col = None
+                    param_col = None
+                    avg_col = None
+                    min_col = None
+                    max_col = None
+                    
+                    for col in display_df.columns:
+                        if col in ['serial', 'serial_number']:
+                            serial_col = col
+                        elif col in ['param', 'parameter_type', 'parameter_name']:
+                            param_col = col
+                        elif col in ['avg', 'average', 'avg_value']:
+                            avg_col = col
+                        elif col in ['min', 'min_value']:
+                            min_col = col
+                        elif col in ['max', 'max_value']:
+                            max_col = col
+
                     for i, (_, row) in enumerate(display_df.iterrows()):
                         self.ui.tableData.setItem(
                             i,
@@ -2058,21 +2193,30 @@ class HALogApp:
                             QtWidgets.QTableWidgetItem(str(row.get("datetime", ""))),
                         )
                         self.ui.tableData.setItem(
-                            i, 1, QtWidgets.QTableWidgetItem(str(row.get("serial", "")))
+                            i, 1, QtWidgets.QTableWidgetItem(str(row.get(serial_col, "")))
                         )
                         self.ui.tableData.setItem(
-                            i, 2, QtWidgets.QTableWidgetItem(str(row.get("param", "")))
+                            i, 2, QtWidgets.QTableWidgetItem(str(row.get(param_col, "")))
                         )
                         self.ui.tableData.setItem(
-                            i, 3, QtWidgets.QTableWidgetItem(str(row.get("avg", "")))
+                            i, 3, QtWidgets.QTableWidgetItem(str(row.get(avg_col, "")))
                         )
                         self.ui.tableData.setItem(
-                            i, 4, QtWidgets.QTableWidgetItem(str(row.get("min", "")))
+                            i, 4, QtWidgets.QTableWidgetItem(str(row.get(min_col, "")))
                         )
                         self.ui.tableData.setItem(
-                            i, 5, QtWidgets.QTableWidgetItem(str(row.get("max", "")))
+                            i, 5, QtWidgets.QTableWidgetItem(str(row.get(max_col, "")))
                         )
-                        diff_val = row.get("diff", "")
+                        
+                        # Calculate diff if both min and max columns exist
+                        diff_val = ""
+                        if min_col and max_col:
+                            try:
+                                diff_val = float(row.get(max_col, 0)) - float(row.get(min_col, 0))
+                                diff_val = f"{diff_val:.2f}"
+                            except:
+                                diff_val = row.get("diff", "")
+                        
                         self.ui.tableData.setItem(
                             i, 6, QtWidgets.QTableWidgetItem(str(diff_val))
                         )
