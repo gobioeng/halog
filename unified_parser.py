@@ -565,16 +565,24 @@ class UnifiedParser:
             sn_match = re.search(r'SN# (\d+)', line)
             serial_number = sn_match.group(1) if sn_match else "Unknown"
             
-            # Look for statistics pattern
-            stat_pattern = r'(\w+)\s*:\s*count=(\d+),?\s*max=([\d.-]+),?\s*min=([\d.-]+),?\s*avg=([\d.-]+)'
+            # Look for statistics pattern - extract parameter name after SN# portion
+            # Find the parameter name between SN# and the colon
+            param_match = re.search(r'SN#\s+\d+\s+(.+?)\s*:\s*count=', line)
+            if not param_match:
+                return None
+            
+            param_name_raw = param_match.group(1).strip()
+            
+            # Now extract the statistics
+            stat_pattern = r'count=(\d+),?\s*max=([\d.-]+),?\s*min=([\d.-]+),?\s*avg=([\d.-]+)'
             stat_match = re.search(stat_pattern, line)
             
             if stat_match:
-                param_name = self._normalize_parameter_name(stat_match.group(1))
-                count = int(stat_match.group(2))
-                max_val = float(stat_match.group(3))
-                min_val = float(stat_match.group(4))
-                avg_val = float(stat_match.group(5))
+                param_name = self._normalize_parameter_name(param_name_raw)
+                count = int(stat_match.group(1))
+                max_val = float(stat_match.group(2))
+                min_val = float(stat_match.group(3))
+                avg_val = float(stat_match.group(4))
                 
                 # Create datetime
                 try:
@@ -627,6 +635,74 @@ class UnifiedParser:
                 groups['other'].append(param)
                 
         return groups
+
+    def convert_short_data_to_dataframe(self, short_data_result: Dict) -> pd.DataFrame:
+        """Convert parsed short data to DataFrame format compatible with analysis functions"""
+        import pandas as pd
+        
+        if not short_data_result.get('success') or not short_data_result.get('parameters'):
+            return pd.DataFrame()
+        
+        try:
+            records = []
+            parameters = short_data_result['parameters']
+            
+            for param in parameters:
+                # Create records for each statistic type (avg, max, min)
+                base_record = {
+                    'datetime': param.get('datetime'),
+                    'serial_number': param.get('serial_number', 'Unknown'),
+                    'parameter_type': param.get('parameter_name', 'Unknown'),
+                    'count': param.get('count', 0),
+                    'line_number': param.get('line_number', 0)
+                }
+                
+                # Add record for average value
+                avg_record = base_record.copy()
+                avg_record.update({
+                    'statistic_type': 'avg',
+                    'value': param.get('avg_value', 0),
+                    'avg_value': param.get('avg_value', 0),
+                    'max_value': param.get('max_value', 0),
+                    'min_value': param.get('min_value', 0)
+                })
+                records.append(avg_record)
+                
+                # Add record for max value  
+                max_record = base_record.copy()
+                max_record.update({
+                    'statistic_type': 'max',
+                    'value': param.get('max_value', 0),
+                    'avg_value': param.get('avg_value', 0),
+                    'max_value': param.get('max_value', 0),
+                    'min_value': param.get('min_value', 0)
+                })
+                records.append(max_record)
+                
+                # Add record for min value
+                min_record = base_record.copy()
+                min_record.update({
+                    'statistic_type': 'min', 
+                    'value': param.get('min_value', 0),
+                    'avg_value': param.get('avg_value', 0),
+                    'max_value': param.get('max_value', 0),
+                    'min_value': param.get('min_value', 0)
+                })
+                records.append(min_record)
+            
+            # Create DataFrame
+            df = pd.DataFrame(records)
+            
+            # Clean and validate the data
+            df = self._clean_and_validate_data(df)
+            
+            return df
+            
+        except Exception as e:
+            print(f"Error converting short data to DataFrame: {e}")
+            import traceback
+            traceback.print_exc()
+            return pd.DataFrame()
 
     # Utility Methods
     def get_supported_parameters(self) -> Dict:
