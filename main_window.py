@@ -591,6 +591,43 @@ class Ui_MainWindow(object):
         self.tableData.verticalHeader().setVisible(False)
         self.tableData.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.tableData.setWordWrap(True)
+        
+        # Add scroll policies and improved styling
+        self.tableData.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.tableData.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.tableData.setMinimumHeight(400)
+        
+        # Enhanced styling for data table
+        self.tableData.setStyleSheet("""
+            QTableWidget {
+                gridline-color: #E0E0E0;
+                font-size: 11px;
+                background-color: #FAFAFA;
+                border: 1px solid #DDDDDD;
+                border-radius: 6px;
+            }
+            QTableWidget::item {
+                padding: 8px;
+                border: 1px solid #E0E0E0;
+                background-color: white;
+            }
+            QTableWidget::item:selected {
+                background-color: #E3F2FD;
+                color: #0D47A1;
+            }
+            QTableWidget::item:alternate {
+                background-color: #F8F9FA;
+            }
+            QHeaderView::section {
+                background-color: #2196F3;
+                color: white;
+                padding: 10px;
+                border: none;
+                font-weight: bold;
+                font-size: 12px;
+            }
+        """)
+        
         layout.addWidget(self.tableData)
 
     def setup_analysis_tab(self):
@@ -669,22 +706,36 @@ class Ui_MainWindow(object):
                 gridline-color: #E0E0E0;
                 font-size: 11px;
                 selection-background-color: #E3F2FD;
+                background-color: #FAFAFA;
+                border: 1px solid #DDDDDD;
+                border-radius: 6px;
             }
             QTableWidget::item {
-                padding: 6px;
+                padding: 8px;
                 border-bottom: 1px solid #E0E0E0;
+                background-color: white;
             }
             QTableWidget::item:selected {
                 background-color: #E3F2FD;
                 color: #0D47A1;
             }
+            QTableWidget::item:alternate {
+                background-color: #F8F9FA;
+            }
             QHeaderView::section {
-                background-color: #F5F5F5;
-                padding: 8px;
-                border: 1px solid #E0E0E0;
+                background-color: #2196F3;
+                color: white;
+                padding: 10px;
+                border: none;
                 font-weight: bold;
+                font-size: 12px;
             }
         """)
+        
+        # Add scroll policies and minimum height
+        self.tableTrends.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.tableTrends.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.tableTrends.setMinimumHeight(400)
         
         trends_layout.addWidget(self.tableTrends)
         layout.addWidget(trends_group)

@@ -899,14 +899,17 @@ class HALogApp:
                     if not hasattr(self, 'fault_parser'):
                         return
                     
-                    stats = self.fault_parser.get_stats()
+                    stats = self.fault_parser.get_fault_code_statistics()
                     
                     if hasattr(self.ui, 'lblTotalCodes'):
-                        self.ui.lblTotalCodes.setText(f"Total Codes: {stats['total_codes']} (HAL: {stats['hal_codes']}, TB: {stats['tb_codes']})")
+                        # Calculate breakdown by source
+                        hal_codes = sum(1 for code_info in self.fault_parser.fault_codes.values() if code_info.get('source') == 'uploaded')
+                        tb_codes = sum(1 for code_info in self.fault_parser.fault_codes.values() if code_info.get('source') == 'tb')
+                        self.ui.lblTotalCodes.setText(f"Total Codes: {stats['total_codes']} (HAL: {hal_codes}, TB: {tb_codes})")
                     
                     if hasattr(self.ui, 'lblFaultTypes'):
-                        types_text = f"Types: {stats['types']} ({', '.join(stats['type_breakdown'].keys())})"
-                        self.ui.lblFaultTypes.setText(types_text)
+                        sources_text = f"Sources: {', '.join(stats['sources'])}"
+                        self.ui.lblFaultTypes.setText(sources_text)
                     
                     print(f"✓ Fault code tab initialized with {stats['total_codes']} codes")
                     
