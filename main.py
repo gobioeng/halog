@@ -2639,37 +2639,73 @@ class HALogApp:
                     traceback.print_exc()
 
             def _process_sample_shortdata(self, file_path):
-                """Process shortdata as sample data only (not permanently stored)"""
+                """Process shortdata as sample data and populate DataFrame for analysis"""
                 try:
+                    import pandas as pd
                     print(f"📋 Processing shortdata as sample: {os.path.basename(file_path)}")
                     
-                    # Parse shortdata for trend analysis only
+                    # Parse shortdata for trend analysis
                     from unified_parser import UnifiedParser
                     
                     parser = UnifiedParser()
                     parsed_data = parser.parse_short_data_file(file_path)
                     
-                    if parsed_data:
-                        # Store in memory for trend analysis
-                        self.shortdata_parameters = parsed_data
-                        self.shortdata_parser = parser
+                    if parsed_data and parsed_data.get('success'):
+                        # Convert parsed data to DataFrame format for analysis
+                        df_converted = parser.convert_short_data_to_dataframe(parsed_data)
                         
-                        # Initialize trend controls with the parsed data
-                        self._initialize_trend_controls()
-                        
-                        print(f"✓ Shortdata processed successfully for trend analysis")
-                        QtWidgets.QMessageBox.information(
-                            self,
-                            "Sample Data Loaded", 
-                            f"Shortdata loaded as sample for trend analysis.\n"
-                            f"Parameters available: {len(parsed_data.get('parameters', []))}"
-                        )
+                        if not df_converted.empty:
+                            # Store DataFrame for analysis and trends
+                            self.df = df_converted
+                            print(f"✓ DataFrame populated with {len(df_converted)} records")
+                            
+                            # Store in memory for trend controls
+                            self.shortdata_parameters = parsed_data
+                            self.shortdata_parser = parser
+                            
+                            # Initialize trend controls with the parsed data
+                            self._initialize_trend_controls()
+                            
+                            # Update analysis tab to show the new data
+                            self.update_analysis_tab()
+                            
+                            print(f"✓ Shortdata processed successfully for trend analysis and analysis tab")
+                            QtWidgets.QMessageBox.information(
+                                self,
+                                "Sample Data Loaded", 
+                                f"Shortdata loaded successfully!\n\n"
+                                f"Parameters available: {len(parsed_data.get('parameters', []))}\n"
+                                f"Records for analysis: {len(df_converted)}\n"
+                                f"Unique parameters: {len(df_converted['parameter_type'].unique()) if not df_converted.empty else 0}\n\n"
+                                f"Data is now available in:\n"
+                                f"• Trend tab graphs\n"
+                                f"• Analysis tab statistics"
+                            )
+                        else:
+                            print("⚠️ DataFrame conversion failed - no data available")
+                            QtWidgets.QMessageBox.warning(
+                                self,
+                                "Import Warning", 
+                                "Shortdata file was processed but no data could be converted for analysis.\n"
+                                "Please check the file format."
+                            )
                     else:
                         print("⚠️ No data extracted from shortdata file")
+                        QtWidgets.QMessageBox.warning(
+                            self,
+                            "Import Error", 
+                            "No valid data could be extracted from the shortdata file.\n"
+                            "Please check the file format."
+                        )
                         
                 except Exception as e:
                     print(f"Error processing shortdata: {e}")
                     traceback.print_exc()
+                    QtWidgets.QMessageBox.critical(
+                        self,
+                        "Import Error", 
+                        f"Error processing shortdata file: {str(e)}"
+                    )
 
             def _import_small_file_filtered(self, file_path):
                 """Import small log file with TB/HALfault filtering"""
