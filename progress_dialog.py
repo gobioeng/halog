@@ -43,52 +43,52 @@ class ProgressDialog(QProgressDialog):
         self.setMaximum(100)
         self.setValue(0)
 
-        # Enhanced Material Design 3.0 Styling
+        # Simplified Windows 11 Theme Styling
         self.setStyleSheet(
             """
             QProgressDialog {
-                background-color: #FFFBFE;
-                border: 1px solid #E7E0EC;
-                border-radius: 12px;
-                padding: 20px;
+                background-color: #f3f3f3;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 16px;
             }
             QProgressBar {
                 border: none;
-                border-radius: 8px;
+                border-radius: 4px;
                 text-align: center;
-                font-weight: 500;
-                background-color: #E8F5E8;
-                color: #1976D2;
-                font-size: 12px;
-                min-height: 20px;
+                font-weight: 400;
+                background-color: #e6e6e6;
+                color: #333333;
+                font-size: 11px;
+                min-height: 16px;
             }
             QProgressBar::chunk {
-                background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,
-                    stop: 0 #1976D2, stop: 1 #1565C0);
-                border-radius: 8px;
+                background-color: #0078d4;
+                border-radius: 4px;
             }
             QLabel {
-                color: #1C1B1F;
-                font-size: 12px;
-                padding: 4px;
+                color: #323130;
+                font-size: 11px;
+                padding: 2px;
                 font-weight: 400;
             }
             QPushButton {
-                background-color: #1976D2;
+                background-color: #0078d4;
                 color: white;
-                border: none;
-                padding: 12px 24px;
-                border-radius: 20px;
-                font-weight: 500;
-                font-size: 14px;
-                min-width: 100px;
+                border: 1px solid #0078d4;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: 400;
+                font-size: 11px;
+                min-width: 80px;
             }
             QPushButton:hover {
-                background-color: #1565C0;
-                box-shadow: 0px 2px 4px rgba(25, 118, 210, 0.3);
+                background-color: #106ebe;
+                border: 1px solid #106ebe;
             }
             QPushButton:pressed {
-                background-color: #0D47A1;
+                background-color: #005a9e;
+                border: 1px solid #005a9e;
             }
         """
         )

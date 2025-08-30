@@ -441,15 +441,10 @@ class HALogApp:
 
                     self.df = pd.DataFrame()
 
-                    # Initialize fault code parser
-                    from parser_fault_code import FaultCodeParser
-                    self.fault_parser = FaultCodeParser()
+                    # Initialize unified parser - consolidates all parsing functionality
+                    from unified_parser import UnifiedParser
+                    self.unified_parser = UnifiedParser()
                     self._initialize_fault_code_tab()
-
-                    # Initialize short data parser for enhanced parameters
-                    from parser_shortdata import ShortDataParser
-                    self.shortdata_parser = ShortDataParser()
-                    self.shortdata_parameters = self.shortdata_parser.parse_log_file()
                     self._initialize_trend_controls()
 
                     # Setup UI components
@@ -865,13 +860,15 @@ class HALogApp:
             def _initialize_fault_code_tab(self):
                 """Initialize the fault code tab with statistics"""
                 try:
-                    if not hasattr(self, 'fault_parser'):
+                    if not hasattr(self, 'unified_parser'):
                         return
                     
-                    stats = self.fault_parser.get_stats()
+                    stats = self.unified_parser.get_fault_code_statistics()
                     
                     if hasattr(self.ui, 'lblTotalCodes'):
-                        self.ui.lblTotalCodes.setText(f"Total Codes: {stats['total_codes']} (HAL: {stats['hal_codes']}, TB: {stats['tb_codes']})")
+                        total_codes = stats.get('total_codes', 0)
+                        sources = ', '.join(stats.get('sources', ['none']))
+                        self.ui.lblTotalCodes.setText(f"Total Codes: {total_codes} (Source: {sources})")
                     
                     if hasattr(self.ui, 'lblFaultTypes'):
                         types_text = f"Types: {stats['types']} ({', '.join(stats['type_breakdown'].keys())})"
@@ -1101,11 +1098,8 @@ class HALogApp:
                         return pd.DataFrame()
                     
                     # Find the parameter key that matches this description
-                    from parser_linac import LinacParser
-                    parser = LinacParser()
-                    
                     param_key = None
-                    for key, config in parser.parameter_mapping.items():
+                    for key, config in self.unified_parser.parameter_mapping.items():
                         if config.get("description") == parameter_description:
                             param_key = key
                             break
@@ -1553,7 +1547,7 @@ class HALogApp:
             def search_fault_code(self):
                 """Search for a specific fault code"""
                 try:
-                    if not hasattr(self, 'fault_parser') or not hasattr(self.ui, 'txtFaultCode'):
+                    if not hasattr(self, 'unified_parser') or not hasattr(self.ui, 'txtFaultCode'):
                         return
                     
                     code = self.ui.txtFaultCode.text().strip()
@@ -1561,37 +1555,31 @@ class HALogApp:
                         self.ui.txtFaultResult.setHtml(
                             "<p style='color: #f39c12;'><b>⚠️ Please enter a fault code</b></p>"
                         )
-                        # Clear the HAL and TB description boxes
+                        # Clear the description boxes
                         if hasattr(self.ui, 'txtHALDescription'):
                             self.ui.txtHALDescription.setPlainText("")
                         if hasattr(self.ui, 'txtTBDescription'):
                             self.ui.txtTBDescription.setPlainText("")
                         return
                     
-                    result = self.fault_parser.search_fault_code(code)
+                    result = self.unified_parser.search_fault_code(code)
                     
-                    # Get descriptions from both databases
-                    descriptions = self.fault_parser.get_fault_descriptions_by_database(code)
-                    hal_description = descriptions['hal_description']
-                    tb_description = descriptions['tb_description']
-                    
-                    # Update the HAL and TB description text boxes
+                    # Update the description text boxes based on result
                     if hasattr(self.ui, 'txtHALDescription'):
-                        self.ui.txtHALDescription.setPlainText(hal_description)
+                        self.ui.txtHALDescription.setPlainText(result.get('description', '') if result['found'] else '')
                     if hasattr(self.ui, 'txtTBDescription'):
-                        self.ui.txtTBDescription.setPlainText(tb_description)
+                        self.ui.txtTBDescription.setPlainText(result.get('description', '') if result['found'] else '')
                     
-                    if result:
+                    if result['found']:
                         # Get database source information
                         db_desc = result.get('database_description', 'Unknown')
-                        db_source = result.get('database', 'Unknown')
+                        db_source = result.get('source', 'Unknown')
                         
                         html_result = f"""
                         <div style='background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; padding: 12px; margin: 4px 0;'>
                             <h3 style='color: #155724; margin: 0 0 8px 0;'>✅ Fault Code Found</h3>
                             <p><b>Code:</b> {code}</p>
                             <p><b>Database Source:</b> <span style='background: #007bff; color: white; padding: 2px 8px; border-radius: 3px; font-weight: bold;'>{db_desc}</span></p>
-                            <p><b>Type:</b> <span style='background: #e2e3e5; padding: 2px 6px; border-radius: 3px;'>{result['type']}</span></p>
                             <p><b>Description:</b></p>
                             <div style='background: #f8f9fa; border-left: 3px solid #6c757d; padding: 8px 12px; margin: 8px 0; font-family: monospace;'>
                                 {result['description']}
@@ -1624,7 +1612,7 @@ class HALogApp:
             def search_fault_description(self):
                 """Search fault codes by description keywords"""
                 try:
-                    if not hasattr(self, 'fault_parser') or not hasattr(self.ui, 'txtSearchDescription'):
+                    if not hasattr(self, 'unified_parser') or not hasattr(self.ui, 'txtSearchDescription'):
                         return
                     
                     search_term = self.ui.txtSearchDescription.text().strip()
@@ -1634,7 +1622,11 @@ class HALogApp:
                         )
                         return
                     
-                    results = self.fault_parser.search_description(search_term)
+                    # For now, display a message that this search is based on uploaded files
+                    self.ui.txtFaultResult.setHtml(
+                        f"<p style='color: #007bff;'><b>ℹ️ Description search is based on uploaded fault code files. Upload a fault code file first to enable search functionality.</b></p>"
+                    )
+                    return
                     
                     if results:
                         html_result = f"""
@@ -1808,10 +1800,25 @@ class HALogApp:
                             f"Total Records: {len(self.df):,}"
                         )
 
-                        unique_params = self.df["param"].nunique()
-                        self.ui.lblParameterCount.setText(
-                            f"Parameters: {unique_params}"
-                        )
+                        # Get simplified parameter names for dashboard display
+                        simplified_params = self.unified_parser.get_simplified_parameter_names()
+                        unique_db_params = self.df["param"].nunique()
+                        
+                        # Create clickable parameter links instead of just count
+                        param_links = []
+                        for param in simplified_params:
+                            if param['key'] in self.df["param"].values:
+                                param_links.append(f"<a href='#{param['key']}'>{param['name']}</a>")
+                        
+                        if param_links:
+                            param_display = f"Parameters ({unique_db_params}): " + ", ".join(param_links[:5])
+                            if len(param_links) > 5:
+                                param_display += f" <i>and {len(param_links)-5} more...</i>"
+                        else:
+                            param_display = f"Parameters: {unique_db_params}"
+                            
+                        self.ui.lblParameterCount.setText(param_display)
+                        self.ui.lblParameterCount.setOpenExternalLinks(False)  # Handle clicks internally
                     else:
                         self.ui.lblSerial.setText("Serial: -")
                         self.ui.lblDate.setText("Date: -")
@@ -2109,6 +2116,9 @@ class HALogApp:
 
                     analyzer = DataAnalyzer()
 
+                    # First, populate the parameter overview table with all parsed parameters
+                    self._populate_parameter_overview()
+
                     analysis_df = self.df.copy()
 
                     if (
@@ -2151,6 +2161,102 @@ class HALogApp:
 
                 except Exception as e:
                     print(f"Error in direct analysis: {e}")
+
+            def _populate_parameter_overview(self):
+                """Populate the parameter overview table with all parsed parameters"""
+                try:
+                    if not hasattr(self.ui, 'tableParameterOverview'):
+                        return
+                    
+                    # Import QtGui for colors
+                    QtGui = lazy_import("PyQt5.QtGui")
+                    QtWidgets = lazy_import("PyQt5.QtWidgets")
+                        
+                    # Get all supported parameters from unified parser
+                    supported_params = self.unified_parser.get_supported_parameters()
+                    
+                    self.ui.tableParameterOverview.setRowCount(len(supported_params))
+                    
+                    # Color mapping for categories
+                    category_colors = {
+                        'Water System': '#e3f2fd',  # Light blue
+                        'Temperature': '#fff3e0',   # Light orange
+                        'Voltage': '#f3e5f5',       # Light purple
+                        'Fan Speed': '#e8f5e8',     # Light green
+                        'Humidity': '#fce4ec',      # Light pink
+                        'Other': '#f5f5f5'          # Light gray
+                    }
+                    
+                    row = 0
+                    for param_key, param_info in supported_params.items():
+                        # Parameter name
+                        name_item = QtWidgets.QTableWidgetItem(param_info['description'])
+                        name_item.setToolTip(f"Internal key: {param_key}")
+                        
+                        # Category
+                        category = self.unified_parser._categorize_parameter(param_key)
+                        category_item = QtWidgets.QTableWidgetItem(category)
+                        category_item.setBackgroundColor(QtGui.QColor(category_colors.get(category, '#f5f5f5')))
+                        
+                        # Unit
+                        unit_item = QtWidgets.QTableWidgetItem(param_info['unit'])
+                        
+                        # Expected range
+                        expected_range = param_info['expected_range']
+                        range_text = f"{expected_range[0]} - {expected_range[1]} {param_info['unit']}"
+                        range_item = QtWidgets.QTableWidgetItem(range_text)
+                        
+                        # Data quality and last value from current data
+                        if hasattr(self, 'df') and not self.df.empty and param_key in self.df['param'].values:
+                            param_data = self.df[self.df['param'] == param_key]
+                            if not param_data.empty:
+                                latest_value = param_data.iloc[-1]['avg'] if 'avg' in param_data.columns else 'N/A'
+                                data_count = len(param_data)
+                                
+                                # Simple quality assessment
+                                if data_count > 100:
+                                    quality = "Excellent"
+                                    quality_color = '#d4edda'  # Light green
+                                elif data_count > 50:
+                                    quality = "Good"
+                                    quality_color = '#fff3cd'  # Light yellow
+                                elif data_count > 10:
+                                    quality = "Fair"
+                                    quality_color = '#ffeaa7'  # Light orange
+                                else:
+                                    quality = "Limited"
+                                    quality_color = '#f8d7da'  # Light red
+                                    
+                                last_value = f"{latest_value:.2f}" if isinstance(latest_value, (int, float)) else str(latest_value)
+                            else:
+                                quality = "No Data"
+                                quality_color = '#e2e3e5'  # Light gray
+                                last_value = "N/A"
+                        else:
+                            quality = "No Data"
+                            quality_color = '#e2e3e5'  # Light gray
+                            last_value = "N/A"
+                        
+                        quality_item = QtWidgets.QTableWidgetItem(quality)
+                        quality_item.setBackgroundColor(QtGui.QColor(quality_color))
+                        
+                        last_value_item = QtWidgets.QTableWidgetItem(last_value)
+                        
+                        # Set items in table
+                        self.ui.tableParameterOverview.setItem(row, 0, name_item)
+                        self.ui.tableParameterOverview.setItem(row, 1, category_item)
+                        self.ui.tableParameterOverview.setItem(row, 2, unit_item)
+                        self.ui.tableParameterOverview.setItem(row, 3, range_item)
+                        self.ui.tableParameterOverview.setItem(row, 4, quality_item)
+                        self.ui.tableParameterOverview.setItem(row, 5, last_value_item)
+                        
+                        row += 1
+                    
+                    # Resize rows to content
+                    self.ui.tableParameterOverview.resizeRowsToContents()
+                    
+                except Exception as e:
+                    print(f"Error populating parameter overview: {e}")
                     traceback.print_exc()
 
             def _display_analysis_results(self, results, progress_dialog=None):
@@ -2251,13 +2357,9 @@ class HALogApp:
             def _get_enhanced_parameter_name(self, param_name):
                 """Map original parameter names to enhanced display names using parser mapping"""
                 try:
-                    # Try to get the enhanced name from the parser mapping first
-                    from parser_linac import LinacParser
-                    parser = LinacParser()
-                    
                     # Check if this parameter has a mapping with description
-                    if param_name in parser.parameter_mapping:
-                        description = parser.parameter_mapping[param_name].get('description', param_name)
+                    if param_name in self.unified_parser.parameter_mapping:
+                        description = self.unified_parser.parameter_mapping[param_name].get('description', param_name)
                         if description != param_name:
                             return description
                     
@@ -2469,13 +2571,26 @@ class HALogApp:
                         if 'shortdata' in filename:
                             print(f"⚠️ Treating {os.path.basename(file_path)} as sample data only (not permanently stored)")
                             self._process_sample_shortdata(file_path)
-                        # Check if it's a fault file that should be filtered and stored permanently
-                        elif 'tbfault' in filename or 'halfault' in filename:
-                            print(f"🔍 Processing fault file with filtering: {os.path.basename(file_path)}")
-                            if file_size < 5 * 1024 * 1024:
-                                self._import_small_file_filtered(file_path)
+                        # Check if it's a fault file - load into unified parser for dynamic fault code lookup
+                        elif 'tbfault' in filename or 'halfault' in filename or 'fault' in filename:
+                            print(f"🔍 Loading fault codes from: {os.path.basename(file_path)}")
+                            success = self.unified_parser.load_fault_codes_from_uploaded_file(file_path)
+                            if success:
+                                # Update fault code tab display
+                                self._initialize_fault_code_tab()
+                                QtWidgets.QMessageBox.information(
+                                    self,
+                                    "Fault Codes Loaded",
+                                    f"Successfully loaded fault codes from {os.path.basename(file_path)}\n"
+                                    f"Fault code database is now updated for searches."
+                                )
                             else:
-                                self._import_large_file_filtered(file_path, file_size)
+                                QtWidgets.QMessageBox.warning(
+                                    self,
+                                    "Fault Code Loading Failed", 
+                                    f"Could not load fault codes from {os.path.basename(file_path)}\n"
+                                    f"Please ensure the file contains fault codes in the correct format."
+                                )
                         else:
                             # Regular machine log file - import all data for MPC, trend, analysis
                             print(f"📊 Processing machine log file: {os.path.basename(file_path)}")
@@ -2503,14 +2618,7 @@ class HALogApp:
                     progress_dialog.setValue(10)
                     QtWidgets.QApplication.processEvents()
 
-                    from parser_linac import LinacParser
-
-                    parser = LinacParser()
-
-                    progress_dialog.setValue(30)
-                    QtWidgets.QApplication.processEvents()
-
-                    df = parser.parse_file_chunked(file_path)
+                    df = self.unified_parser.parse_linac_file(file_path)
 
                     progress_dialog.setValue(70)
                     QtWidgets.QApplication.processEvents()
@@ -2609,16 +2717,12 @@ class HALogApp:
                 try:
                     print(f"📋 Processing shortdata as sample: {os.path.basename(file_path)}")
                     
-                    # Parse shortdata for trend analysis only
-                    from parser_shortdata import ShortDataParser
+                    # Parse shortdata for trend analysis only 
+                    parsed_data = self.unified_parser.parse_short_data_file(file_path)
                     
-                    parser = ShortDataParser(file_path)
-                    parsed_data = parser.parse_log_file()
-                    
-                    if parsed_data:
+                    if parsed_data.get('success', False):
                         # Store in memory for trend analysis
                         self.shortdata_parameters = parsed_data
-                        self.shortdata_parser = parser
                         
                         # Initialize trend controls with the parsed data
                         self._initialize_trend_controls()
@@ -2628,7 +2732,7 @@ class HALogApp:
                             self,
                             "Sample Data Loaded", 
                             f"Shortdata loaded as sample for trend analysis.\n"
-                            f"Parameters available: {len(parsed_data.get('parameters', []))}"
+                            f"Parameters available: {parsed_data.get('total_parameters', 0)}"
                         )
                     else:
                         print("⚠️ No data extracted from shortdata file")
@@ -2673,9 +2777,7 @@ class HALogApp:
                         QtWidgets.QApplication.processEvents()
 
                         # Parse the filtered data
-                        from parser_linac import LinacParser
-                        parser = LinacParser()
-                        df = parser.parse_file_chunked(temp_path)
+                        df = self.unified_parser.parse_linac_file(temp_path)
 
                         progress_dialog.setValue(70)
                         QtWidgets.QApplication.processEvents()
@@ -2780,9 +2882,7 @@ class HALogApp:
                         QtWidgets.QApplication.processEvents()
 
                         # Use existing large file processing for filtered data
-                        from parser_linac import LinacParser
-                        parser = LinacParser()
-                        df = parser.parse_file_chunked(temp_path)
+                        df = self.unified_parser.parse_linac_file(temp_path)
 
                         progress_dialog.setValue(85)
                         QtWidgets.QApplication.processEvents()

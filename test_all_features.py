@@ -14,13 +14,13 @@ from pathlib import Path
 # Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from parser_linac import LinacParser
+from unified_parser import UnifiedParser
 
 class TestEnhancedTrendMapping(unittest.TestCase):
     """Test enhanced trend parameter mapping functionality"""
     
     def setUp(self):
-        self.parser = LinacParser()
+        self.parser = UnifiedParser()
     
     def test_parameter_mapping_completeness(self):
         """Test that all required parameters are mapped with correct descriptions"""
@@ -115,8 +115,7 @@ class TestUIStructure(unittest.TestCase):
         """Test that parameters are correctly grouped"""
         
         try:
-            from parser_linac import LinacParser
-            parser = LinacParser()
+            parser = UnifiedParser()
             
             # Test that grouping method exists and returns expected structure
             self.assertTrue(hasattr(parser, 'parameter_mapping'))
@@ -142,19 +141,27 @@ class TestFaultCodeEnhancements(unittest.TestCase):
         """Test fault code parser functionality"""
         
         try:
-            from parser_fault_code import FaultCodeParser
-            parser = FaultCodeParser()
+            parser = UnifiedParser()
             
-            # Test dual database lookup
+            # Load fault codes from existing database files for testing
+            import os
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            tb_file = os.path.join(script_dir, "data", "TBFault.txt")
+            hal_file = os.path.join(script_dir, "data", "HALfault.txt")
+            
+            # Load one of the fault databases for testing
+            if os.path.exists(tb_file):
+                success = parser.load_fault_codes_from_uploaded_file(tb_file)
+                self.assertTrue(success, "Failed to load fault codes from TB file")
+            
+            # Test fault code lookup
             test_codes = ['400027', '3108', '4000']
             
             for code in test_codes:
                 result = parser.search_fault_code(code)
                 self.assertIsInstance(result, dict, f"Expected dict result for code {code}")
-                
-                if result:
-                    self.assertIn('database', result, f"Result missing 'database' key for code {code}")
-                    self.assertIn('description', result, f"Result missing 'description' key for code {code}")
+                self.assertIn('found', result, f"Result missing 'found' key for code {code}")
+                self.assertIn('description', result, f"Result missing 'description' key for code {code}")
                     
         except ImportError as e:
             self.skipTest(f"Could not import fault code parser: {e}")
@@ -165,24 +172,35 @@ def test_fault_code_enhancements():
     print("🔍 Testing Fault Code Enhancements...")
     
     try:
-        from parser_fault_code import FaultCodeParser
-        parser = FaultCodeParser()
+        parser = UnifiedParser()
         
-        # Test dual database lookup
+        # Load fault codes from existing database files for testing
+        import os
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        tb_file = os.path.join(script_dir, "data", "TBFault.txt") 
+        hal_file = os.path.join(script_dir, "data", "HALfault.txt")
+        
+        # Load TB fault codes
+        if os.path.exists(tb_file):
+            success = parser.load_fault_codes_from_uploaded_file(tb_file)
+            print(f"✓ Loaded TB fault codes: {success}")
+        
+        # Test fault code lookup
         test_codes = ['400027', '3108', '4000', '999999']
         
         for code in test_codes:
             result = parser.search_fault_code(code)
-            descriptions = parser.get_fault_descriptions_by_database(code)
             
             print(f"  Code {code}:")
-            if result:
-                print(f"    Found in: {result['database']} database")
+            if result['found']:
+                print(f"    Found in: {result['source']} database")
                 print(f"    Description: {result['description'][:50]}...")
-            
-            print(f"    HAL: {'✓' if descriptions['hal_description'] != 'NA' else '✗'}")
-            print(f"    TB: {'✓' if descriptions['tb_description'] != 'NA' else '✗'}")
+                print(f"    Status: ✓")
+            else:
+                print(f"    Status: ✗ Not found")
         
+        stats = parser.get_fault_code_statistics()
+        print(f"✓ Total loaded {stats['total_codes']} fault codes from {stats.get('loaded_from', 'unknown')}")
         print("✅ Fault code enhancement tests completed")
         
     except Exception as e:
@@ -194,8 +212,7 @@ def test_enhanced_trends_functionality():
     print("🔍 Testing Enhanced Trends Functionality...")
     
     try:
-        from parser_linac import LinacParser
-        parser = LinacParser()
+        parser = UnifiedParser()
         
         required_parameters = [
             "MLC_ADC_CHAN_TEMP_BANKB_STAT_24V",

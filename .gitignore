@@ -162,6 +162,9 @@ test_data/
 !data/sample_halog_data.txt
 !data/Fault.txt
 
+# Sample data structure file (for users to understand format, not part of app)
+sample_data_structure.txt
+
 # Node modules (if any web components added)
 node_modules/
 
