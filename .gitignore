@@ -191,4 +191,5 @@ output/
 
 # Development tools
 .flake8
-.pre-commit-config.yaml
+.pre-commit-config.yaml*.db-*
+*.db
