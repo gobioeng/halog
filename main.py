@@ -441,15 +441,46 @@ class HALogApp:
 
                     self.df = pd.DataFrame()
 
-                    # Initialize fault code parser
-                    from parser_fault_code import FaultCodeParser
-                    self.fault_parser = FaultCodeParser()
+                    # Initialize unified parser for fault codes and other data
+                    from unified_parser import UnifiedParser
+                    self.fault_parser = UnifiedParser()
+                    
+                    # Load fault code databases from core data directory
+                    hal_fault_path = os.path.join(os.path.dirname(__file__), 'data', 'HALfault.txt')
+                    tb_fault_path = os.path.join(os.path.dirname(__file__), 'data', 'TBFault.txt')
+                    
+                    # Load fault codes from both databases
+                    hal_loaded = self.fault_parser.load_fault_codes_from_uploaded_file(hal_fault_path)
+                    if hal_loaded:
+                        print("✓ HAL fault codes loaded successfully")
+                    
+                    # Load TB fault codes (append to existing)
+                    if os.path.exists(tb_fault_path):
+                        try:
+                            with open(tb_fault_path, 'r', encoding='utf-8') as file:
+                                for line_num, line in enumerate(file, 1):
+                                    line = line.strip()
+                                    if not line or line.startswith('#'):
+                                        continue
+                                    fault_info = self.fault_parser._parse_fault_code_line(line)
+                                    if fault_info:
+                                        code = fault_info['code']
+                                        self.fault_parser.fault_codes[code] = {
+                                            'description': fault_info['description'],
+                                            'source': 'tb',
+                                            'line_number': line_num
+                                        }
+                            print(f"✓ TB fault codes loaded successfully")
+                        except Exception as e:
+                            print(f"Warning: Could not load TB fault codes: {e}")
+                    
                     self._initialize_fault_code_tab()
 
                     # Initialize short data parser for enhanced parameters
-                    from parser_shortdata import ShortDataParser
-                    self.shortdata_parser = ShortDataParser()
-                    self.shortdata_parameters = self.shortdata_parser.parse_log_file()
+                    self.shortdata_parser = self.fault_parser  # Use same unified parser instance
+                    self.shortdata_parameters = self.shortdata_parser.parse_short_data_file(
+                        os.path.join(os.path.dirname(__file__), 'data', 'shortdata.txt')
+                    )
                     self._initialize_trend_controls()
 
                     # Setup UI components
@@ -868,14 +899,17 @@ class HALogApp:
                     if not hasattr(self, 'fault_parser'):
                         return
                     
-                    stats = self.fault_parser.get_stats()
+                    stats = self.fault_parser.get_fault_code_statistics()
                     
                     if hasattr(self.ui, 'lblTotalCodes'):
-                        self.ui.lblTotalCodes.setText(f"Total Codes: {stats['total_codes']} (HAL: {stats['hal_codes']}, TB: {stats['tb_codes']})")
+                        # Calculate breakdown by source
+                        hal_codes = sum(1 for code_info in self.fault_parser.fault_codes.values() if code_info.get('source') == 'uploaded')
+                        tb_codes = sum(1 for code_info in self.fault_parser.fault_codes.values() if code_info.get('source') == 'tb')
+                        self.ui.lblTotalCodes.setText(f"Total Codes: {stats['total_codes']} (HAL: {hal_codes}, TB: {tb_codes})")
                     
                     if hasattr(self.ui, 'lblFaultTypes'):
-                        types_text = f"Types: {stats['types']} ({', '.join(stats['type_breakdown'].keys())})"
-                        self.ui.lblFaultTypes.setText(types_text)
+                        sources_text = f"Sources: {', '.join(stats['sources'])}"
+                        self.ui.lblFaultTypes.setText(sources_text)
                     
                     print(f"✓ Fault code tab initialized with {stats['total_codes']} codes")
                     
@@ -1101,8 +1135,8 @@ class HALogApp:
                         return pd.DataFrame()
                     
                     # Find the parameter key that matches this description
-                    from parser_linac import LinacParser
-                    parser = LinacParser()
+                    from unified_parser import UnifiedParser
+                    parser = UnifiedParser()
                     
                     param_key = None
                     for key, config in parser.parameter_mapping.items():
@@ -2252,8 +2286,8 @@ class HALogApp:
                 """Map original parameter names to enhanced display names using parser mapping"""
                 try:
                     # Try to get the enhanced name from the parser mapping first
-                    from parser_linac import LinacParser
-                    parser = LinacParser()
+                    from unified_parser import UnifiedParser
+                    parser = UnifiedParser()
                     
                     # Check if this parameter has a mapping with description
                     if param_name in parser.parameter_mapping:
@@ -2503,14 +2537,14 @@ class HALogApp:
                     progress_dialog.setValue(10)
                     QtWidgets.QApplication.processEvents()
 
-                    from parser_linac import LinacParser
+                    from unified_parser import UnifiedParser
 
-                    parser = LinacParser()
+                    parser = UnifiedParser()
 
                     progress_dialog.setValue(30)
                     QtWidgets.QApplication.processEvents()
 
-                    df = parser.parse_file_chunked(file_path)
+                    df = parser.parse_linac_file(file_path)
 
                     progress_dialog.setValue(70)
                     QtWidgets.QApplication.processEvents()
@@ -2610,10 +2644,10 @@ class HALogApp:
                     print(f"📋 Processing shortdata as sample: {os.path.basename(file_path)}")
                     
                     # Parse shortdata for trend analysis only
-                    from parser_shortdata import ShortDataParser
+                    from unified_parser import UnifiedParser
                     
-                    parser = ShortDataParser(file_path)
-                    parsed_data = parser.parse_log_file()
+                    parser = UnifiedParser()
+                    parsed_data = parser.parse_short_data_file(file_path)
                     
                     if parsed_data:
                         # Store in memory for trend analysis
@@ -2673,9 +2707,9 @@ class HALogApp:
                         QtWidgets.QApplication.processEvents()
 
                         # Parse the filtered data
-                        from parser_linac import LinacParser
-                        parser = LinacParser()
-                        df = parser.parse_file_chunked(temp_path)
+                        from unified_parser import UnifiedParser
+                        parser = UnifiedParser()
+                        df = parser.parse_linac_file(temp_path)
 
                         progress_dialog.setValue(70)
                         QtWidgets.QApplication.processEvents()
@@ -2780,9 +2814,9 @@ class HALogApp:
                         QtWidgets.QApplication.processEvents()
 
                         # Use existing large file processing for filtered data
-                        from parser_linac import LinacParser
-                        parser = LinacParser()
-                        df = parser.parse_file_chunked(temp_path)
+                        from unified_parser import UnifiedParser
+                        parser = UnifiedParser()
+                        df = parser.parse_linac_file(temp_path)
 
                         progress_dialog.setValue(85)
                         QtWidgets.QApplication.processEvents()
