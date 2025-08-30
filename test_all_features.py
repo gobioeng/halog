@@ -149,10 +149,8 @@ class TestFaultCodeEnhancements(unittest.TestCase):
             tb_file = os.path.join(script_dir, "data", "TBFault.txt")
             hal_file = os.path.join(script_dir, "data", "HALfault.txt")
             
-            # Load one of the fault databases for testing
-            if os.path.exists(tb_file):
-                success = parser.load_fault_codes_from_uploaded_file(tb_file)
-                self.assertTrue(success, "Failed to load fault codes from TB file")
+            # Test that static fault codes are loaded during initialization
+            self.assertGreater(len(parser.fault_codes), 0, "No fault codes loaded from static database")
             
             # Test fault code lookup
             test_codes = ['400027', '3108', '4000']

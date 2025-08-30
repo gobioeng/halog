@@ -441,9 +441,10 @@ class HALogApp:
 
                     self.df = pd.DataFrame()
 
-                    # Initialize fault code parser
-                    from parser_fault_code import FaultCodeParser
-                    self.fault_parser = FaultCodeParser()
+                    # Initialize unified parser for all data types including fault codes
+                    from unified_parser import UnifiedParser
+                    self.unified_parser = UnifiedParser()
+                    self.fault_parser = self.unified_parser  # Use unified parser for fault codes
                     self._initialize_fault_code_tab()
 
                     # Initialize short data parser for enhanced parameters
@@ -1812,12 +1813,19 @@ class HALogApp:
                         self.ui.lblParameterCount.setText(
                             f"Parameters: {unique_params}"
                         )
+                        
+                        # Show actual extracted parameter names
+                        extracted_params = sorted(self.df["param"].unique())
+                        param_text = "Extracted from log file:\n"
+                        param_text += "\n".join([f"• {param}" for param in extracted_params])
+                        self.ui.txtExtractedParameters.setPlainText(param_text)
                     else:
                         self.ui.lblSerial.setText("Serial: -")
                         self.ui.lblDate.setText("Date: -")
                         self.ui.lblDuration.setText("Duration: -")
                         self.ui.lblRecordCount.setText("Total Records: 0")
                         self.ui.lblParameterCount.setText("Parameters: 0")
+                        self.ui.txtExtractedParameters.setPlainText("No parameters extracted. Load a log file to see extracted parameters.")
 
                     # Update UI components
                     self.update_trend_combos()

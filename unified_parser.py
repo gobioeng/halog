@@ -36,6 +36,8 @@ class UnifiedParser:
             "processing_time": 0,
         }
         self.fault_codes: Dict[str, Dict[str, str]] = {}
+        # Load static fault codes during initialization
+        self.load_static_fault_codes()
         
     def _compile_patterns(self):
         """Compile regex patterns for enhanced log parsing"""
@@ -119,7 +121,6 @@ class UnifiedParser:
             "CoolingtargetTempStatistics": {
                 "patterns": [
                     "CoolingtargetTempStatistics",
-                    "coolingtargettempstatistics",
                     "Cooling target Temp Statistics",
                     "targetTempStatistics",
                 ],
@@ -131,7 +132,6 @@ class UnifiedParser:
             "FanremoteTempStatistics": {
                 "patterns": [
                     "FanremoteTempStatistics",
-                    "fanremotetempstatistics",
                     "Fan remote Temp Statistics",
                     "remoteTempStatistics",
                 ],
@@ -143,7 +143,6 @@ class UnifiedParser:
             "FanhumidityStatistics": {
                 "patterns": [
                     "FanhumidityStatistics",
-                    "fanhumiditystatistics",
                     "Fan humidity Statistics",
                     "humidityStatistics",
                 ],
@@ -156,7 +155,6 @@ class UnifiedParser:
             "FanfanSpeed1Statistics": {
                 "patterns": [
                     "FanfanSpeed1Statistics",
-                    "fanfanspeed1statistics",
                     "Fan fan Speed 1 Statistics",
                     "fanSpeed1Statistics",
                 ],
@@ -168,7 +166,6 @@ class UnifiedParser:
             "FanfanSpeed2Statistics": {
                 "patterns": [
                     "FanfanSpeed2Statistics", 
-                    "fanfanspeed2statistics",
                     "Fan fan Speed 2 Statistics",
                     "fanSpeed2Statistics",
                 ],
@@ -180,7 +177,6 @@ class UnifiedParser:
             "FanfanSpeed3Statistics": {
                 "patterns": [
                     "FanfanSpeed3Statistics",
-                    "fanfanspeed3statistics", 
                     "Fan fan Speed 3 Statistics",
                     "fanSpeed3Statistics",
                 ],
@@ -192,7 +188,6 @@ class UnifiedParser:
             "FanfanSpeed4Statistics": {
                 "patterns": [
                     "FanfanSpeed4Statistics",
-                    "fanfanspeed4statistics",
                     "Fan fan Speed 4 Statistics", 
                     "fanSpeed4Statistics",
                 ],
@@ -205,7 +200,6 @@ class UnifiedParser:
             "MLC_ADC_CHAN_TEMP_BANKA_STAT_24V": {
                 "patterns": [
                     "MLC_ADC_CHAN_TEMP_BANKA_STAT",
-                    "mlc_adc_chan_temp_banka_stat",
                     "MLC ADC CHAN TEMP BANKA STAT",
                 ],
                 "unit": "V",
@@ -216,7 +210,6 @@ class UnifiedParser:
             "MLC_ADC_CHAN_TEMP_BANKB_STAT_24V": {
                 "patterns": [
                     "MLC_ADC_CHAN_TEMP_BANKB_STAT",
-                    "mlc_adc_chan_temp_bankb_stat",
                     "MLC ADC CHAN TEMP BANKB STAT",
                 ],
                 "unit": "V",
@@ -424,57 +417,98 @@ class UnifiedParser:
 
         return df
 
-    # Fault Code Parsing Methods
-    def load_fault_codes_from_uploaded_file(self, file_path: str) -> bool:
+    # Fault Code Database Methods - STATIC DATABASE
+    def load_static_fault_codes(self) -> bool:
         """
-        Load fault codes from uploaded file instead of fixed database.
-        This addresses the requirement that fault code database should change
-        with uploaded log files, not be permanent.
+        Load fault codes from static database files in the core application.
+        Fault code database is fixed and does not change with log uploads.
         """
         try:
+            script_dir = Path(__file__).parent
+            hal_file_path = script_dir / "data" / "HALfault.txt"
+            tb_file_path = script_dir / "data" / "TBFault.txt"
+            
             self.fault_codes = {}
             
-            if not os.path.exists(file_path):
+            # Load HAL fault codes
+            success_hal = self._load_static_fault_file(hal_file_path, "HAL")
+            
+            # Load TB fault codes
+            success_tb = self._load_static_fault_file(tb_file_path, "TB")
+            
+            total_loaded = len(self.fault_codes)
+            if total_loaded > 0:
+                print(f"✓ Static fault code database loaded: {total_loaded} codes from core files")
+                return True
+            else:
+                print("❌ No fault codes loaded from static database")
                 return False
                 
+        except Exception as e:
+            print(f"Error loading static fault codes: {e}")
+            return False
+
+    def _load_static_fault_file(self, file_path: Path, database_source: str) -> bool:
+        """Load fault codes from a static core fault file"""
+        try:
+            if not file_path.exists():
+                print(f"Warning: Static fault file not found at {file_path}")
+                return False
+            
             # Try different encodings
-            encodings = ['utf-8', 'latin-1', 'cp1252']
+            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+            lines = None
             
             for encoding in encodings:
                 try:
                     with open(file_path, 'r', encoding=encoding) as file:
-                        for line_num, line in enumerate(file, 1):
-                            line = line.strip()
-                            if not line or line.startswith('#'):
-                                continue
-                                
-                            # Parse fault code line
-                            fault_info = self._parse_fault_code_line(line)
-                            if fault_info:
-                                code = fault_info['code']
-                                self.fault_codes[code] = {
-                                    'description': fault_info['description'],
-                                    'source': fault_info.get('source', 'uploaded'),
-                                    'line_number': line_num
-                                }
-                    
-                    print(f"✓ Loaded {len(self.fault_codes)} fault codes from uploaded file")
-                    return True
-                    
+                        lines = file.readlines()
+                    break
                 except UnicodeDecodeError:
                     continue
+            
+            if lines is None:
+                print(f"Error: Could not read {database_source} fault file")
+                return False
+            
+            # Skip header line if it exists
+            start_line = 1 if lines and ('ID' in lines[0] and 'Description' in lines[0]) else 0
+            codes_loaded = 0
+            
+            for line_num, line in enumerate(lines[start_line:], start=start_line + 1):
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Parse line format: ID\tDescription\tType
+                parts = line.split('\t')
+                if len(parts) >= 2:
+                    fault_id = parts[0].strip()
+                    description = parts[1].strip()
+                    fault_type = parts[2].strip() if len(parts) > 2 else "Unknown"
                     
-            print(f"❌ Failed to load fault codes from {file_path}")
-            return False
+                    # Store with database source information
+                    self.fault_codes[fault_id] = {
+                        'description': description,
+                        'type': fault_type,
+                        'line_number': line_num,
+                        'database': database_source,
+                        'file_path': str(file_path)
+                    }
+                    codes_loaded += 1
+            
+            print(f"✓ Loaded {codes_loaded} codes from static {database_source} database")
+            return True
             
         except Exception as e:
-            print(f"Error loading fault codes: {e}")
+            print(f"Error loading static {database_source} fault codes: {e}")
             return False
 
     def _parse_fault_code_line(self, line: str) -> Optional[Dict]:
-        """Parse a single fault code line"""
-        # Handle different fault code formats
+        """Parse a single fault code line from static database"""
+        # Handle different fault code formats for static files
         patterns = [
+            r'^(\d+)\s*\t+(.+)$',  # "12345\tDescription"
             r'^(\d+)\s*[:\-\s]+(.+)$',  # "12345: Description"
             r'^(\d+)\s+(.+)$',          # "12345 Description"
             r'^Code\s*(\d+)\s*[:\-\s]*(.+)$',  # "Code 12345: Description"
@@ -491,32 +525,36 @@ class UnifiedParser:
         return None
 
     def search_fault_code(self, code: str) -> Dict:
-        """Search for fault code in loaded database"""
+        """Search for fault code in static database"""
         code = str(code).strip()
         
         if code in self.fault_codes:
+            fault_info = self.fault_codes[code]
             return {
                 'found': True,
                 'code': code,
-                'description': self.fault_codes[code]['description'],
-                'source': self.fault_codes[code]['source'],
-                'database_description': f"{self.fault_codes[code]['source'].title()} Database"
+                'description': fault_info['description'],
+                'type': fault_info.get('type', 'Unknown'),
+                'database': fault_info['database'],
+                'database_description': f"{fault_info['database']} Database"
             }
         else:
             return {
                 'found': False,
                 'code': code,
-                'description': 'Fault code not found in uploaded database',
-                'source': 'none',
+                'description': 'Fault code not found in static database',
+                'type': 'Unknown',
+                'database': 'none',
                 'database_description': 'Not Available'
             }
 
     def get_fault_code_statistics(self) -> Dict:
-        """Get statistics about loaded fault codes"""
+        """Get statistics about static fault code database"""
+        databases = list(set(info['database'] for info in self.fault_codes.values()))
         return {
             'total_codes': len(self.fault_codes),
-            'sources': list(set(info['source'] for info in self.fault_codes.values())),
-            'loaded_from': 'uploaded_file' if self.fault_codes else 'none'
+            'databases': databases,
+            'loaded_from': 'static_core_files'
         }
 
     # Short Data Parsing Methods

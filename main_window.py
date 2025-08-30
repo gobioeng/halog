@@ -156,11 +156,31 @@ class Ui_MainWindow(object):
 
         self.lblRecordCount = QLabel("Total Records: 0")
         self.lblRecordCount.setWordWrap(True)
+        
+        # Replace simple parameter count with actual extracted parameter names display
         self.lblParameterCount = QLabel("Parameters: 0")
         self.lblParameterCount.setWordWrap(True)
+        
+        # Add text area to show actual extracted parameter names
+        self.txtExtractedParameters = QTextEdit()
+        self.txtExtractedParameters.setMaximumHeight(120)
+        self.txtExtractedParameters.setReadOnly(True)
+        self.txtExtractedParameters.setPlaceholderText("Extracted parameters will appear here after log file is loaded...")
+        self.txtExtractedParameters.setStyleSheet("""
+            QTextEdit {
+                border: 1px solid #d1d9e0;
+                border-radius: 4px;
+                background-color: #f8f9fa;
+                padding: 8px;
+                font-size: 11px;
+                color: #495057;
+            }
+        """)
 
         data_layout.addWidget(self.lblRecordCount, 0, 0)
         data_layout.addWidget(self.lblParameterCount, 1, 0)
+        data_layout.addWidget(QLabel("Extracted Parameters:"), 2, 0)
+        data_layout.addWidget(self.txtExtractedParameters, 3, 0)
         cards_layout.addWidget(data_group)
         cards_layout.addStretch()
 

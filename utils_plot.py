@@ -719,7 +719,8 @@ def find_time_clusters(df_times, gap_threshold=timedelta(days=1)):
 
 def plot_multi_date_timeline(ax, df, param_name, gap_threshold=timedelta(days=1)):
     """
-    Plot data with visual gaps for missing data between dates
+    Enhanced plot with visual gaps for missing data between dates.
+    Shows gray shaded areas for data gaps like in the example image.
     
     Parameters:
     -----------
@@ -749,48 +750,74 @@ def plot_multi_date_timeline(ax, df, param_name, gap_threshold=timedelta(days=1)
     # Find time clusters (continuous data periods)
     clusters = find_time_clusters(df_clean['datetime'], gap_threshold)
     
-    # Plot each cluster separately with gaps
-    colors = plt.cm.Set1(np.linspace(0, 1, len(clusters)))
+    # Plot each cluster separately with enhanced gap visualization
+    main_color = '#2E8B57'  # Sea green for data points
     
     for i, cluster in enumerate(clusters):
         cluster_data = df_clean.iloc[cluster]
         
-        # Plot the cluster
+        # Plot the data cluster with green dots and lines
         ax.plot(cluster_data['datetime'], cluster_data['avg'], 
-               color=colors[i], linewidth=2, alpha=0.8, 
-               marker='o', markersize=4, label=f'Period {i+1}' if len(clusters) > 1 else param_name)
+               color=main_color, linewidth=2, alpha=0.8, 
+               marker='o', markersize=3, markerfacecolor=main_color, 
+               markeredgecolor='white', markeredgewidth=0.5)
         
-        # Add a visual gap indicator if there are multiple clusters
+        # Add enhanced gap visualization with gray shaded areas
         if i < len(clusters) - 1:
-            # Add a gap marker between clusters
             next_cluster = clusters[i + 1]
             gap_start = cluster_data['datetime'].iloc[-1]
             gap_end = df_clean.iloc[next_cluster[0]]['datetime']
             
-            # Add vertical dashed line to indicate gap
-            gap_mid = gap_start + (gap_end - gap_start) / 2
-            ax.axvline(x=gap_mid, color='red', linestyle='--', alpha=0.5, linewidth=1)
+            # Get y-axis limits for shading
+            y_min, y_max = ax.get_ylim()
             
-            # Add text annotation for gap
+            # Add gray shaded area for the gap (like in user's example)
+            ax.axvspan(gap_start, gap_end, alpha=0.3, color='lightgray', 
+                      label='Missing Data' if i == 0 else "")
+            
+            # Add gap duration text in the middle of the gap
             gap_duration = gap_end - gap_start
-            if gap_duration.days > 0:
-                gap_text = f'{gap_duration.days}d gap'
-            else:
-                gap_text = f'{gap_duration.seconds//3600}h gap'
+            gap_mid = gap_start + (gap_duration / 2)
             
-            ax.annotate(gap_text, xy=(gap_mid, ax.get_ylim()[1] * 0.9), 
-                       ha='center', va='bottom', fontsize=8, color='red', alpha=0.7)
+            if gap_duration.days > 0:
+                gap_text = f'{gap_duration.days} days'
+            else:
+                gap_text = f'{gap_duration.seconds//3600}h'
+            
+            # Position text in middle of gap area
+            y_text_pos = y_min + (y_max - y_min) * 0.5
+            ax.annotate(gap_text, xy=(gap_mid, y_text_pos), 
+                       ha='center', va='center', fontsize=9, 
+                       color='darkgray', fontweight='bold',
+                       bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
     
-    # Enhance axis formatting
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
-    ax.xaxis.set_major_locator(mdates.HourLocator(interval=max(1, len(df_clean) // 10)))
+    # Enhanced axis formatting for multi-day display
+    if len(df_clean) > 0:
+        total_span = df_clean['datetime'].max() - df_clean['datetime'].min()
+        
+        if total_span.days > 7:
+            # For long periods, show dates
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
+            ax.xaxis.set_major_locator(mdates.DayLocator(interval=max(1, total_span.days // 10)))
+        else:
+            # For shorter periods, show date and time
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
+            ax.xaxis.set_major_locator(mdates.HourLocator(interval=max(1, int(total_span.total_seconds() // 3600 // 10))))
     
-    # Add legend if multiple periods
+    # Set title and labels
+    ax.set_title(f'{param_name} - Multi-day Timeline', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Value', fontsize=10)
+    
+    # Add legend if there are gaps
     if len(clusters) > 1:
-        ax.legend(loc='best', fontsize=8)
+        ax.legend(loc='upper right', fontsize=9, framealpha=0.9)
     
     # Rotate x-axis labels for better readability
-    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+    
+    # Improve grid
+    ax.grid(True, alpha=0.3, linestyle='-', linewidth=0.5)
+    ax.set_axisbelow(True)
 
 def _plot_single_parameter(ax, df: pd.DataFrame, param_name: str, subplot: bool = False):
     """Plot data for a single parameter with compressed time gaps"""
