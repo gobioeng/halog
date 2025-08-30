@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QThread, pyqtSignal
-from parser_linac import LinacParser
+from unified_parser import UnifiedParser
 from database import DatabaseManager
 import os
 import json
@@ -21,7 +21,7 @@ class FileProcessingWorker(QThread):
         self.file_path = file_path
         self.file_size = file_size
         self.database = database
-        self.parser = LinacParser()
+        self.parser = UnifiedParser()
         self._cancel_requested = False
         self.chunk_size = 1000  # Process files in chunks of 1000 lines
 
@@ -34,7 +34,7 @@ class FileProcessingWorker(QThread):
             )
 
             # Parse file with chunked processing
-            df = self.parser.parse_file_chunked(
+            df = self.parser.parse_linac_file(
                 file_path=self.file_path,
                 chunk_size=self.chunk_size,
                 progress_callback=self._progress_callback,

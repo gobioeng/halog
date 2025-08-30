@@ -778,32 +778,60 @@ class Ui_MainWindow(object):
         
         # Set minimum column widths for parameter names
         header.setMinimumSectionSize(200)  # Minimum width for parameter column
-        header.resizeSection(0, 300)  # Default width for parameter column
+        header.resizeSection(0, 350)  # Increased default width for parameter column
         
         # Enhanced text wrapping and row height management
         self.tableMPC.setWordWrap(True)
         self.tableMPC.setTextElideMode(Qt.ElideNone)
         self.tableMPC.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.tableMPC.setMinimumHeight(450)
+        self.tableMPC.setMinimumHeight(500)  # Increased minimum height
         
         # Enable better text display with automatic row height adjustment
         self.tableMPC.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.tableMPC.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         
-        # Add custom styling for better text readability
+        # Enhanced styling for better content handling and visual appeal
         self.tableMPC.setStyleSheet("""
             QTableWidget {
                 gridline-color: #E0E0E0;
                 font-size: 12px;
                 line-height: 1.4;
+                background-color: #FAFAFA;
+                border: 1px solid #DDDDDD;
+                border-radius: 8px;
             }
             QTableWidget::item {
-                padding: 8px;
+                padding: 10px;
                 border: 1px solid #E0E0E0;
+                background-color: white;
             }
             QTableWidget::item:selected {
                 background-color: #E3F2FD;
                 color: #0D47A1;
+            }
+            QTableWidget::item:alternate {
+                background-color: #F8F9FA;
+            }
+            QHeaderView::section {
+                background-color: #2196F3;
+                color: white;
+                padding: 12px;
+                border: none;
+                font-weight: bold;
+                font-size: 13px;
+            }
+            QScrollBar:vertical {
+                background-color: #F0F0F0;
+                width: 12px;
+                border-radius: 6px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #CCCCCC;
+                border-radius: 6px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #999999;
             }
         """)
         
@@ -913,17 +941,41 @@ class Ui_MainWindow(object):
                 date_b_item.setBackground(Qt.lightGray)
             self.tableMPC.setItem(row, 2, date_b_item)
             
-            # Status with color coding - handle NA values
+            # Status with enhanced color coding and styling - handle NA values
             status_display = "NA" if status == "NA" or not status else status
             status_item = QLabel(status_display)
             if status_display == "PASS":
-                status_item.setStyleSheet("color: green; font-weight: bold;")
+                status_item.setStyleSheet("""
+                    color: white; 
+                    font-weight: bold; 
+                    background-color: #4CAF50; 
+                    border-radius: 4px; 
+                    padding: 6px 12px;
+                """)
             elif status_display == "FAIL":
-                status_item.setStyleSheet("color: red; font-weight: bold;")
+                status_item.setStyleSheet("""
+                    color: white; 
+                    font-weight: bold; 
+                    background-color: #F44336; 
+                    border-radius: 4px; 
+                    padding: 6px 12px;
+                """)
             elif status_display == "NA":
-                status_item.setStyleSheet("color: gray; font-weight: bold; background-color: #f0f0f0;")
+                status_item.setStyleSheet("""
+                    color: #666666; 
+                    font-weight: bold; 
+                    background-color: #E0E0E0; 
+                    border-radius: 4px; 
+                    padding: 6px 12px;
+                """)
             else:
-                status_item.setStyleSheet("color: orange; font-weight: bold;")
+                status_item.setStyleSheet("""
+                    color: white; 
+                    font-weight: bold; 
+                    background-color: #FF9800; 
+                    border-radius: 4px; 
+                    padding: 6px 12px;
+                """)
             status_item.setAlignment(Qt.AlignCenter)
             self.tableMPC.setCellWidget(row, 3, status_item)
 
