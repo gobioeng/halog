@@ -38,10 +38,12 @@ class ProgressDialog(QProgressDialog):
     def setupUI(self):
         """Setup the enhanced progress dialog UI"""
         self.setWindowTitle("Processing LINAC Log File")
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowModality(Qt.ApplicationModal)  # Changed to ApplicationModal for better visibility
         self.setMinimumWidth(450)
         self.setMaximum(100)
         self.setValue(0)
+        # Ensure dialog stays on top
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
         # Simplified Windows 11 Theme Styling
         self.setStyleSheet(
