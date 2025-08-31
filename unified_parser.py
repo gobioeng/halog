@@ -68,8 +68,7 @@ class UnifiedParser:
             # Water/Flow parameters (for Water System tab)
             "magnetronFlow": {
                 "patterns": [
-                    "magnetron flow", "magnetronFlow", "CoolingmagnetronFlowLowStatistics",
-                    "coolingmagnetronflowlowstatistics"
+                    "magnetron flow", "magnetronFlow", "CoolingmagnetronFlowLowStatistics"
                 ],
                 "unit": "L/min",
                 "description": "Mag Flow",
@@ -79,12 +78,22 @@ class UnifiedParser:
             "targetAndCirculatorFlow": {
                 "patterns": [
                     "target and circulator flow", "targetAndCirculatorFlow", 
-                    "CoolingtargetFlowLowStatistics", "coolingtargetflowlowstatistics"
+                    "CoolingtargetFlowLowStatistics"
                 ],
                 "unit": "L/min",
                 "description": "Flow Target",
                 "expected_range": (6, 12),
                 "critical_range": (4, 15),
+            },
+            "CoolingtargetTempStatistics": {
+                "patterns": [
+                    "CoolingtargetTempStatistics", "cooling_target_temp_statistics",
+                    "Cooling target Temp Statistics", "targetTempStatistics"
+                ],
+                "unit": "°C",
+                "description": "Flow Target",
+                "expected_range": (15, 25),
+                "critical_range": (10, 30),
             },
             "cityWaterFlow": {
                 "patterns": [
@@ -100,8 +109,8 @@ class UnifiedParser:
             # Temperature parameters (for Temperature tab)
             "FanremoteTempStatistics": {
                 "patterns": [
-                    "FanremoteTempStatistics", "fanremotetempstatistics",
-                    "Fan remote Temp Statistics", "remoteTempStatistics"
+                    "FanremoteTempStatistics", "Fan remote Temp Statistics", 
+                    "remoteTempStatistics", "remote_temp_stats"
                 ],
                 "unit": "°C",
                 "description": "Temp Room",
@@ -110,7 +119,8 @@ class UnifiedParser:
             },
             "magnetronTemp": {
                 "patterns": [
-                    "magnetronTemp", "magnetron temp", "magnetron temperature"
+                    "magnetronTemp", "magnetron temp", "magnetron temperature",
+                    "mag_temp"
                 ],
                 "unit": "°C",
                 "description": "Temp Magnetron",
@@ -121,8 +131,8 @@ class UnifiedParser:
             # Humidity parameters (for Humidity tab)
             "FanhumidityStatistics": {
                 "patterns": [
-                    "FanhumidityStatistics", "fanhumiditystatistics",
-                    "Fan humidity Statistics", "humidityStatistics"
+                    "FanhumidityStatistics", "Fan humidity Statistics", 
+                    "humidityStatistics", "humidity_stats"
                 ],
                 "unit": "%",
                 "description": "Room Humidity",
@@ -133,8 +143,8 @@ class UnifiedParser:
             # Fan speed parameters (for Fan Speed tab)
             "FanfanSpeed1Statistics": {
                 "patterns": [
-                    "FanfanSpeed1Statistics", "fanfanspeed1statistics",
-                    "Fan fan Speed 1 Statistics", "fanSpeed1Statistics"
+                    "FanfanSpeed1Statistics", "Fan fan Speed 1 Statistics", 
+                    "fanSpeed1Statistics", "fan_speed_1"
                 ],
                 "unit": "RPM",
                 "description": "Speed FAN 1",
@@ -143,8 +153,8 @@ class UnifiedParser:
             },
             "FanfanSpeed2Statistics": {
                 "patterns": [
-                    "FanfanSpeed2Statistics", "fanfanspeed2statistics",
-                    "Fan fan Speed 2 Statistics", "fanSpeed2Statistics"
+                    "FanfanSpeed2Statistics", "Fan fan Speed 2 Statistics", 
+                    "fanSpeed2Statistics", "fan_speed_2"
                 ],
                 "unit": "RPM",
                 "description": "Speed FAN 2",
@@ -153,8 +163,8 @@ class UnifiedParser:
             },
             "FanfanSpeed3Statistics": {
                 "patterns": [
-                    "FanfanSpeed3Statistics", "fanfanspeed3statistics",
-                    "Fan fan Speed 3 Statistics", "fanSpeed3Statistics"
+                    "FanfanSpeed3Statistics", "Fan fan Speed 3 Statistics", 
+                    "fanSpeed3Statistics", "fan_speed_3"
                 ],
                 "unit": "RPM",
                 "description": "Speed FAN 3",
@@ -163,8 +173,8 @@ class UnifiedParser:
             },
             "FanfanSpeed4Statistics": {
                 "patterns": [
-                    "FanfanSpeed4Statistics", "fanfanspeed4statistics",
-                    "Fan fan Speed 4 Statistics", "fanSpeed4Statistics"
+                    "FanfanSpeed4Statistics", "Fan fan Speed 4 Statistics", 
+                    "fanSpeed4Statistics", "fan_speed_4"
                 ],
                 "unit": "RPM",
                 "description": "Speed FAN 4",
@@ -175,8 +185,8 @@ class UnifiedParser:
             # Voltage parameters (for Voltage tab)
             "MLC_ADC_CHAN_TEMP_BANKA_STAT_24V": {
                 "patterns": [
-                    "MLC_ADC_CHAN_TEMP_BANKA_STAT", "mlc_adc_chan_temp_banka_stat",
-                    "MLC ADC CHAN TEMP BANKA STAT", "BANKA"
+                    "MLC_ADC_CHAN_TEMP_BANKA_STAT", "MLC ADC CHAN TEMP BANKA STAT", 
+                    "BANKA_24V", "mlc_bank_a_24v"
                 ],
                 "unit": "V",
                 "description": "MLC Bank A 24V",
@@ -185,8 +195,8 @@ class UnifiedParser:
             },
             "MLC_ADC_CHAN_TEMP_BANKB_STAT_24V": {
                 "patterns": [
-                    "MLC_ADC_CHAN_TEMP_BANKB_STAT", "mlc_adc_chan_temp_bankb_stat",
-                    "MLC ADC CHAN TEMP BANKB STAT", "BANKB"
+                    "MLC_ADC_CHAN_TEMP_BANKB_STAT", "MLC ADC CHAN TEMP BANKB STAT", 
+                    "BANKB_24V", "mlc_bank_b_24v"
                 ],
                 "unit": "V",
                 "description": "MLC Bank B 24V",

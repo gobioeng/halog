@@ -487,6 +487,19 @@ class HALogApp:
                     self.load_dashboard()
                     self.ui.tabWidget.currentChanged.connect(self.on_tab_changed)
                     self._optimize_database()
+                    
+                    # Load sample data if database is empty for demonstration
+                    try:
+                        if hasattr(self, 'db') and self.db:
+                            record_count = self.db.get_record_count()
+                            if record_count == 0:
+                                print("📋 No data in database, loading sample data for demonstration...")
+                                sample_file = os.path.join(os.path.dirname(__file__), 'test_complete_shortdata.txt')
+                                if os.path.exists(sample_file):
+                                    self._process_sample_shortdata(sample_file)
+                                    print("✓ Sample data loaded for trend analysis")
+                    except Exception as e:
+                        print(f"Note: Could not load sample data: {e}")
                 except Exception as e:
                     print(f"Error initializing database: {e}")
                     traceback.print_exc()
@@ -1054,8 +1067,9 @@ class HALogApp:
             def refresh_trend_tab(self, group_name):
                 """Refresh trend data for specific parameter group with new dropdown structure"""
                 try:
-                    if not hasattr(self, 'shortdata_parser'):
-                        print(f"⚠️ Shortdata parser not available for {group_name}")
+                    # Check if we have any data available in the database
+                    if not hasattr(self, 'df') or self.df.empty:
+                        print(f"⚠️ No data available in database for {group_name}")
                         return
 
                     # Get the appropriate combo boxes and graph widgets based on group
@@ -1168,7 +1182,7 @@ class HALogApp:
 
                     # Check which column name exists in the DataFrame
                     param_column = None
-                    possible_columns = ['param', 'parameter_type', 'parameter_name', 'Parameter']
+                    possible_columns = ['parameter_type', 'param', 'parameter_name', 'Parameter']
 
                     for col in possible_columns:
                         if col in self.df.columns:
@@ -1565,15 +1579,15 @@ class HALogApp:
                         status_item.setAlignment(Qt.AlignCenter)
 
                         if data['status'] == "PASS":
-                            status_item.setStyleSheet("color: green; font-weight: bold; background-color: #d4edda; padding: 4px; border-radius: 3px;")
+                            status_item.setStyleSheet("color: #1B5E20; font-weight: 600; background-color: #E8F5E8; padding: 6px; border-radius: 6px;")
                         elif data['status'] == "FAIL":
-                            status_item.setStyleSheet("color: red; font-weight: bold; background-color: #f8d7da; padding: 4px; border-radius: 3px;")
+                            status_item.setStyleSheet("color: #B71C1C; font-weight: 600; background-color: #FFEBEE; padding: 6px; border-radius: 6px;")
                         elif data['status'] == "WARNING":
-                            status_item.setStyleSheet("color: orange; font-weight: bold; background-color: #fff3cd; padding: 4px; border-radius: 3px;")
+                            status_item.setStyleSheet("color: #E65100; font-weight: 600; background-color: #FFF3E0; padding: 6px; border-radius: 6px;")
                         elif data['status'] == "NA":
-                            status_item.setStyleSheet("color: gray; font-weight: bold; background-color: #f0f0f0; padding: 4px; border-radius: 3px;")
+                            status_item.setStyleSheet("color: #616161; font-weight: 600; background-color: #F5F5F5; padding: 6px; border-radius: 6px;")
                         else:
-                            status_item.setStyleSheet("color: blue; font-weight: bold; background-color: #cce7ff; padding: 4px; border-radius: 3px;")
+                            status_item.setStyleSheet("color: #1976D2; font-weight: 600; background-color: #E3F2FD; padding: 6px; border-radius: 6px;")
 
                         self.ui.tableMPC.setCellWidget(row, 3, status_item)
 
