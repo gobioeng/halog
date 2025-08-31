@@ -1579,15 +1579,15 @@ class HALogApp:
                         status_item.setAlignment(Qt.AlignCenter)
 
                         if data['status'] == "PASS":
-                            status_item.setStyleSheet("color: green; font-weight: bold; background-color: #d4edda; padding: 4px; border-radius: 3px;")
+                            status_item.setStyleSheet("color: #1B5E20; font-weight: 600; background-color: #E8F5E8; padding: 6px; border-radius: 6px;")
                         elif data['status'] == "FAIL":
-                            status_item.setStyleSheet("color: red; font-weight: bold; background-color: #f8d7da; padding: 4px; border-radius: 3px;")
+                            status_item.setStyleSheet("color: #B71C1C; font-weight: 600; background-color: #FFEBEE; padding: 6px; border-radius: 6px;")
                         elif data['status'] == "WARNING":
-                            status_item.setStyleSheet("color: orange; font-weight: bold; background-color: #fff3cd; padding: 4px; border-radius: 3px;")
+                            status_item.setStyleSheet("color: #E65100; font-weight: 600; background-color: #FFF3E0; padding: 6px; border-radius: 6px;")
                         elif data['status'] == "NA":
-                            status_item.setStyleSheet("color: gray; font-weight: bold; background-color: #f0f0f0; padding: 4px; border-radius: 3px;")
+                            status_item.setStyleSheet("color: #616161; font-weight: 600; background-color: #F5F5F5; padding: 6px; border-radius: 6px;")
                         else:
-                            status_item.setStyleSheet("color: blue; font-weight: bold; background-color: #cce7ff; padding: 4px; border-radius: 3px;")
+                            status_item.setStyleSheet("color: #1976D2; font-weight: 600; background-color: #E3F2FD; padding: 6px; border-radius: 6px;")
 
                         self.ui.tableMPC.setCellWidget(row, 3, status_item)
 
